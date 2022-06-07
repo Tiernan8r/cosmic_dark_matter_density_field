@@ -4,10 +4,10 @@
 #SBATCH --job-name=calc_delta
 #SBATCH -o out.log
 #SBATCH --nodes=30
-#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --time=12:00:00
-#SBATCH --mem=20G
+#SBATCH --mem=16G
 # email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s2222340@ed.ac.uk
