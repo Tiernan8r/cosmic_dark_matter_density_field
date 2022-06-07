@@ -3,8 +3,8 @@
 #SBATCH -p all
 #SBATCH --job-name=calc_delta
 #SBATCH -o out.log
-#SBATCH --nodes=34
-#SBATCH --ntasks-per-node=3
+#SBATCH --nodes=30
+#SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=8
 #SBATCH --time=12:00:00
 #SBATCH --mem=20G
