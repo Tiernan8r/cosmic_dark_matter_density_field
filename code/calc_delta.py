@@ -6,50 +6,47 @@ n_snapshots = 102
 
 yt.enable_parallelism()
 
-ss = np.arange(0, n_snapshots)
+snapshots = np.arange(0, n_snapshots)
 
 storage = {}
 
-
 # Sphere centers from a file
-c = np.loadtxt("examples/random_locs.txt", max_rows=500)
-
+random_centres = np.loadtxt("examples/random_locs.txt", max_rows=500)
 
 # Sphere radius
-r = 50
-
+radius = 50
 
 # 102 snapshots on different cores
-for sto, s in yt.parallel_objects(ss, n_snapshots, storage=storage):
+for sto, snapshot in yt.parallel_objects(snapshots, n_snapshots, storage=storage):
 
     units = {"length": (1.0, "Mpc/h")}
 
-    f_name = f"/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/data/snapdir_{s:0>3}/snapshot_{s:0>3}.0.hdf5"
+    snapshot_f_name = f"/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/data/snapdir_{snapshot:0>3}/snapshot_{snapshot:0>3}.0.hdf5"
 
     # load in the simulation
-    ds = yt.load(f_name, unit_base=units)
+    data_set = yt.load(snapshot_f_name, unit_base=units)
 
-    z = ds.current_redshift
+    z = data_set.current_redshift
 
     a = 1 / (1+z)
 
     # define a region containing the full box and get its density
-    cg = ds.r[:, :, :]
+    region = data_set.r[:, :, :]
 
-    rho_bar = cg.quantities.total_mass()[1] / (ds.domain_width[0]*a)**3
+    rho_bar = region.quantities.total_mass()[1] / (data_set.domain_width[0]*a)**3
 
     # overdensities
     delta = []
 
     # give units to the sphere radius
-    r_un = r * ds.units.Mpc / ds.units.h
+    radius_units = radius * data_set.units.Mpc / data_set.units.h
 
-    R = r_un.to('code_length')
+    R = radius_units.to('code_length')
 
     # create spheres at random locations from the file and get their overdensities
-    for cc in c:
+    for centres in random_centres:
 
-        sp = ds.sphere(cc, R)
+        sp = data_set.sphere(centres, R)
 
         rho = sp.quantities.total_mass()[1] / (4*np.pi/3 * (a*R)**3)
 
