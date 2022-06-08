@@ -20,8 +20,9 @@ ntasks=102
 cd ${SLURM_SUBMIT_DIR}
 
 module purge
-source /usr/local/anaconda/3.9/etc/profile.d/conda.sh
-conda activate base
+source /home/brs/tmox/tmox_conda
+tmox_activate
+conda activate yt
 
 # srun -n ${ntasks} -c ${nthreads} python calc_delta.py
 mpirun -np ${ntasks} python calc_delta.py

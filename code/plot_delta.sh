@@ -20,7 +20,8 @@ cd ${SLURM_SUBMIT_DIR}
 # Load your anaconda module if needed
 
 module purge
-source /usr/local/anaconda/3.9/etc/profile.d/conda.sh
-conda activate base
+source /home/brs/tmox/tmox_conda
+tmox_activate
+conda activate yt
 
 python plot_delta.py
