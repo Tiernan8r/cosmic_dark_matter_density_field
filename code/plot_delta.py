@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Sphere centers from a file
-c = np.loadtxt("random_locs.txt", max_rows=500)
+c = np.loadtxt("examples/random_locs.txt", max_rows=500)
 
-z_arr = np.load("z_full.npy")
-delta_arr = np.load("delta_final_50Mpc.npy")
+z_arr = np.load("/home/tstapleton/dissertation/data/z.npy")
+delta_arr = np.load("/home/tstapleton/dissertation/data/delta.npy")
 
 a_arr = 1 / (1+z_arr)
 

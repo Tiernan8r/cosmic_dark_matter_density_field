@@ -76,8 +76,8 @@ if yt.is_root():
     delta_arr = np.array(deltas)
 
     # write the data
-    with open("z_full.npy", "wb") as f:
+    with open("/home/tstapleton/dissertation/data/z.npy", "xb") as f:
         np.save(f, z_arr)
 
-    with open("delta_final_50Mpc.npy", "wb") as f:
+    with open("/home/tstapleotn/dissertationt/data/delta.npy", "xb") as f:
         np.save(delta_arr)
