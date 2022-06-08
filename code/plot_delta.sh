@@ -2,7 +2,7 @@
 
 #SBATCH -p all
 #SBATCH --job-name=plot_delta
-#SBATCH -o out.log
+#SBATCH -o out_plot_delta.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1

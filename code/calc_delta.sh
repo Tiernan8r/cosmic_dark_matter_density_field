@@ -2,10 +2,10 @@
 
 #SBATCH -p all
 #SBATCH --job-name=calc_delta
-#SBATCH -o out.log
 #SBATCH --nodes=10
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
+#SBATCH -o out_calc_delta.log
 #SBATCH --time=12:00:00
 #SBATCH --mem=16G
 # email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)
