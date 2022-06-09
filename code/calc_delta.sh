@@ -16,6 +16,7 @@
 
 ntasks=102
 # nthreads=8
+radius = 10
 
 cd ${SLURM_SUBMIT_DIR}
 
@@ -25,4 +26,4 @@ tmox_activate
 conda activate yt
 
 # srun -n ${ntasks} -c ${nthreads} python calc_delta.py
-mpirun -np ${ntasks} python calc_delta.py
+mpirun -np ${ntasks} python calc_delta.py -n ${ntasks} -r ${radius}

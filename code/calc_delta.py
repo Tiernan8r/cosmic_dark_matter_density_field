@@ -1,8 +1,22 @@
 import numpy as np
 import yt
+import sys
+from . import cli
+
+mappings = {
+    "-h": "--help",
+    "-n": "--num-snapshots",
+    "-r": "--radius"
+}
+
+# Read any cli input
+flags, vals = cli.parse_input(sys.argv[1:], mapping=mappings)
 
 # MPI stuff
-n_snapshots = 102
+n_snapshots = int(flags.get("--num-snapshots", 102))
+
+# Sphere radius
+radius = int(flags.get("--radius", 50))
 
 yt.enable_parallelism()
 
@@ -12,9 +26,6 @@ storage = {}
 
 # Sphere centers from a file
 random_centres = np.loadtxt("examples/random_locs.txt", max_rows=500)
-
-# Sphere radius
-radius = 50
 
 # 102 snapshots on different cores
 for sto, snapshot in yt.parallel_objects(snapshots, n_snapshots, storage=storage):
