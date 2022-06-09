@@ -2,8 +2,8 @@
 
 #SBATCH -p all
 #SBATCH --job-name=calc_delta
-#SBATCH -o out_calc_delta.log
 #SBATCH --nodes=15
+#SBATCH -o logs/out_calc_delta.log
 #SBATCH --ntasks-per-node=10
 #SBATCH --cpus-per-task=1
 #SBATCH --time=12:00:00
@@ -16,7 +16,7 @@
 
 NTASKS=102
 # NTHREADS=8
-RADIUS = 50
+RADIUS=50
 
 
 parse_cli () {
@@ -24,12 +24,12 @@ parse_cli () {
     while [[ ${#@} -gt 0 ]]; do
             case ${1} in
             -n|--n-tasks)
-                    NTASKS="${1}"
+                    NTASKS="${2}"
                     echo "Running for '${NTASKS}' number of tasks."
                     shift 2
                     ;;
             -r|--radius)
-                    RADIUS="${1}"
+                    RADIUS="${2}"
                     echo "Using a sphere radius of '${RADIUS}' Mpc."
                     shift 2
                     ;;
