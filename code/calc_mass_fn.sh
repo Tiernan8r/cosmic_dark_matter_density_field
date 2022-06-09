@@ -2,7 +2,7 @@
 
 #SBATCH -p all
 #SBATCH --job-name=calc_mass_fn
-#SBATCH -o out_calc_mass_fn.log
+#SBATCH -o logs/out_calc_mass_fn.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=25
 #SBATCH --cpus-per-task=1
