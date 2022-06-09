@@ -44,7 +44,8 @@ for sto, snapshot in yt.parallel_objects(snapshots, n_snapshots, storage=storage
     # define a region containing the full box and get its density
     region = data_set.r[:, :, :]
 
-    rho_bar = region.quantities.total_mass()[1] / (data_set.domain_width[0]*a)**3
+    rho_bar = region.quantities.total_mass(
+    )[1] / (data_set.domain_width[0]*a)**3
 
     # overdensities
     delta = []
