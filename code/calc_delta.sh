@@ -53,10 +53,7 @@ parse_cli () {
 setup() {
     cd ${SLURM_SUBMIT_DIR}
 
-    module purge
-    source /home/brs/tmox/tmox_conda
-    tmox_activate
-    conda activate yt
+    . ./activate_environment.sh
 }
 
 # set up and run the python code
