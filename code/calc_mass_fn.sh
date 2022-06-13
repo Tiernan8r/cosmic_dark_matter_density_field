@@ -19,10 +19,7 @@ ntasks=25
 
 cd ${SLURM_SUBMIT_DIR}
 
-module purge
-source /home/brs/tmox/tmox_conda
-tmox_activate
-conda activate yt
+. ./activate_environment.sh
 
 # srun -n ${ntasks} -c ${nthreads} python calc_delta.py
 mpirun -np ${ntasks} python calc_mass_fn.py
