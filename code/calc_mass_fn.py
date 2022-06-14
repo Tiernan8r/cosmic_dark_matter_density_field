@@ -91,7 +91,7 @@ def filter_halos(ds: Dataset, ad: YTRegion, centre: Tuple[float, float, float], 
     y = ad["halos", "particle_position_y"].to(distance_units)
     z = ad["halos", "particle_position_z"].to(distance_units)
 
-    c = unyt_array(centres, distance_units)
+    c = unyt_array(centre, distance_units)
     r = unyt_array(radius, distance_units)
 
     dx = x - c[0]
