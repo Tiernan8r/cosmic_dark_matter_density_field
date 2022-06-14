@@ -1,9 +1,0 @@
-* Over redshifts
-	* Load in halos
-	* Iterate over halo groups : ad["Group", "particle_identifier"]
-		* Get (virial) mass
-		* Get volume
-		* Get number of particles in halo?
-			-> Number density
-		* Use #density/ln(M) = phi
-		* Plot PHI as func of ln(M_vir)
