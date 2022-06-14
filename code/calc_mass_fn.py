@@ -40,15 +40,23 @@ def main():
                 print(te)
                 continue
 
+            dist_units = ds.units.Mpc / ds.units.h
+
             z = ds.current_redshift
             a = 1 / (1 + z)
 
-            sim_size = ds.domain_width[0]
+            print("redshift is:", z)
+
+            sim_size = (ds.domain_width[0]).to(dist_units)
+            print("simulation size is:", sim_size)
 
             storage = {}
 
-            for r in np.arange(0, sim_size, NUM_SPHERE_SAMPLES):
-                coords = rand_coords(NUM_COORDS_PER_ITERATION, max=sim_size)
+            radii = np.linspace(start=0, stop=sim_size.value, num=NUM_SPHERE_SAMPLES)
+            print("sampling with radii of the following sizes:", radii)
+
+            for r in radii:
+                coords = rand_coords(NUM_COORDS_PER_ITERATION, max=sim_size) * dist_units
 
                 ms = []
                 ns = []
@@ -56,14 +64,18 @@ def main():
                 for c in coords:
                     idxs = filter_halos(ds, ad, c, r)
 
-                    N = len(idxs)
-                    ad = ds.all_data()
+                    N = len(idxs[0])
+                    print(f"Found {N} halos within {r}Mpc of ({c[0]}, {c[1]}, {c[2]})")
+
                     masses = ad["halos", "particle_mass"][idxs]
 
-                    R = ds.units.Mpc / ds.units.h
+                    R = r * dist_units
 
                     M = np.sum(masses)
-                    n = N / (4/3 * np.pi * (a * R)**3)
+                    V = 4/3 * np.pi * (a * R)**3
+                    print("Volume of sample:", V)
+
+                    n = N / V
 
                     ms.append(M)
                     ns.append(n)
@@ -72,9 +84,10 @@ def main():
             all_data[simulation_name][z] = storage
 
     with open("../data/mass_fn.pickle", "wb") as f:
-        pickle.dump(all_data, f, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(all_data, f)
 
-    # print(all_data)    
+    # print(all_data)
+
 
 def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
     np.random.seed(seed)
@@ -84,21 +97,20 @@ def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
 
 
 def filter_halos(ds: Dataset, ad: YTRegion, centre: Tuple[float, float, float], radius: float):
-    distance_units = ds.units.Mpc / ds.units.h
-    
+    dist_units = ds.units.Mpc / ds.units.h
 
-    x = ad["halos", "particle_position_x"].to(distance_units)
-    y = ad["halos", "particle_position_y"].to(distance_units)
-    z = ad["halos", "particle_position_z"].to(distance_units)
+    x = ad["halos", "particle_position_x"].to(dist_units)
+    y = ad["halos", "particle_position_y"].to(dist_units)
+    z = ad["halos", "particle_position_z"].to(dist_units)
 
-    c = unyt_array(centre, distance_units)
-    r = unyt_array(radius, distance_units)
+    c = unyt_array(centre, dist_units)
+    r = unyt_array(radius, dist_units)
 
     dx = x - c[0]
     dy = y - c[1]
     dz = z - c[2]
 
-    l = np.sqrt(dx**2 + dz**2 + dy**2).to(distance_units)
+    l = np.sqrt(dx**2 + dz**2 + dy**2).to(dist_units)
 
     idxs = np.where(l <= r)
 
