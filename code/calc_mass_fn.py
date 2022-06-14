@@ -1,12 +1,13 @@
+import pickle
 import re
 from typing import Tuple
-import pickle
 
 import numpy as np
 import yt
 import yt.extensions.legacy
-from yt.data_objects.static_output import Dataset
+from unyt import unyt_array
 from yt.data_objects.selection_objects.region import YTRegion
+from yt.data_objects.static_output import Dataset
 
 import helpers
 
@@ -84,13 +85,14 @@ def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
 
 def filter_halos(ds: Dataset, ad: YTRegion, centre: Tuple[float, float, float], radius: float):
     distance_units = ds.units.Mpc / ds.units.h
+    
 
     x = ad["halos", "particle_position_x"].to(distance_units)
     y = ad["halos", "particle_position_y"].to(distance_units)
     z = ad["halos", "particle_position_z"].to(distance_units)
 
-    c = (centre * distance_units).to(distance_units)
-    r = (radius * distance_units).to(distance_units)
+    c = unyt_array(centres, distance_units)
+    r = unyt_array(radius, distance_units)
 
     dx = x - c[0]
     dy = y - c[1]
