@@ -1,6 +1,6 @@
 import os
 import re
-from typing import List
+from typing import List, Tuple
 
 ROOT = "/disk12/legacy/"
 
@@ -32,22 +32,22 @@ GROUP_PATTERN = DATA + "groups_{0:0>3}/fof_subhalo_tab_{0:0>3}.0.hdf5"
 SNAPSHOT_PATTERN = DATA + "snapdir_{0:0>3}/snapshot_{0:0>3}.0.hdf5"
 ROCKSTAR_PATTERN = ROCKSTAR + "halos_{0:0>3}.0.bin"
 
-halo_regex = re.compile(
-    "(.*fof_subhalo_tab_\d{3}.0.hdf5$)|(.*halos_\d{3}.0.bin$)")
+groups_regex = re.compile(".*fof_subhalo_tab_\d{3}.0.hdf5$")
+rockstar_regex = re.compile(".*halos_\d{3}.0.bin$")
 
 
-def find_halos(data_dir: str) -> List[str]:
-    halo_files = []
-
-    print("DATA DIR:", data_dir)
+def find_halos(data_dir: str) -> Tuple[List[str], List[str]]:
+    groups = []
+    rockstars = []
 
     for root, dirs, files in os.walk(data_dir):
-        print(root, "|", dirs, "|", files)
         for file in files:
-            if halo_regex.match(file):
-                halo_files.append(root + file)
+            if groups_regex.match(file):
+                groups.append(root + "/" + file)
+            elif rockstar_regex.match(file):
+                rockstars.append(root + "/" + file)
 
-    return halo_files
+    return groups, rockstars
 
 
 def gen_paths(data_sets: List[str], pattern: str) -> List[str]:
