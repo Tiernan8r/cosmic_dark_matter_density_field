@@ -1,48 +1,59 @@
 import re
 from typing import Tuple
+import pickle
 
 import numpy as np
 import yt
 import yt.extensions.legacy
 from yt.data_objects.static_output import Dataset
+from yt.data_objects.selection_objects.region import YTRegion
 
 import helpers
 
 sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d{3})n(\d+)_SLEGAC).*$")
 
-NUM_COORDS_PER_ITERATION = 10
-NUM_SPHERE_SAMPLES = 10
+NUM_COORDS_PER_ITERATION = 100
+NUM_SPHERE_SAMPLES = 100
 
 
 def main():
     # Iterate over datasets
+    all_data = {}
     for pth in helpers.TEST_PATHS:
+        print("Reading data set in:", pth)
         # Find halos for data set
         _, rockstars = helpers.find_halos(pth)
 
-        all_data = {}
+        simulation_name = sim_regex.match(pth).group(1)
+        all_data[simulation_name] = {}
 
         for rck in rockstars:
-            ds = yt.load(rck)
+            print("working on rockstar file:", rck)
+
+            ds: Dataset = yt.load(rck)
+
+            try:
+                ad: YTRegion = ds.all_data()
+            except TypeError as te:
+                print("error reading all_data(), ignoring")
+                print(te)
+                continue
 
             z = ds.current_redshift
             a = 1 / (1 + z)
 
-            match = sim_regex.match(rck)
-            simulation_name = match.group(1)
-            sim_size = int(match.group(3))
+            sim_size = ds.domain_width[0]
 
-            all_data[simulation_name] = {}
             storage = {}
 
             for r in np.arange(0, sim_size, NUM_SPHERE_SAMPLES):
                 coords = rand_coords(NUM_COORDS_PER_ITERATION, max=sim_size)
 
-                masses = []
+                ms = []
                 ns = []
 
                 for c in coords:
-                    idxs = filter_halos(ds, c, r)
+                    idxs = filter_halos(ds, ad, c, r)
 
                     N = len(idxs)
                     ad = ds.all_data()
@@ -53,31 +64,33 @@ def main():
                     M = np.sum(masses)
                     n = N / (4/3 * np.pi * (a * R)**3)
 
-                    masses.append(M)
+                    ms.append(M)
                     ns.append(n)
 
-                storage[r] = (masses, ns)
+                storage[r] = (ms, ns)
             all_data[simulation_name][z] = storage
 
+    with open("../data/mass_fn.pickle", "wb") as f:
+        pickle.dump(all_data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
+    # print(all_data)    
 
-def rand_coords(amount: int, min: int = 0, max: int = 100, seed="legacy"):
+def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
     np.random.seed(seed)
     coords = np.random.rand(amount, 3)
 
     return (max - min) * coords + min
 
 
-def filter_halos(ds: Dataset, centre: Tuple(float, float, float), radius: float):
-    ad = ds.all_data()
-    x = ad["halos", "particle_position_x"]
-    y = ad["halos", "particle_position_y"]
-    z = ad["halos", "particle_position_z"]
-
+def filter_halos(ds: Dataset, ad: YTRegion, centre: Tuple[float, float, float], radius: float):
     distance_units = ds.units.Mpc / ds.units.h
 
-    c = centre * distance_units
-    r = radius * distance_units
+    x = ad["halos", "particle_position_x"].to(distance_units)
+    y = ad["halos", "particle_position_y"].to(distance_units)
+    z = ad["halos", "particle_position_z"].to(distance_units)
+
+    c = (centre * distance_units).to(distance_units)
+    r = (radius * distance_units).to(distance_units)
 
     dx = x - c[0]
     dy = y - c[1]

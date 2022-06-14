@@ -15,8 +15,8 @@ DATA_SETS = [
 
 TEST_DATA_SETS = [
     "GVD_C700_l100n256_SLEGAC/",
-    "GVD_C700_l1600n256_SLEGAC/",
-    "GVD_C700_l1600n64_SLEGAC/",
+    # "GVD_C700_l1600n256_SLEGAC/",
+    # "GVD_C700_l1600n64_SLEGAC/",
 ]
 
 ALL_DATA_SETS = sorted(DATA_SETS + TEST_DATA_SETS)
@@ -47,7 +47,7 @@ def find_halos(data_dir: str) -> Tuple[List[str], List[str]]:
             elif rockstar_regex.match(file):
                 rockstars.append(root + "/" + file)
 
-    return groups, rockstars
+    return sorted(groups), sorted(rockstars)
 
 
 def gen_paths(data_sets: List[str], pattern: str) -> List[str]:
