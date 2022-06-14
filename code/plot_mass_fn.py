@@ -37,19 +37,19 @@ def main():
 
 def plot(M, n, simulation_name, redshift):
 
-    # if redshift == 0:
-    #     print("NUMBER DENSITIES")
-    #     print(n)
-    #     print("-----------------")
-    #     print("MASSES")
-    #     print(M)
+    print("REDSHIFT:", redshift)
+    print("NUMBER DENSITIES")
+    print(n)
+    print("-----------------")
+    print("MASSES")
+    print(M)
 
-    plt.plot(M, n)
-    plt.title(f"Mass Function @ $z={redshift:2f}$ for simulation {simulation_name}")
+    plt.plot(np.log(M), n)
+    plt.title(f"Mass Function @ $z={redshift:.2f}$ for simulation {simulation_name}")
     plt.xlabel("$\log{M_{vir}}$")
     plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
 
-    plt.savefig(f"../plots/test_mass_fn-{simulation_name}_{redshift:2f}.png")
+    plt.savefig(f"../plots/test_mass_fn-{simulation_name}_{redshift:.2f}.png")
     plt.cla()
 
 def load_data():
