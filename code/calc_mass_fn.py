@@ -52,11 +52,13 @@ def main():
 
             storage = {}
 
-            radii = np.linspace(start=0, stop=sim_size.value, num=NUM_SPHERE_SAMPLES)
+            radii = np.linspace(start=0, stop=sim_size.value,
+                                num=NUM_SPHERE_SAMPLES)
             print("sampling with radii of the following sizes:", radii)
 
             for r in radii:
-                coords = rand_coords(NUM_COORDS_PER_ITERATION, max=sim_size) * dist_units
+                coords = rand_coords(
+                    NUM_COORDS_PER_ITERATION, min=r, max=sim_size.value) * dist_units
 
                 ms = []
                 ns = []
@@ -65,13 +67,14 @@ def main():
                     idxs = filter_halos(ds, ad, c, r)
 
                     N = len(idxs[0])
-                    print(f"Found {N} halos within {r}Mpc of ({c[0]}, {c[1]}, {c[2]})")
+                    print(
+                        f"Found {N} halos within {r}Mpc of ({c[0]}, {c[1]}, {c[2]})")
 
                     masses = ad["halos", "particle_mass"][idxs]
 
-                    R = r * dist_units
-
                     M = np.sum(masses)
+
+                    R = r * dist_units
                     V = 4/3 * np.pi * (a * R)**3
                     print("Volume of sample:", V)
 
