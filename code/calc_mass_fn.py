@@ -13,13 +13,15 @@ import helpers
 
 sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d{3})n(\d+)_SLEGAC).*$")
 
-NUM_COORDS_PER_ITERATION = 100
-NUM_SPHERE_SAMPLES = 100
+NUM_SAMPLES_PER_SPHERE = 10
+NUM_SPHERE_SIZES = 10
 
 
 def main():
     # Iterate over datasets
     all_data = {}
+    coords_radii_map = {}
+
     for pth in helpers.TEST_PATHS:
         print("Reading data set in:", pth)
         # Find halos for data set
@@ -53,12 +55,21 @@ def main():
             storage = {}
 
             radii = np.linspace(start=0, stop=sim_size.value,
-                                num=NUM_SPHERE_SAMPLES)
+                                num=NUM_SPHERE_SIZES)
             print("sampling with radii of the following sizes:", radii)
 
             for r in radii:
-                coords = rand_coords(
-                    NUM_COORDS_PER_ITERATION, min=r, max=sim_size.value) * dist_units
+
+                if r not in coords_radii_map:
+                    coord_min = r
+                    coord_max = sim_size.value - r
+
+                    coords = rand_coords(
+                        NUM_SAMPLES_PER_SPHERE, min=coord_min, max=coord_max) * dist_units
+
+                    coords_radii_map[r] = coords
+                else:
+                    coords = coords_radii_map[r]
 
                 ms = []
                 ns = []
@@ -78,7 +89,8 @@ def main():
                     V = 4/3 * np.pi * (a * R)**3
                     print("Volume of sample:", V)
 
-                    n = N / V
+                    # n = N / V
+                    n=N
 
                     ms.append(M)
                     ns.append(n)

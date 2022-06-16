@@ -35,6 +35,7 @@ def main():
 
             plot(sorted_masses, sorted_number_densities, sim_name, z)
 
+
 def plot(M, n, simulation_name, redshift):
 
     print("REDSHIFT:", redshift)
@@ -44,13 +45,23 @@ def plot(M, n, simulation_name, redshift):
     print("MASSES")
     print(M)
 
+    # MIN, MAX = np.min(M), np.max(M)
+    # N_BINS = 100
+    # bins = 10 ** np.linspace(np.log10(MIN), np.log10(MAX), N_BINS)
+
     plt.plot(np.log(M), n)
-    plt.title(f"Mass Function @ $z={redshift:.2f}$ for simulation {simulation_name}")
+    # plt.hist(n, bins=bins)
+    plt.gca().set_xscale("log")
+
+    plt.title(
+        f"Mass Function @ $z={redshift:.2f}$ for simulation {simulation_name}")
     plt.xlabel("$\log{M_{vir}}$")
     plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
 
-    plt.savefig(f"../plots/test_mass_fn-{simulation_name}_{redshift:.2f}.png")
+    plt.savefig(
+        f"../plots/test_mass_fn-hist-{simulation_name}_{redshift:.2f}.png")
     plt.cla()
+
 
 def load_data():
 
