@@ -60,6 +60,7 @@ def main():
 
             for r in radii:
 
+                # Reuse random coordinates between simulations
                 if r not in coords_radii_map:
                     coord_min = r
                     coord_max = sim_size.value - r
