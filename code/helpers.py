@@ -5,12 +5,12 @@ from typing import List, Tuple
 ROOT = "/disk12/legacy/"
 
 DATA_SETS = [
-    "GVD_C700_l100n1024_SLEGAC/",
-    "GVD_C700_l100n2048_SLEGAC/",
-    "GVD_C700_l10n1024_SLEGAC/",
+    # "GVD_C700_l100n1024_SLEGAC/",
+    # "GVD_C700_l100n2048_SLEGAC/",
+    # "GVD_C700_l10n1024_SLEGAC/",
     "GVD_C700_l1600n2048_SLEGAC/",
-    "GVD_C900_l100n2048_SLEGAC/",
-    "GVD_C900_l1600n2048_SLEGAC/",
+    # "GVD_C900_l100n2048_SLEGAC/",
+    # "GVD_C900_l1600n2048_SLEGAC/",
 ]
 
 TEST_DATA_SETS = [
@@ -34,11 +34,12 @@ ROCKSTAR_PATTERN = ROCKSTAR + "halos_{0:0>3}.0.bin"
 
 groups_regex = re.compile(".*fof_subhalo_tab_\d{3}.0.hdf5$")
 rockstar_regex = re.compile(".*halos_\d{3}.0.bin$")
+snapshots_regex = re.compile(".*snapshot_\d{3}.0.hdf5$")
 
-
-def find_halos(data_dir: str) -> Tuple[List[str], List[str]]:
+def find_halos(data_dir: str) -> Tuple[List[str], List[str], List[str]]:
     groups = []
     rockstars = []
+    snapshots = []
 
     for root, dirs, files in os.walk(data_dir):
         for file in files:
@@ -46,8 +47,10 @@ def find_halos(data_dir: str) -> Tuple[List[str], List[str]]:
                 groups.append(root + "/" + file)
             elif rockstar_regex.match(file):
                 rockstars.append(root + "/" + file)
+            elif snapshots_regex.match(file):
+                snapshots.append(root + "/" + file)
 
-    return sorted(groups), sorted(rockstars)
+    return sorted(groups), sorted(rockstars), sorted(snapshots)
 
 
 def gen_paths(data_sets: List[str], pattern: str) -> List[str]:
