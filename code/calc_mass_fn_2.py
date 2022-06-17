@@ -3,13 +3,14 @@ import re
 from typing import Tuple
 
 import numpy as np
+import unyt
 import yt
 import yt.extensions.legacy
-import unyt
 from yt.data_objects.selection_objects.region import YTRegion
 from yt.data_objects.static_output import Dataset
 
 import helpers
+import plot_mass_fn_2
 
 sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d{3})n(\d+)_SLEGAC).*$")
 
@@ -21,10 +22,10 @@ def main():
     # Iterate over datasets
     all_data = {}
 
-    for pth in helpers.TEST_PATHS:
+    for pth in helpers.PATHS:
         print("Reading data set in:", pth)
         # Find halos for data set
-        _, rockstars = helpers.find_halos(pth)
+        _, rockstars, _ = helpers.find_halos(pth)
 
         simulation_name = sim_regex.match(pth).group(1)
         all_data[simulation_name] = {}
@@ -66,7 +67,8 @@ def main():
                 coords = rand_coords(
                     NUM_SAMPLES_PER_SPHERE, min=coord_min, max=coord_max) * dist_units
 
-                ms = data.get(r, unyt.unyt_array([], ds.units.Msun / ds.units.h))
+                ms = data.get(r, unyt.unyt_array(
+                    [], ds.units.Msun / ds.units.h))
 
                 for c in coords:
                     idxs = filter_halos(ds, ad, c, r)
@@ -75,14 +77,14 @@ def main():
 
                     ms = unyt.uconcatenate((ms, masses))
 
-                data[r] = sorted(ms)
-            all_data[simulation_name][z] = data
+                plot_mass_fn_2.plot(z, r, sorted(ms), sim_name=simulation_name)
+                # data[r] = sorted(ms)
+            # all_data[simulation_name][z] = data
 
     # with open("../data/mass_fn.pickle", "wb") as f:
     #     pickle.dump(all_data, f)
-    print("GENNING PLOTS:")
-    import plot_mass_fn_2
-    plot_mass_fn_2.plotting(all_data)
+    # print("GENNING PLOTS:")
+    # plot_mass_fn_2.plotting(all_data)
 
     # print(all_data)
 
