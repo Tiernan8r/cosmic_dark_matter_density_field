@@ -53,14 +53,14 @@ parse_cli () {
 setup() {
     cd ${SLURM_SUBMIT_DIR}
 
-    . ../activate_environment.sh
+    . activate_environment.sh
 }
 
 # set up and run the python code
 main() {
     setup
     # srun -n ${NTASKS} -c ${NTHREADS} python calc_delta.py
-    mpirun -np ${NTASKS} $(python ../calc_delta.py -n ${NTASKS} -r ${RADIUS})
+    mpirun -np ${NTASKS} $(python calc_delta.py -n ${NTASKS} -r ${RADIUS})
 }
 
 # Read the CLI input if given

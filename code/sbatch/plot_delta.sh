@@ -19,6 +19,6 @@ cd ${SLURM_SUBMIT_DIR}
 
 # Load your anaconda module if needed
 
-. ../activate_environment.sh
+. activate_environment.sh
 
-python ../plot_delta.py
+python plot_delta.py
