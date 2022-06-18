@@ -19,9 +19,6 @@ cd ${SLURM_SUBMIT_DIR}
 
 # Load your anaconda module if needed
 
-module purge
-source /home/brs/tmox/tmox_conda
-tmox_activate
-conda activate yt
+. ../activate_environment.sh
 
-python plot_delta.py
+python ../plot_delta.py

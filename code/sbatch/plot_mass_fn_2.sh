@@ -19,6 +19,6 @@ nthreads=1
 
 cd ${SLURM_SUBMIT_DIR}
 
-. ./activate_environment.sh
+. ../activate_environment.sh
 
-srun -n ${ntasks} -c ${nthreads} python plot_mass_fn_2.py
+srun -n ${ntasks} -c ${nthreads} python ../plot_mass_fn_2.py
