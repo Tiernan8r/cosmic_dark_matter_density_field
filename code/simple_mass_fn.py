@@ -69,28 +69,6 @@ def main():
         plot(z, radius, sorted(ms), sim_name=simulation_name)
 
 
-def plot(z, radius, masses, sim_name=""):
-
-    print(f"RADIUS: {radius} @ z={z}")
-
-    hist, bin_edges = np.histogram(masses, bins=100)
-
-    a = 1 / (1+z)
-    V = 4/3 * np.pi * (a*radius)**3
-
-    hist = hist / V
-
-    plt.plot(np.log(bin_edges[:-1]), hist)
-    plt.gca().set_xscale("log")
-
-    plt.title(f"Mass Function for {sim_name} @ z={z:.2f}")
-    plt.xlabel("$\log{M_{vir}}$")
-    plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
-    plt.savefig(
-        f"../plots/mass_function_{sim_name}-z{z:.2f}-r{radius}.png")
-    plt.cla()
-
-
 def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
     np.random.seed(seed)
     coords = np.random.rand(amount, 3)
@@ -117,6 +95,28 @@ def filter_halos(ds, ad, centre: Tuple[float, float, float], radius: float):
     idxs = np.where(l <= r)
 
     return idxs
+
+
+def plot(z, radius, masses, sim_name=""):
+
+    print(f"RADIUS: {radius} @ z={z}")
+
+    hist, bin_edges = np.histogram(masses, bins=100)
+
+    a = 1 / (1+z)
+    V = 4/3 * np.pi * (a*radius)**3
+
+    hist = hist / V
+
+    plt.plot(np.log(bin_edges[:-1]), hist)
+    plt.gca().set_xscale("log")
+
+    plt.title(f"Mass Function for {sim_name} @ z={z:.2f}")
+    plt.xlabel("$\log{M_{vir}}$")
+    plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
+    plt.savefig(
+        f"../plots/mass_function_{sim_name}-z{z:.2f}-r{radius}.png")
+    plt.cla()
 
 
 if __name__ == "__main__":
