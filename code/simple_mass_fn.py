@@ -16,7 +16,7 @@ sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
 
 NUM_SAMPLES_PER_SPHERE = 1000
 NUM_SPHERE_SIZES = 10
-
+NUM_HIST_BINS = 1000
 
 def main():
     pth = ROOT + SIM_FOLDER
@@ -101,7 +101,7 @@ def plot(z, radius, masses, sim_name=""):
 
     print(f"RADIUS: {radius} @ z={z}")
 
-    hist, bin_edges = np.histogram(masses, bins=100)
+    hist, bin_edges = np.histogram(masses, bins=NUM_HIST_BINS)
 
     a = 1 / (1+z)
     V = 4/3 * np.pi * (a*radius)**3
