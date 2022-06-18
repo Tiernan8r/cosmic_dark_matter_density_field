@@ -21,5 +21,5 @@ cd ${SLURM_SUBMIT_DIR}
 
 . ../activate_environment.sh
 
-srun -n ${ntasks} -c ${nthreads} python ../calc_mass_fn.py
+srun -n ${ntasks} -c ${nthreads} python ../mass_function/calc_mass_fn.py
 # mpirun -np ${ntasks} python calc_mass_fn.py
