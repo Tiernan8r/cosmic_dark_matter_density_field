@@ -14,7 +14,7 @@ SIM_FOLDER = "GVD_C700_l1600n2048_SLEGAC/"
 
 sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
 
-NUM_SAMPLES_PER_SPHERE = 10
+NUM_SAMPLES_PER_SPHERE = 1000
 NUM_SPHERE_SIZES = 10
 
 
@@ -41,14 +41,11 @@ def main():
         dist_units = ds.units.Mpc / ds.units.h
 
         z = ds.current_redshift
-        a = 1 / (1 + z)
 
         print("redshift is:", z)
 
         sim_size = (ds.domain_width[0]).to(dist_units)
         print("simulation size is:", sim_size)
-
-        # data = {}
 
         radius = 50
         print("sampling with radius:", radius)
@@ -59,10 +56,8 @@ def main():
         coords = rand_coords(
             NUM_SAMPLES_PER_SPHERE, min=coord_min, max=coord_max) * dist_units
 
-        default_masses = unyt.unyt_array(
+        ms = unyt.unyt_array(
             [], ds.units.Msun / ds.units.h)
-        # ms = data.get(radius, default_masses)
-        ms = default_masses
 
         for c in coords:
             idxs = filter_halos(ds, ad, c, radius)
@@ -77,8 +72,6 @@ def main():
 def plot(z, radius, masses, sim_name=""):
 
     print(f"RADIUS: {radius} @ z={z}")
-    print("#MASSES: ", len(masses))
-    # print(masses)
 
     hist, bin_edges = np.histogram(masses, bins=100)
 
@@ -86,19 +79,15 @@ def plot(z, radius, masses, sim_name=""):
     V = 4/3 * np.pi * (a*radius)**3
 
     hist = hist / V
-    # print("HISTS:")
-    # print(hist)
 
-    # plt.hist(x=masses, bins=100, density=True)
     plt.plot(np.log(bin_edges[:-1]), hist)
     plt.gca().set_xscale("log")
-    # ax = plt.gca()
 
     plt.title(f"Mass Function for {sim_name} @ z={z:.2f}")
     plt.xlabel("$\log{M_{vir}}$")
     plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
     plt.savefig(
-        f"../plots/tests/test_simple_{sim_name}-z{z:.2f}-r{radius}.png")
+        f"../plots/mass_function_{sim_name}-z{z:.2f}-r{radius}.png")
     plt.cla()
 
 
