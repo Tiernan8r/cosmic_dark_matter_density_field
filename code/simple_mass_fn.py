@@ -6,42 +6,33 @@ import numpy as np
 import unyt
 import yt
 import yt.extensions.legacy
-from yt.data_objects.selection_objects.region import YTRegion
-from yt.data_objects.static_output import Dataset
 
 import helpers
 
-ROOT = "/disk12/legacy"
+ROOT = "/disk12/legacy/"
 SIM_FOLDER = "GVD_C700_l1600n2048_SLEGAC/"
 
-sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d{3})n(\d+)_SLEGAC).*$")
+sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
 
 NUM_SAMPLES_PER_SPHERE = 10
 NUM_SPHERE_SIZES = 10
 
 
 def main():
-    # Iterate over datasets
-    all_data = {}
-
     pth = ROOT + SIM_FOLDER
     print("Reading data set in:", pth)
     # Find halos for data set
     _, rockstars, _ = helpers.find_halos(pth)
 
     simulation_name = sim_regex.match(pth).group(1)
-    all_data[simulation_name] = {}
-
-    # TODO: remove
-    rockstars = rockstars[-1:]
 
     for rck in rockstars:
         print("working on rockstar file:", rck)
 
-        ds: Dataset = yt.load(rck)
+        ds = yt.load(rck)
 
         try:
-            ad: YTRegion = ds.all_data()
+            ad = ds.all_data()
         except TypeError as te:
             print("error reading all_data(), ignoring")
             print(te)
@@ -95,17 +86,19 @@ def plot(z, radius, masses, sim_name=""):
     V = 4/3 * np.pi * (a*radius)**3
 
     hist = hist / V
-    print("HISTS:")
-    print(hist)
+    # print("HISTS:")
+    # print(hist)
 
     # plt.hist(x=masses, bins=100, density=True)
-    plt.plot(np.log(bin_edges), hist)
+    plt.plot(np.log(bin_edges[:-1]), hist)
+    plt.gca().set_xscale("log")
     # ax = plt.gca()
 
-    plt.title("TEST")
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.savefig(f"../../plots/tests/test_simple_{sim_name}-{z:.2f}.png")
+    plt.title(f"Mass Function for {sim_name} @ z={z:.2f}")
+    plt.xlabel("$\log{M_{vir}}$")
+    plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
+    plt.savefig(
+        f"../plots/tests/test_simple_{sim_name}-z{z:.2f}-r{radius}.png")
     plt.cla()
 
 
@@ -116,7 +109,7 @@ def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
     return (max - min) * coords + min
 
 
-def filter_halos(ds: Dataset, ad: YTRegion, centre: Tuple[float, float, float], radius: float):
+def filter_halos(ds, ad, centre: Tuple[float, float, float], radius: float):
     dist_units = ds.units.Mpc / ds.units.h
 
     x = ad["halos", "particle_position_x"].to(dist_units)
