@@ -9,7 +9,7 @@ import yt.extensions.legacy
 from yt.data_objects.selection_objects.region import YTRegion
 from yt.data_objects.static_output import Dataset
 
-import helpers
+import code.util.helpers as helpers
 import plot_mass_fn_2
 
 sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d{3})n(\d+)_SLEGAC).*$")
