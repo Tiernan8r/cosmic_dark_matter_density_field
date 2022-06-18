@@ -1,7 +1,7 @@
 import numpy as np
 import yt
 import sys
-import code.util.cli as cli
+import cli
 
 mappings = {
     "-h": "--help",

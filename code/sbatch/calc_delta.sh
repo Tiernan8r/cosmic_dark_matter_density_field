@@ -60,7 +60,7 @@ setup() {
 main() {
     setup
     # srun -n ${NTASKS} -c ${NTHREADS} python calc_delta.py
-    mpirun -np ${NTASKS} $(python ../delta/calc_delta.py -n ${NTASKS} -r ${RADIUS})
+    mpirun -np ${NTASKS} $(python ../calc_delta.py -n ${NTASKS} -r ${RADIUS})
 }
 
 # Read the CLI input if given
