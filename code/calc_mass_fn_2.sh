@@ -4,10 +4,10 @@
 #SBATCH --job-name=calc_mass_fn_2
 #SBATCH -o logs/out_calc_mass_fn_2.log
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=2
 #SBATCH --time=2:00:00
-#SBATCH --mem=16G
+#SBATCH --mem=64G
 # email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s2222340@ed.ac.uk
