@@ -21,4 +21,4 @@ cd ${SLURM_SUBMIT_DIR}
 
 . ../activate_environment.sh
 
-python ../delta/plot_delta.py
+python ../plot_delta.py
