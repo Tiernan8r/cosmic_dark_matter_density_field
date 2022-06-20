@@ -18,6 +18,7 @@ NUM_SAMPLES_PER_SPHERE = 1000
 NUM_SPHERE_SIZES = 10
 NUM_HIST_BINS = 1000
 
+
 def main():
     pth = ROOT + SIM_FOLDER
     print("Reading data set in:", pth)
@@ -27,46 +28,49 @@ def main():
     simulation_name = sim_regex.match(pth).group(1)
 
     for rck in rockstars:
-        print("working on rockstar file:", rck)
-
-        ds = yt.load(rck)
-
-        try:
-            ad = ds.all_data()
-        except TypeError as te:
-            print("error reading all_data(), ignoring")
-            print(te)
-            continue
-
-        dist_units = ds.units.Mpc / ds.units.h
-
-        z = ds.current_redshift
-
-        print("redshift is:", z)
-
-        sim_size = (ds.domain_width[0]).to(dist_units)
-        print("simulation size is:", sim_size)
-
         radius = 50
-        print("sampling with radius:", radius)
+        z, masses = halo_work(rck, radius, simulation_name)
+        plot(z, radius, masses, sim_name=simulation_name)
 
-        coord_min = radius
-        coord_max = sim_size.value - radius
 
-        coords = rand_coords(
-            NUM_SAMPLES_PER_SPHERE, min=coord_min, max=coord_max) * dist_units
+def halo_work(rck: str, radius: float, simulation_name: str):
+    print("working on rockstar file:", rck)
 
-        ms = unyt.unyt_array(
-            [], ds.units.Msun / ds.units.h)
+    ds = yt.load(rck)
 
-        for c in coords:
-            idxs = filter_halos(ds, ad, c, radius)
+    try:
+        ad = ds.all_data()
+    except TypeError as te:
+        print("error reading all_data(), ignoring")
+        print(te)
+        return
 
-            masses = ad["halos", "particle_mass"][idxs]
+    dist_units = ds.units.Mpc / ds.units.h
 
-            ms = unyt.uconcatenate((ms, masses))
+    z = ds.current_redshift
 
-        plot(z, radius, sorted(ms), sim_name=simulation_name)
+    print("redshift is:", z)
+
+    sim_size = (ds.domain_width[0]).to(dist_units)
+    print("simulation size is:", sim_size)
+
+    coord_min = radius
+    coord_max = sim_size.value - radius
+
+    coords = rand_coords(
+        NUM_SAMPLES_PER_SPHERE, min=coord_min, max=coord_max) * dist_units
+
+    ms = unyt.unyt_array(
+        [], ds.units.Msun / ds.units.h)
+
+    for c in coords:
+        idxs = filter_halos(ds, ad, c, radius)
+
+        masses = ad["halos", "particle_mass"][idxs]
+
+        ms = unyt.uconcatenate((ms, masses))
+
+    return z, sorted(ms)
 
 
 def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
