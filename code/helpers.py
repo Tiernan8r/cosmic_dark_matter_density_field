@@ -32,9 +32,11 @@ GROUP_PATTERN = DATA + "groups_{0:0>3}/fof_subhalo_tab_{0:0>3}.0.hdf5"
 SNAPSHOT_PATTERN = DATA + "snapdir_{0:0>3}/snapshot_{0:0>3}.0.hdf5"
 ROCKSTAR_PATTERN = ROCKSTAR + "halos_{0:0>3}.0.bin"
 
-groups_regex = re.compile(".*fof_subhalo_tab_\d{3}.0.hdf5$")
+groups_regex = re.compile(".*fof_(subhalo_)?tab_\d{3}.0.hdf5$")
 rockstar_regex = re.compile(".*halos_\d{3}.0.bin$")
 snapshots_regex = re.compile(".*snapshot_\d{3}.0.hdf5$")
+
+rockstar_root_regex = re.compile(".*rockstar$")
 
 sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
 
@@ -48,7 +50,7 @@ def find_halos(data_dir: str) -> Tuple[List[str], List[str], List[str]]:
         for file in files:
             if groups_regex.match(file):
                 groups.append(root + "/" + file)
-            elif rockstar_regex.match(file):
+            elif rockstar_regex.match(file) and rockstar_root_regex.match(root):
                 rockstars.append(root + "/" + file)
             elif snapshots_regex.match(file):
                 snapshots.append(root + "/" + file)

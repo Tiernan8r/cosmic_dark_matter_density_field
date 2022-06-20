@@ -1,3 +1,4 @@
+import os
 import re
 from typing import Tuple
 
@@ -18,8 +19,8 @@ NUM_SAMPLES_PER_SPHERE = 1000
 NUM_SPHERE_SIZES = 10
 NUM_HIST_BINS = 1000
 
-PLOTS_FOLDER = "../plots/"
-PLOTS_FILENAME_PATTERN = PLOTS_FOLDER + "{0}/mass_function_r{1:.2f}-z{2:.2f}.png"
+PLOTS_FOLDER = "../plots/{0}/"
+PLOTS_FILENAME_PATTERN = PLOTS_FOLDER + "mass_function_r{1:.2f}-z{2:.2f}.png"
 
 def main():
     pth = ROOT + SIM_FOLDER
@@ -128,6 +129,12 @@ def plot(z, radius, masses, sim_name="default"):
     plt.title(f"Mass Function for {sim_name} @ z={z:.2f}")
     plt.xlabel("$\log{M_{vir}}$")
     plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
+
+    # Ensure the folders exist before attempting to save an image to it...
+    dir_name = PLOTS_FOLDER.format(sim_name)
+    if not os.path.isdir(dir_name):
+        os.makedirs(dir_name)
+
     plt.savefig(PLOTS_FILENAME_PATTERN.format(sim_name, radius, z))
     plt.cla()
 
