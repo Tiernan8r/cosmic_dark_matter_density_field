@@ -26,11 +26,12 @@ def main():
     _, rockstars, _ = helpers.find_halos(pth)
 
     simulation_name = sim_regex.match(pth).group(1)
+    sim_size = float(sim_regex.match(pth).group(3))
 
     for rck in rockstars:
-        radius = 50
-        z, masses = halo_work(rck, radius, simulation_name)
-        plot(z, radius, masses, sim_name=simulation_name)
+        for radius in calc_radii(sim_size, min=50):
+            z, masses = halo_work(rck, radius, simulation_name)
+            plot(z, radius, masses, sim_name=simulation_name)
 
 
 def halo_work(rck: str, radius: float, simulation_name: str):
@@ -71,6 +72,13 @@ def halo_work(rck: str, radius: float, simulation_name: str):
         ms = unyt.uconcatenate((ms, masses))
 
     return z, sorted(ms)
+
+
+def calc_radii(sim_size: float, min=0):
+    radii = np.linspace(start=min, stop=sim_size,
+                        num=NUM_SPHERE_SIZES)
+
+    return [float(r) for r in radii]
 
 
 def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
