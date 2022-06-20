@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
-#SBATCH --time=12:00:00
+#SBATCH --time=48:00:00
 #SBATCH --mem=64G
 # email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-type=ALL
