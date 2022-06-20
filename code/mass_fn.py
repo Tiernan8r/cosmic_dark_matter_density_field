@@ -19,7 +19,7 @@ NUM_SAMPLES_PER_SPHERE = 1000
 NUM_SPHERE_SIZES = 10
 NUM_HIST_BINS = 1000
 
-PLOTS_FOLDER = "../plots/{0}/"
+PLOTS_FOLDER = "../plots/mass_function/{0}/"
 PLOTS_FILENAME_PATTERN = PLOTS_FOLDER + "mass_function_r{1:.2f}-z{2:.2f}.png"
 
 def main():
