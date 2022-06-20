@@ -36,6 +36,9 @@ groups_regex = re.compile(".*fof_subhalo_tab_\d{3}.0.hdf5$")
 rockstar_regex = re.compile(".*halos_\d{3}.0.bin$")
 snapshots_regex = re.compile(".*snapshot_\d{3}.0.hdf5$")
 
+sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
+
+
 def find_halos(data_dir: str) -> Tuple[List[str], List[str], List[str]]:
     groups = []
     rockstars = []
@@ -51,19 +54,3 @@ def find_halos(data_dir: str) -> Tuple[List[str], List[str], List[str]]:
                 snapshots.append(root + "/" + file)
 
     return sorted(groups), sorted(rockstars), sorted(snapshots)
-
-
-def gen_paths(data_sets: List[str], pattern: str) -> List[str]:
-    paths = []
-    for ds in data_sets:
-        paths.append(ROOT + ds + pattern)
-    return paths
-
-
-groups = gen_paths(DATA_SETS, GROUP_PATTERN)
-snapshots = gen_paths(DATA_SETS, SNAPSHOT_PATTERN)
-rockstars = gen_paths(DATA_SETS, ROCKSTAR_PATTERN)
-
-test_groups = gen_paths(TEST_DATA_SETS, GROUP_PATTERN)
-test_snapshots = gen_paths(TEST_DATA_SETS, SNAPSHOT_PATTERN)
-test_rockstars = gen_paths(TEST_DATA_SETS, ROCKSTAR_PATTERN)
