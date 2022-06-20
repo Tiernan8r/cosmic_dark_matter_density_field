@@ -18,6 +18,8 @@ NUM_SAMPLES_PER_SPHERE = 1000
 NUM_SPHERE_SIZES = 10
 NUM_HIST_BINS = 1000
 
+PLOTS_FOLDER = "../plots/"
+PLOTS_FILENAME_PATTERN = PLOTS_FOLDER + "{0}/mass_function_r{1:.2f}-z{2:.2f}.png"
 
 def main():
     pth = ROOT + SIM_FOLDER
@@ -109,7 +111,7 @@ def filter_halos(ds, ad, centre: Tuple[float, float, float], radius: float):
     return idxs
 
 
-def plot(z, radius, masses, sim_name=""):
+def plot(z, radius, masses, sim_name="default"):
 
     print(f"RADIUS: {radius} @ z={z}")
 
@@ -126,8 +128,7 @@ def plot(z, radius, masses, sim_name=""):
     plt.title(f"Mass Function for {sim_name} @ z={z:.2f}")
     plt.xlabel("$\log{M_{vir}}$")
     plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
-    plt.savefig(
-        f"../plots/mass_function_{sim_name}-z{z:.2f}-r{radius}.png")
+    plt.savefig(PLOTS_FILENAME_PATTERN.format(sim_name, radius, z))
     plt.cla()
 
 
