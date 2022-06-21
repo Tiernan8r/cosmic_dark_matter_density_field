@@ -64,17 +64,16 @@ def halo_work(rck: str, radius: float, simulation_name: str):
     coords = rand_coords(
         NUM_SAMPLES_PER_SPHERE, min=coord_min, max=coord_max) * dist_units
 
-    ms = unyt.unyt_array(
+    masses = unyt.unyt_array(
         [], ds.units.Msun / ds.units.h)
 
     for c in coords:
-        idxs = filter_halos(ds, ad, c, radius)
+        sp = ds.sphere(c, radius)
+        mass = sp.quantities.total_mass()[1]
 
-        masses = ad["halos", "particle_mass"][idxs]
+        masses = unyt.uconcatenate((masses, mass))
 
-        ms = unyt.uconcatenate((ms, masses))
-
-    return z, sorted(ms)
+    return z, sorted(masses)
 
 
 def calc_radii(sim_size: float, min=0):
