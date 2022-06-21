@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH -p all
-#SBATCH --job-name=mass_function
-#SBATCH -o logs/mass_function.log
+#SBATCH --job-name=calculations
+#SBATCH -o logs/calculations.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
@@ -21,4 +21,4 @@ cd ${SLURM_SUBMIT_DIR}
 
 . activate_environment.sh
 
-srun -n ${ntasks} -c ${nthreads} python mass_function.py
+srun -n ${ntasks} -c ${nthreads} python calculations.py
