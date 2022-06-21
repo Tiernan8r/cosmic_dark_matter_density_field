@@ -131,21 +131,25 @@ def plot(z_arr: np.ndarray, delta_arr: np.ndarray):
 
     a_arr = 1 / (1+z_arr)
 
-    # plot the data
-    for i in range(len(c)):
-        plt.plot(a_arr, delta_arr.T[i], alpha=0.1)
+    try:
+        # plot the data
+        for i in range(len(c)):
+            plt.plot(a_arr, delta_arr.T[i], alpha=0.1)
 
-    plt.title("Overdensity evolution with cosmic scale factor")
-    plt.xlabel("Scale factor $a$")
-    plt.ylabel("Overdensity $\delta$")
+        plt.title("Overdensity evolution with cosmic scale factor")
+        plt.xlabel("Scale factor $a$")
+        plt.ylabel("Overdensity $\delta$")
 
-    dir_name = PLOTS_PATH.format(SIMULATION)
-    if not os.path.isdir(dir_name):
-        os.makedirs(dir_name)
-    
-    plt_f_name = PLOTS_PATH + PLOTS_FILENAME
-    plt.savefig(plt_f_name.format(SIMULATION))
+        dir_name = PLOTS_PATH.format(SIMULATION)
+        if not os.path.isdir(dir_name):
+            os.makedirs(dir_name)
+        
+        plt_f_name = PLOTS_PATH + PLOTS_FILENAME
+        plt.savefig(plt_f_name.format(SIMULATION))
 
+    except IndexError:
+        print("error making plot, skipping...")
+        return
 
 if __name__ == "__main__":
     main()
