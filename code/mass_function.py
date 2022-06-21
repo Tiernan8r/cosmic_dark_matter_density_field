@@ -100,14 +100,21 @@ def halo_work(rck: str, radius: float):
         print(f"Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
         try:
             sp = ds.sphere(c, R)
-            m = sp.quantities.total_mass()[1]
-            mass = m.to(ds.units.Msun / ds.units.h)
-
-            masses = unyt.uconcatenate((masses, [mass]))
         except Exception as e:
-            print("error reading mass of sphere sample...")
+            print("error creating sphere sample")
             print(e)
             continue
+
+        try:
+            m = sp.quantities.total_mass()[1]
+        except Exception as e:
+            print("error reading sphere total_mass()")
+            print(e)
+            continue
+
+        mass = m.to(ds.units.Msun / ds.units.h)
+
+        masses = unyt.uconcatenate((masses, [mass]))
 
     return z, sorted(masses)
 
