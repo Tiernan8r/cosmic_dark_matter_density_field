@@ -19,8 +19,13 @@ NUM_SAMPLES_PER_SPHERE = 10
 NUM_SPHERE_SIZES = 1
 NUM_HIST_BINS = 1000
 
-PLOTS_FOLDER = "../plots/mass_function/{0}/"
-PLOTS_FILENAME_PATTERN = PLOTS_FOLDER + "mass_function_r{1:.2f}-z{2:.2f}.png"
+MASS_FN_PLOTS_DIR = "../plots/mass_function/{0}/"
+MASS_FN_PLOTS_FNAME_PTRN = MASS_FN_PLOTS_DIR + \
+    "mass_function_r{1:.2f}-z{2:.2f}.png"
+
+OVERDENSITY_PLOTS_DIR = "../plots/deltas/{0}/"
+OVERDENSITY_PLOTS_FNAME_PTRN = OVERDENSITY_PLOTS_DIR + \
+    "overdensity_r{1:.2f}-z{z:.2f}.png"
 
 DESIRED_REDSHIFTS = [0, 1, 2, 6, 10]
 
@@ -42,14 +47,14 @@ def main():
         total_mass_function(rck, sim_size)
 
         for radius in calc_radii(sim_size, min=50):
-            z, masses = halo_work(rck, radius)
-            plot(z, radius, masses, sim_name=simulation_name)
+            z, masses, deltas = halo_work(rck, radius)
+            plot(z, radius, masses, deltas, sim_name=simulation_name)
 
 
 def total_mass_function(rck, sim_size):
     print("Calculating total mass function:")
+    ds = yt.load(rck)
     try:
-        ds = yt.load(rck)
         ad = ds.all_data()
     except TypeError as te:
         print("error reading all_data(), ignoring...")
@@ -67,8 +72,8 @@ def total_mass_function(rck, sim_size):
     hist = hist / V
 
     title = f"Total Mass Function for @ z={z:.2f}"
-    save_dir = PLOTS_FOLDER.format(SIM_NAME)
-    plot_name = (PLOTS_FOLDER +
+    save_dir = MASS_FN_PLOTS_DIR.format(SIM_NAME)
+    plot_name = (MASS_FN_PLOTS_DIR +
                  "total_mass_function_z{1:.2f}.png").format(SIM_FOLDER, z)
 
     plot_mass_function(hist, bins, title, save_dir, plot_name)
@@ -81,11 +86,22 @@ def halo_work(rck: str, radius: float):
     R = radius * dist_units
 
     z = ds.current_redshift
+    a = 1/(1+z)
 
     print("redshift is:", z)
 
+    V = 4/3 * np.pi * (a*R)**3
+
     sim_size = (ds.domain_width[0]).to(dist_units)
     print("simulation size is:", sim_size)
+
+    # Get the average density over the region
+    rg = ds.r[:]
+    try:
+        rho_bar = rg.quantities.total_mass()[1] / (sim_size*a)**3
+    except unyt.exceptions.IterableUnitCoercionError as e:
+        print("Error reading regions quantities from database, ignoring...")
+        print(e)
 
     coord_min = radius
     coord_max = sim_size.value - radius
@@ -95,6 +111,7 @@ def halo_work(rck: str, radius: float):
 
     masses = unyt.unyt_array(
         [], ds.units.Msun / ds.units.h)
+    deltas = []
 
     for c in coords:
         print(f"Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
@@ -112,11 +129,15 @@ def halo_work(rck: str, radius: float):
             print(e)
             continue
 
+        rho = m / V
+        delta = (rho - rho_bar) / rho_bar
+        deltas.append(delta)
+
         mass = m.to(ds.units.Msun / ds.units.h)
 
         masses = unyt.uconcatenate((masses, [mass]))
 
-    return z, sorted(masses)
+    return z, sorted(masses), sorted(deltas)
 
 
 def calc_radii(sim_size: float, min=0):
@@ -133,19 +154,24 @@ def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
     return (max - min) * coords + min
 
 
-def plot(z, radius, masses, sim_name="default"):
-    hist, bin_edges = np.histogram(masses, bins=NUM_HIST_BINS)
+def plot(z, radius, masses, deltas, sim_name="default"):
+    mass_hist, mass_bin_edges = np.histogram(masses, bins=NUM_HIST_BINS)
 
     a = 1 / (1+z)
     V = 4/3 * np.pi * (a*radius)**3
 
-    hist = hist / V
+    mass_hist = mass_hist / V
 
     title = f"Mass Function for {sim_name} @ z={z:.2f}"
-    save_dir = PLOTS_FOLDER.format(sim_name)
-    plot_name = PLOTS_FILENAME_PATTERN.format(sim_name, radius, z)
+    save_dir = MASS_FN_PLOTS_DIR.format(sim_name)
+    plot_name = MASS_FN_PLOTS_FNAME_PTRN.format(sim_name, radius, z)
 
-    plot_mass_function(hist, bin_edges, title, save_dir, plot_name)
+    plot_mass_function(mass_hist, mass_bin_edges, title, save_dir, plot_name)
+
+    title = f"Overdensity for {sim_name} @ z={z:.2f}"
+    save_dir = OVERDENSITY_PLOTS_DIR.format(sim_name)
+    plot_name = OVERDENSITY_PLOTS_FNAME_PTRN.format(sim_name, radius, z)
+    plot_delta(deltas, sim_name=sim_name)
 
 
 def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
@@ -157,6 +183,20 @@ def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
     plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
 
     # Ensure the folders exist before attempting to save an image to it...
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
+
+    plt.savefig(plot_f_name)
+    plt.cla()
+
+
+def plot_delta(deltas, title, save_dir, plot_f_name):
+    plt.hist(deltas, bins=NUM_HIST_BINS)
+
+    plt.title(title)
+    plt.xlabel("Overdensity value")
+    plt.ylabel("Overdensity $\delta$")
+
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
