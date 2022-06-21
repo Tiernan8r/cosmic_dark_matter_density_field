@@ -113,6 +113,10 @@ def wrangle(storage: dict) -> Tuple[np.ndarray, np.ndarray]:
 
 def save(z_arr: np.array, delta_arr: np.array):
     print("Saving data to file...")
+    
+    if not os.path.isdir("../data"):
+        os.makedirs("../data")
+
     # write the data
     with open("../data/z.npy", "wb") as f:
         np.save(f, z_arr)
