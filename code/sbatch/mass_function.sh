@@ -5,9 +5,9 @@
 #SBATCH -o logs/mass_function.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=16
 #SBATCH --time=72:00:00
-#SBATCH --mem=128G
+#SBATCH --mem=32G
 # email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s2222340@ed.ac.uk
