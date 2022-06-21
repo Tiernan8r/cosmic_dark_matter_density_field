@@ -32,7 +32,7 @@ def calc() -> Tuple[np.ndarray, np.ndarray]:
     random_centres = np.loadtxt("examples/random_locs.txt", max_rows=500)
     print("loaded", len(random_centres), "random coordinates from the file")
 
-    _, _, snapshots = helpers.find_halos(SIMULATION_PATH)
+    snapshots, _, _ = helpers.find_data_files(SIMULATION_PATH)
 
     storage = {}
 

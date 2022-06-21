@@ -10,39 +10,75 @@ import yt.extensions.legacy
 import helpers
 
 ROOT = "/disk12/legacy/"
-SIM_FOLDER = "GVD_C700_l1600n2048_SLEGAC/"
+SIM_NAME = "GVD_C700_l1600n2048_SLEGAC"
+SIM_FOLDER = f"{SIM_NAME}/"
 
 sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
 
-NUM_SAMPLES_PER_SPHERE = 1000
-NUM_SPHERE_SIZES = 10
+NUM_SAMPLES_PER_SPHERE = 10
+NUM_SPHERE_SIZES = 1
 NUM_HIST_BINS = 1000
 
 PLOTS_FOLDER = "../plots/mass_function/{0}/"
 PLOTS_FILENAME_PATTERN = PLOTS_FOLDER + "mass_function_r{1:.2f}-z{2:.2f}.png"
+
+DESIRED_REDSHIFTS = [0, 1, 2, 6, 10]
 
 
 def main():
     pth = ROOT + SIM_FOLDER
     print("Reading data set in:", pth)
     # Find halos for data set
-    _, rockstars, _ = helpers.find_halos(pth)
+    print("Filtering halo files to look for redshifts:", DESIRED_REDSHIFTS)
+    _, _, rockstars = helpers.filter_data_files(SIM_NAME, DESIRED_REDSHIFTS)
+    print("Found", len(rockstars), "rockstar files that match these redshifts")
 
     simulation_name = sim_regex.match(pth).group(1)
     sim_size = float(sim_regex.match(pth).group(3))
 
     for rck in rockstars:
+        print("Working on rockstar file:", rck)
+
+        total_mass_function(rck, sim_size)
+
         for radius in calc_radii(sim_size, min=50):
             z, masses = halo_work(rck, radius)
             plot(z, radius, masses, sim_name=simulation_name)
 
 
-def halo_work(rck: str, radius: float):
-    print("working on rockstar file:", rck)
+def total_mass_function(rck, sim_size):
+    print("Calculating total mass function:")
+    try:
+        ds = yt.load(rck)
+        ad = ds.all_data()
+    except TypeError as te:
+        print("error reading all_data(), ignoring...")
+        print(te)
+        return
 
+    masses = ad["halos", "particle_mass"]
+
+    hist, bins = np.histogram(masses)
+
+    z = ds.current_redshift
+    a = 1 / (1+z)
+
+    V = (sim_size * a)**3
+    hist = hist / V
+
+    title = f"Total Mass Function for @ z={z:.2f}"
+    save_dir = PLOTS_FOLDER.format(SIM_FOLDER)
+    plot_name = (PLOTS_FOLDER +
+                 "total_mass_function_z{1:2f}.png").format(SIM_FOLDER, z)
+
+    plot_mass_function(hist, bins, title, save_dir, plot_name)
+
+
+def halo_work(rck: str, radius: float):
     ds = yt.load(rck)
 
     dist_units = ds.units.Mpc / ds.units.h
+    R = radius * dist_units
 
     z = ds.current_redshift
 
@@ -61,11 +97,17 @@ def halo_work(rck: str, radius: float):
         [], ds.units.Msun / ds.units.h)
 
     for c in coords:
-        sp = ds.sphere(c, radius)
-        m = sp.quantities.total_mass()[1]
-        mass = m.to(ds.units.Msun / ds.units.h)
+        print(f"Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
+        try:
+            sp = ds.sphere(c, R)
+            m = sp.quantities.total_mass()[1]
+            mass = m.to(ds.units.Msun / ds.units.h)
 
-        masses = unyt.uconcatenate((masses, mass))
+            masses = unyt.uconcatenate((masses, [mass]))
+        except Exception as e:
+            print("error reading mass of sphere sample...")
+            print(e)
+            continue
 
     return z, sorted(masses)
 
@@ -85,9 +127,6 @@ def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
 
 
 def plot(z, radius, masses, sim_name="default"):
-
-    print(f"RADIUS: {radius} @ z={z}")
-
     hist, bin_edges = np.histogram(masses, bins=NUM_HIST_BINS)
 
     a = 1 / (1+z)
@@ -95,19 +134,26 @@ def plot(z, radius, masses, sim_name="default"):
 
     hist = hist / V
 
-    plt.plot(np.log(bin_edges[:-1]), hist)
+    title = f"Mass Function for {sim_name} @ z={z:.2f}"
+    save_dir = PLOTS_FOLDER.format(sim_name)
+    plot_name = PLOTS_FILENAME_PATTERN.format(sim_name, radius, z)
+
+    plot_mass_function(hist, bin_edges, title, save_dir, plot_name)
+
+
+def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
+    plt.plot(np.log(bin_edges[:-1]), np.log(hist))
     plt.gca().set_xscale("log")
 
-    plt.title(f"Mass Function for {sim_name} @ z={z:.2f}")
+    plt.title(title)
     plt.xlabel("$\log{M_{vir}}$")
     plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
 
     # Ensure the folders exist before attempting to save an image to it...
-    dir_name = PLOTS_FOLDER.format(sim_name)
-    if not os.path.isdir(dir_name):
-        os.makedirs(dir_name)
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
 
-    plt.savefig(PLOTS_FILENAME_PATTERN.format(sim_name, radius, z))
+    plt.savefig(plot_f_name)
     plt.cla()
 
 
