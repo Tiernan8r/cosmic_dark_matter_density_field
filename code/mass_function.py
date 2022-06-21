@@ -67,9 +67,9 @@ def total_mass_function(rck, sim_size):
     hist = hist / V
 
     title = f"Total Mass Function for @ z={z:.2f}"
-    save_dir = PLOTS_FOLDER.format(SIM_FOLDER)
+    save_dir = PLOTS_FOLDER.format(SIM_NAME)
     plot_name = (PLOTS_FOLDER +
-                 "total_mass_function_z{1:2f}.png").format(SIM_FOLDER, z)
+                 "total_mass_function_z{1:.2f}.png").format(SIM_FOLDER, z)
 
     plot_mass_function(hist, bins, title, save_dir, plot_name)
 
