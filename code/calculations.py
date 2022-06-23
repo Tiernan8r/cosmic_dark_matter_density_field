@@ -31,6 +31,9 @@ def main():
     setup_logging()
     logger = logging.getLogger(main.__name__)
 
+    yt.enable_parallelism()
+    logger.info("Parallelism enabled...")
+
     pth = ROOT + SIM_FOLDER
     logger.debug(f"Reading data set in '{pth}'")
 
@@ -44,7 +47,7 @@ def main():
     simulation_name = sim_regex.match(pth).group(1)
     sim_size = float(sim_regex.match(pth).group(3))
 
-    for rck in rockstars:
+    for _, rck in yt.parallel_objects(rockstars):
         logger.debug(f"Working on rockstar file '{rck}'")
 
         total_mass_function(rck, sim_size)
@@ -59,6 +62,9 @@ def main():
 
 
 def total_mass_function(rck, sim_size):
+    if not yt.is_root():
+        return
+
     logger = logging.getLogger(total_mass_function.__name__)
 
     logger.debug("Calculating total mass function:")
@@ -132,7 +138,7 @@ def halo_work(rck: str, radius: float):
         logger.error(e)
 
     # Iterate over all the randomly sampled coordinates
-    for c in coords:
+    for c in yt.parallel_objects(coords):
         logger.debug(
             f"Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
         # Try to sample a sphere of the given radius at this coord
@@ -177,6 +183,9 @@ def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
 
 
 def plot(z, radius, masses, deltas, sim_name="default"):
+    if not yt.is_root():
+        return
+
     logger = logging.getLogger(plot.__name__)
 
     mass_hist, mass_bin_edges = np.histogram(masses, bins=NUM_HIST_BINS)
@@ -203,6 +212,9 @@ def plot(z, radius, masses, deltas, sim_name="default"):
 
 
 def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
+    if not yt.is_root():
+        return
+
     x = np.log(bin_edges[:-1])
     y = np.log(hist)
 
@@ -222,6 +234,9 @@ def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
 
 
 def plot_delta(deltas, title, save_dir, plot_f_name):
+    if not yt.is_root():
+        return
+
     plt.hist(deltas, bins=NUM_OVERDENSITY_HIST_BINS)
 
     plt.title(title)
