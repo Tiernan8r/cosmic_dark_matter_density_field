@@ -11,30 +11,12 @@ import yt
 import yt.extensions.legacy
 
 import helpers
-
-LOG_FILENAME = "logging.yaml"
-
-ROOT = "/disk12/legacy/"
-SIM_NAME = "GVD_C700_l1600n2048_SLEGAC"
-SIM_FOLDER = f"{SIM_NAME}/"
-
-sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
-
-NUM_SPHERE_SAMPLES = 1000
-NUM_HIST_BINS = 1000
-NUM_OVERDENSITY_HIST_BINS = 1000
-
-MASS_FN_PLOTS_DIR = "../plots/mass_function/{0}/"
-MASS_FN_PLOTS_FNAME_PTRN = MASS_FN_PLOTS_DIR + \
-    "mass_function_r{1:.2f}-z{2:.2f}.png"
-
-OVERDENSITY_PLOTS_DIR = "../plots/deltas/{0}/"
-OVERDENSITY_PLOTS_FNAME_PTRN = OVERDENSITY_PLOTS_DIR + \
-    "overdensity_r{1:.2f}-z{2:.2f}.png"
-
-DESIRED_REDSHIFTS = [0, 1, 2, 6, 10]
-DESIRED_RADII = [50]
-# DESIRED_RADII = [10, 20, 50, 100]
+from constants import (DESIRED_RADII, DESIRED_REDSHIFTS, LOG_FILENAME,
+                       MASS_FN_PLOTS_DIR, MASS_FN_PLOTS_FNAME_PTRN,
+                       NUM_HIST_BINS, NUM_OVERDENSITY_HIST_BINS,
+                       NUM_SPHERE_SAMPLES, OVERDENSITY_PLOTS_DIR,
+                       OVERDENSITY_PLOTS_FNAME_PTRN, ROOT, SIM_FOLDER,
+                       SIM_NAME, sim_regex)
 
 
 def setup_logging() -> logging.Logger:
