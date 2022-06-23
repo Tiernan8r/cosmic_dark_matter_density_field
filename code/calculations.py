@@ -15,8 +15,9 @@ from constants import (DESIRED_RADII, DESIRED_REDSHIFTS, LOG_FILENAME,
                        NUM_HIST_BINS, NUM_OVERDENSITY_HIST_BINS,
                        NUM_SPHERE_SAMPLES, OVERDENSITY_PLOTS_DIR,
                        OVERDENSITY_PLOTS_FNAME_PTRN, ROOT, SIM_FOLDER,
-                       SIM_NAME, sim_regex)
+                       SIM_NAME)
 
+# TODO: cache calced results...
 
 def setup_logging() -> logging.Logger:
     logging_path = os.path.abspath(LOG_FILENAME)
