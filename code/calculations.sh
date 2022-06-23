@@ -2,11 +2,11 @@
 
 #SBATCH -p all
 #SBATCH --job-name=calculations
-#SBATCH -o logs/calculations.log
+#SBATCH -o calculations.log
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --time=72:00:00
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=2
+#SBATCH --time=24:00:00
 #SBATCH --mem=8G
 # email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-type=ALL
@@ -14,7 +14,7 @@
 
 #################
 
-ntasks=8
+ntasks=4
 nthreads=1
 
 cd ${SLURM_SUBMIT_DIR}

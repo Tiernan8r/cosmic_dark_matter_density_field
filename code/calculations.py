@@ -1,12 +1,11 @@
+import json
 import logging
 import logging.config
 import os
-import re
 
 import matplotlib.pyplot as plt
 import numpy as np
 import unyt
-import yaml
 import yt
 import yt.extensions.legacy
 
@@ -22,52 +21,52 @@ from constants import (DESIRED_RADII, DESIRED_REDSHIFTS, LOG_FILENAME,
 def setup_logging() -> logging.Logger:
     logging_path = os.path.abspath(LOG_FILENAME)
     with open(logging_path) as f:
-        dict_config = yaml.load(f, Loader=yaml.SafeLoader)
+        dict_config = json.load(f)
 
     logging.config.dictConfig(dict_config)
 
 
 def main():
-    setup_logging()
-    logger = logging.getLogger(main.__name__)
+    if yt.is_root():
 
-    yt.enable_parallelism()
-    logger.info("Parallelism enabled...")
+        setup_logging()
+        logger = logging.getLogger(main.__name__)
 
-    pth = ROOT + SIM_FOLDER
-    logger.debug(f"Reading data set in '{pth}'")
+        yt.enable_parallelism()
+        logger.info("Parallelism enabled...")
 
-    # Find halos for data set
-    logger.debug(
-        f"Filtering halo files to look for redshifts: {DESIRED_REDSHIFTS}")
-    _, _, rockstars = helpers.filter_data_files(SIM_NAME, DESIRED_REDSHIFTS)
-    logger.debug(
-        f"Found {len(rockstars)} rockstar files that match these redshifts")
+        pth = ROOT + SIM_FOLDER
+        logger.debug(f"Reading data set in '{pth}'")
 
-    simulation_name = sim_regex.match(pth).group(1)
-    sim_size = float(sim_regex.match(pth).group(3))
+        # Find halos for data set
+        logger.debug(
+            f"Filtering halo files to look for redshifts: {DESIRED_REDSHIFTS}")
+        _, _, rockstars = helpers.filter_data_files(SIM_NAME, DESIRED_REDSHIFTS)
+        logger.debug(
+            f"Found {len(rockstars)} rockstar files that match these redshifts")
 
-    for _, rck in yt.parallel_objects(rockstars):
-        logger.debug(f"Working on rockstar file '{rck}'")
+        for rck in rockstars:
+            logger.debug(f"Working on rockstar file '{rck}'")
 
-        total_mass_function(rck, sim_size)
+            total_mass_function(rck)
 
-        for radius in DESIRED_RADII:
-            z, masses, deltas = halo_work(rck, radius)
+            for radius in DESIRED_RADII:
+                z, masses, deltas = halo_work(rck, radius)
 
-            logger.debug("Generating plot for this data...")
-            plot(z, radius, masses, deltas, sim_name=simulation_name)
+                logger.debug("Generating plot for this data...")
+                plot(z, radius, masses, deltas, sim_name=SIM_NAME)
 
-    logger.info("DONE calculations\n")
+        logger.info("DONE calculations\n")
 
 
-def total_mass_function(rck, sim_size):
+def total_mass_function(rck):
     if not yt.is_root():
         return
 
     logger = logging.getLogger(total_mass_function.__name__)
 
     logger.debug("Calculating total mass function:")
+
     ds = yt.load(rck)
     try:
         ad = ds.all_data()
@@ -76,14 +75,14 @@ def total_mass_function(rck, sim_size):
         logger.error(te)
         return
 
-    masses = ad["halos", "particle_mass"]
+    masses = ad["halos", "particle_mass"].to(ds.units.Msun / ds.units.h)
 
     hist, bins = np.histogram(masses)
 
     z = ds.current_redshift
     a = 1 / (1+z)
 
-    V = (sim_size * a)**3
+    V = (ds.domain_width[0] * a)**3
     hist = hist / V
 
     title = f"Total Mass Function for @ z={z:.2f}"
@@ -132,10 +131,10 @@ def halo_work(rck: str, radius: float):
     # Get the average density over the region
     try:
         rho_bar = ad.quantities.total_mass()[1] / (sim_size*a)**3
-    except unyt.exceptions.IterableUnitCoercionError as e:
+    except unyt.exceptions.IterableUnitCoercionError as te:
         logger.error(
             "Error reading regions quantities from database, ignoring...")
-        logger.error(e)
+        logger.error(te)
 
     # Iterate over all the randomly sampled coordinates
     for c in yt.parallel_objects(coords):
@@ -144,17 +143,17 @@ def halo_work(rck: str, radius: float):
         # Try to sample a sphere of the given radius at this coord
         try:
             sp = ds.sphere(c, R)
-        except Exception as e:
+        except TypeError as te:
             logger.error("error creating sphere sample")
-            logger.error(e)
+            logger.error(te)
             continue
 
         # Try to read the masses of halos in this sphere
         try:
             m = sp["halos", "particle_mass"]
-        except Exception as e:
+        except TypeError as te:
             logger.error("error reading sphere total_mass()")
-            logger.error(e)
+            logger.error(te)
             continue
 
         logger.debug(f"Found {len(m)} halos in this sphere sample")
@@ -166,9 +165,9 @@ def halo_work(rck: str, radius: float):
             rho = sp.quantities.total_mass()[1] / V
             delta = (rho - rho_bar) / rho_bar
             deltas.append(delta)
-        except unyt.exceptions.IterableUnitCoercionError as e:
+        except unyt.exceptions.IterableUnitCoercionError as te:
             logger.error("Error reading sphere quantities, ignoring...")
-            logger.error(e)
+            logger.error(te)
 
     logger.info(f"DONE reading {NUM_SPHERE_SAMPLES} sphere samples\n")
 
