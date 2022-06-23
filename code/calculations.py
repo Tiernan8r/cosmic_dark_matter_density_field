@@ -15,9 +15,9 @@ SIM_FOLDER = f"{SIM_NAME}/"
 
 sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
 
-NUM_SAMPLES_PER_SPHERE = 10
-NUM_SPHERE_SIZES = 1
+NUM_SPHERE_SAMPLES = 1000
 NUM_HIST_BINS = 1000
+NUM_OVERDENSITY_HIST_BINS = 1000
 
 MASS_FN_PLOTS_DIR = "../plots/mass_function/{0}/"
 MASS_FN_PLOTS_FNAME_PTRN = MASS_FN_PLOTS_DIR + \
@@ -25,9 +25,11 @@ MASS_FN_PLOTS_FNAME_PTRN = MASS_FN_PLOTS_DIR + \
 
 OVERDENSITY_PLOTS_DIR = "../plots/deltas/{0}/"
 OVERDENSITY_PLOTS_FNAME_PTRN = OVERDENSITY_PLOTS_DIR + \
-    "overdensity_r{1:.2f}-z{z:.2f}.png"
+    "overdensity_r{1:.2f}-z{2:.2f}.png"
 
 DESIRED_REDSHIFTS = [0, 1, 2, 6, 10]
+DESIRED_RADII = [50]
+# DESIRED_RADII = [10, 20, 50, 100]
 
 
 def main():
@@ -46,9 +48,13 @@ def main():
 
         total_mass_function(rck, sim_size)
 
-        for radius in calc_radii(sim_size, min=50):
+        for radius in DESIRED_RADII:
             z, masses, deltas = halo_work(rck, radius)
+
+            print("Generating plot for this data...")
             plot(z, radius, masses, deltas, sim_name=simulation_name)
+
+    print("DONE calculations\n")
 
 
 def total_mass_function(rck, sim_size):
@@ -95,26 +101,34 @@ def halo_work(rck: str, radius: float):
     sim_size = (ds.domain_width[0]).to(dist_units)
     print("simulation size is:", sim_size)
 
-    # Get the average density over the region
-    rg = ds.r[:]
-    try:
-        rho_bar = rg.quantities.total_mass()[1] / (sim_size*a)**3
-    except unyt.exceptions.IterableUnitCoercionError as e:
-        print("Error reading regions quantities from database, ignoring...")
-        print(e)
-
     coord_min = radius
     coord_max = sim_size.value - radius
 
     coords = rand_coords(
-        NUM_SAMPLES_PER_SPHERE, min=coord_min, max=coord_max) * dist_units
+        NUM_SPHERE_SAMPLES, min=coord_min, max=coord_max) * dist_units
 
-    masses = unyt.unyt_array(
-        [], ds.units.Msun / ds.units.h)
+    masses = unyt.unyt_array([], ds.units.Msun/ds.units.h)
     deltas = []
 
+    # Try to get the entire dataset region
+    try:
+        ad = ds.all_data()
+    except TypeError as te:
+        print("error getting all dataset region")
+        print(te)
+        return z, unyt.unyt_array(masses), unyt.unyt_array(deltas)
+
+    # Get the average density over the region
+    try:
+        rho_bar = ad.quantities.total_mass()[1] / (sim_size*a)**3
+    except unyt.exceptions.IterableUnitCoercionError as e:
+        print("Error reading regions quantities from database, ignoring...")
+        print(e)
+
+    # Iterate over all the randomly sampled coordinates
     for c in coords:
         print(f"Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
+        # Try to sample a sphere of the given radius at this coord
         try:
             sp = ds.sphere(c, R)
         except Exception as e:
@@ -122,29 +136,30 @@ def halo_work(rck: str, radius: float):
             print(e)
             continue
 
+        # Try to read the masses of halos in this sphere
         try:
-            m = sp.quantities.total_mass()[1]
+            m = sp["halos", "particle_mass"]
         except Exception as e:
             print("error reading sphere total_mass()")
             print(e)
             continue
 
-        rho = m / V
-        delta = (rho - rho_bar) / rho_bar
-        deltas.append(delta)
+        print(f"Found {len(m)} halos in this sphere sample")
 
-        mass = m.to(ds.units.Msun / ds.units.h)
+        masses = unyt.uconcatenate((masses, m))
 
-        masses = unyt.uconcatenate((masses, [mass]))
+        # Try to calculate the overdensity of the sphere
+        try:
+            rho = sp.quantities.total_mass()[1] / V
+            delta = (rho - rho_bar) / rho_bar
+            deltas.append(delta)
+        except unyt.exceptions.IterableUnitCoercionError as e:
+            print("Error reading sphere quantities, ignoring...")
+            print(e)
 
-    return z, sorted(masses), sorted(deltas)
+    print(f"DONE reading {NUM_SPHERE_SAMPLES} sphere samples\n")
 
-
-def calc_radii(sim_size: float, min=0):
-    radii = np.linspace(start=min, stop=sim_size,
-                        num=NUM_SPHERE_SIZES)
-
-    return [float(r) for r in radii]
+    return z, masses, unyt.unyt_array(deltas)
 
 
 def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
@@ -162,25 +177,32 @@ def plot(z, radius, masses, deltas, sim_name="default"):
 
     mass_hist = mass_hist / V
 
+    print(f"Plotting mass function at z={z:.2f}...")
+
     title = f"Mass Function for {sim_name} @ z={z:.2f}"
     save_dir = MASS_FN_PLOTS_DIR.format(sim_name)
     plot_name = MASS_FN_PLOTS_FNAME_PTRN.format(sim_name, radius, z)
 
     plot_mass_function(mass_hist, mass_bin_edges, title, save_dir, plot_name)
 
+    print(f"Plotting overdensities at z={z:.2f}...")
+
     title = f"Overdensity for {sim_name} @ z={z:.2f}"
     save_dir = OVERDENSITY_PLOTS_DIR.format(sim_name)
     plot_name = OVERDENSITY_PLOTS_FNAME_PTRN.format(sim_name, radius, z)
-    plot_delta(deltas, sim_name=sim_name)
+    plot_delta(deltas, title, save_dir, plot_name)
 
 
 def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
-    plt.plot(np.log(bin_edges[:-1]), np.log(hist))
+    x = np.log(bin_edges[:-1])
+    y = np.log(hist)
+
+    plt.plot(x, y)
     plt.gca().set_xscale("log")
 
     plt.title(title)
     plt.xlabel("$\log{M_{vir}}$")
-    plt.ylabel("$\phi=\\frac{d n}{d \log{M_{vir}}}$")
+    plt.ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
 
     # Ensure the folders exist before attempting to save an image to it...
     if not os.path.isdir(save_dir):
@@ -191,7 +213,7 @@ def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
 
 
 def plot_delta(deltas, title, save_dir, plot_f_name):
-    plt.hist(deltas, bins=NUM_HIST_BINS)
+    plt.hist(deltas, bins=NUM_OVERDENSITY_HIST_BINS)
 
     plt.title(title)
     plt.xlabel("Overdensity value")

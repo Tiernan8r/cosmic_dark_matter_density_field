@@ -1,7 +1,11 @@
+import functools
 import math
 import os
+import pickle
 import re
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
+
+PATH_TO_CACHE = "../data/helpers.pickle"
 
 ROOT = "/disk12/legacy/"
 
@@ -13,13 +17,11 @@ DATA_SETS = [
     "GVD_C900_l100n2048_SLEGAC/",
     "GVD_C900_l1600n2048_SLEGAC/",
 ]
-
 TEST_DATA_SETS = [
     "GVD_C700_l100n256_SLEGAC/",
     "GVD_C700_l1600n256_SLEGAC/",
     "GVD_C700_l1600n64_SLEGAC/",
 ]
-
 ALL_DATA_SETS = sorted(DATA_SETS + TEST_DATA_SETS)
 
 PATHS = [ROOT + ds for ds in DATA_SETS]
@@ -42,6 +44,24 @@ rockstar_root_regex = re.compile(".*rockstar/$")
 sim_regex = re.compile("^(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC)$")
 
 
+@functools.lru_cache(maxsize=1)
+def _get_cache() -> Dict[str, Any]:
+    if os.path.exists(PATH_TO_CACHE):
+        with open(PATH_TO_CACHE, "rb") as f:
+            return pickle.load(f)
+    else:
+        return {}
+
+
+GLOBAL_CACHE = _get_cache()
+
+
+def _save_cache():
+    global GLOBAL_CACHE
+    with open(PATH_TO_CACHE, "wb") as f:
+        pickle.dump(GLOBAL_CACHE, f)
+
+
 def _find_directories(sim_name: str) -> Tuple[str, str, str]:
     if not sim_regex.match(sim_name):
         return "/tmp", "/tmp", "/tmp"
@@ -54,9 +74,6 @@ def _find_directories(sim_name: str) -> Tuple[str, str, str]:
 
 
 def find_data_files(sim_name: str) -> Tuple[List[str], List[str], List[str]]:
-
-    snap, group, rock = _find_directories(sim_name)
-
     def find(dirname: str, file_reg: re.Pattern, root_reg: re.Pattern = None):
         l = []
 
@@ -70,11 +87,30 @@ def find_data_files(sim_name: str) -> Tuple[List[str], List[str], List[str]]:
 
         return l
 
-    groups = find(group, groups_regex)
-    rockstars = find(rock, rockstar_regex, rockstar_root_regex)
-    snapshots = find(snap, snapshots_regex)
+    global GLOBAL_CACHE
 
-    return sorted(snapshots), sorted(groups), sorted(rockstars),
+    if sim_name not in GLOBAL_CACHE:
+        GLOBAL_CACHE[sim_name] = {}
+
+    if "dirs" not in GLOBAL_CACHE[sim_name]:
+
+        snap, group, rock = _find_directories(sim_name)
+
+        groups = find(group, groups_regex)
+        rockstars = find(rock, rockstar_regex, rockstar_root_regex)
+        snapshots = find(snap, snapshots_regex)
+
+        dirs = {
+            "snapshots": sorted(snapshots),
+            "groups": sorted(groups),
+            "rockstars": sorted(rockstars),
+        }
+
+        GLOBAL_CACHE[sim_name]["dirs"] = dirs
+        _save_cache()
+
+    dirs = GLOBAL_CACHE[sim_name]["dirs"]
+    return dirs["snapshots"], dirs["groups"], dirs["rockstars"]
 
 
 rockstar_ascii_reg = re.compile("^(halos_(\d+).0).ascii$")
@@ -82,22 +118,31 @@ rockstar_a_factor = re.compile("^#a = (.*)$")
 
 
 def determine_redshifts(sim_name: str) -> Dict[float, str]:
-    _, _, rock = _find_directories(sim_name)
+    global GLOBAL_CACHE
 
-    map = {}
+    if sim_name not in GLOBAL_CACHE:
+        GLOBAL_CACHE[sim_name] = {}
+    if "redshifts" not in GLOBAL_CACHE[sim_name]:
 
-    for dirname, subdirs, files in os.walk(rock):
-        for file in files:
-            if rockstar_ascii_reg.match(file):
-                with open(dirname + file) as f:
-                    # Read the second line in the vals file, which says the expansion factor
-                    a = f.readlines()[1]
-                    a_val = float(rockstar_a_factor.match(a).group(1))
-                    # convert from comoving to redshift
-                    z = (1 / a_val) - 1
-                    map[z] = rockstar_ascii_reg.match(file).group(2)
+        _, _, rock = _find_directories(sim_name)
 
-    return map
+        map = {}
+
+        for dirname, subdirs, files in os.walk(rock):
+            for file in files:
+                if rockstar_ascii_reg.match(file):
+                    with open(dirname + file) as f:
+                        # Read the second line in the vals file, which says the expansion factor
+                        a = f.readlines()[1]
+                        a_val = float(rockstar_a_factor.match(a).group(1))
+                        # convert from comoving to redshift
+                        z = (1 / a_val) - 1
+                        map[z] = rockstar_ascii_reg.match(file).group(2)
+
+        GLOBAL_CACHE[sim_name]["redshifts"] = map
+        _save_cache()
+
+    return GLOBAL_CACHE[sim_name]["redshifts"]
 
 
 def filter_redshifts(sim_name: str, desired: List[float], tolerance=0.02) -> Dict[float, str]:
@@ -113,6 +158,7 @@ def filter_redshifts(sim_name: str, desired: List[float], tolerance=0.02) -> Dic
 
 
 def filter_data_files(sim_name: str, desired: List[float], tolerance=0.02) -> Tuple[List[str], List[str], List[str]]:
+    # TODO: Optimise
     redshifts = filter_redshifts(sim_name, desired, tolerance)
     snaps, groups, rocks = find_data_files(sim_name)
 
