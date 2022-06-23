@@ -19,6 +19,7 @@ from constants import (DESIRED_RADII, DESIRED_REDSHIFTS, LOG_FILENAME,
 
 # TODO: cache calced results...
 
+
 def setup_logging() -> logging.Logger:
     logging_path = os.path.abspath(LOG_FILENAME)
     with open(logging_path) as f:
@@ -42,7 +43,8 @@ def main():
         # Find halos for data set
         logger.debug(
             f"Filtering halo files to look for redshifts: {DESIRED_REDSHIFTS}")
-        _, _, rockstars = helpers.filter_data_files(SIM_NAME, DESIRED_REDSHIFTS)
+        _, _, rockstars = helpers.filter_data_files(
+            SIM_NAME, DESIRED_REDSHIFTS)
         logger.debug(
             f"Found {len(rockstars)} rockstar files that match these redshifts")
 
