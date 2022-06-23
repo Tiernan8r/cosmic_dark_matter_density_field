@@ -6,9 +6,9 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import unyt
+import yaml
 import yt
 import yt.extensions.legacy
-import yaml
 
 import helpers
 
