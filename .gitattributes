@@ -1,1 +1,10 @@
+papers/Bond[[:space:]]et[[:space:]]al.[[:space:]]-[[:space:]]1991[[:space:]]-[[:space:]]Excursion[[:space:]]Set[[:space:]]Mass[[:space:]]Functions[[:space:]]for[[:space:]]Hierarchical[[:space:]]Gaus.pdf filter=lfs diff=lfs merge=lfs -text
+papers/Lacey[[:space:]]and[[:space:]]Cole[[:space:]]-[[:space:]]1993[[:space:]]-[[:space:]]Merger[[:space:]]rates[[:space:]]in[[:space:]]hierarchical[[:space:]]models[[:space:]]of[[:space:]]galaxy[[:space:]]form.pdf filter=lfs diff=lfs merge=lfs -text
+papers/Dehnen[[:space:]]and[[:space:]]Read[[:space:]]-[[:space:]]2011[[:space:]]-[[:space:]]N-body[[:space:]]simulations[[:space:]]of[[:space:]]gravitational[[:space:]]dynamics.pdf filter=lfs diff=lfs merge=lfs -text
+papers/formation_of_galaxies_and_clusters_of_galaxies_by_self-similar_gravitational_condensation-press_&_schechter.pdf filter=lfs diff=lfs merge=lfs -text
+papers/galaxy_formation_and_evolution-houjun_mo__frank_van_den_bosch_&_simon_white.pdf filter=lfs diff=lfs merge=lfs -text
+papers/Tinker[[:space:]]et[[:space:]]al.[[:space:]]-[[:space:]]2008[[:space:]]-[[:space:]]Toward[[:space:]]a[[:space:]]halo[[:space:]]mass[[:space:]]function[[:space:]]for[[:space:]]precision[[:space:]]cosmolog.pdf filter=lfs diff=lfs merge=lfs -text
+papers/Tinker[[:space:]]et[[:space:]]al.[[:space:]]-[[:space:]]2010[[:space:]]-[[:space:]]The[[:space:]]Large[[:space:]]Scale[[:space:]]Bias[[:space:]]of[[:space:]]Dark[[:space:]]Matter[[:space:]]Halos[[:space:]]Numeric.pdf filter=lfs diff=lfs merge=lfs -text
+papers/Vecchia[[:space:]]et[[:space:]]al.[[:space:]]-[[:space:]]2012[[:space:]]-[[:space:]]The[[:space:]]First[[:space:]]Billion[[:space:]]Years[[:space:]]simulation[[:space:]]project.[[:space:]]Galact.pdf filter=lfs diff=lfs merge=lfs -text
+papers/Wechsler[[:space:]]and[[:space:]]Tinker[[:space:]]-[[:space:]]2018[[:space:]]-[[:space:]]The[[:space:]]Connection[[:space:]]between[[:space:]]Galaxies[[:space:]]and[[:space:]]their[[:space:]]Dark[[:space:]]Mat.pdf filter=lfs diff=lfs merge=lfs -text
 papers/* !text !filter !merge !diff
