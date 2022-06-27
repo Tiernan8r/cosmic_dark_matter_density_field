@@ -1,0 +1,13 @@
+# Data set parameters
+
+DEF_ROOT = "/disk12/legacy/"
+DEF_SIM_NAME = "GVD_C700_l1600n2048_SLEGAC"
+
+# Sampling parameters
+
+DEF_NUM_SPHERE_SAMPLES = 1000
+DEF_NUM_HIST_BINS = 1000
+DEF_NUM_OD_HIST_BINS = 1000
+
+DEF_REDSHIFTS = [0, 1, 2, 6, 10]
+DEF_RADII = [10, 20, 50, 100]

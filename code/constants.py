@@ -4,21 +4,16 @@ import re
 
 LOG_FILENAME = "logging.json"
 
-# Data set parameters
+# Configuration parameters:
 
-ROOT = "/disk12/legacy/"
-SIM_NAME = "GVD_C700_l1600n2048_SLEGAC"
-SIM_FOLDER = f"{SIM_NAME}/"
-
-# Sampling parameters
-
-NUM_SPHERE_SAMPLES = 1000
-NUM_HIST_BINS = 1000
-NUM_OVERDENSITY_HIST_BINS = 1000
-
-DESIRED_REDSHIFTS = [0, 1, 2, 6, 10]
-DESIRED_RADII = [50]
-# DESIRED_RADII = [10, 20, 50, 100]
+CONFIGURATION_FILE = "default_config.yaml"
+CONF_KEY_NUM_HIST_BINS = "number_of_histogram_bins"
+CONF_KEY_NUM_OD_HIST_BINS = "number_of_overdensity_histogram_bins"
+CONF_KEY_NUM_SPHERE_SAMPLES = "number_of_sphere_samples"
+CONF_KEY_RADII = "radii"
+CONF_KEY_REDSHIFTS = "redshifts"
+CONF_KEY_ROOT = "root"
+CONF_KEY_SIM_NAME = "simulation_name"
 
 # Plot save path parameters
 
@@ -31,6 +26,8 @@ OVERDENSITY_PLOTS_FNAME_PTRN = OVERDENSITY_PLOTS_DIR + \
     "overdensity_r{1:.2f}-z{2:.2f}.png"
 
 # Constants for helpers.py:
+
+ROOT = "/disk12/legacy"
 
 # All data set names
 DATA_SETS = [
@@ -48,11 +45,6 @@ TEST_DATA_SETS = [
 ]
 ALL_DATA_SETS = sorted(DATA_SETS + TEST_DATA_SETS)
 
-# List of paths to all the data sets
-
-PATHS = [ROOT + ds for ds in DATA_SETS]
-TEST_PATHS = [ROOT + tds for tds in TEST_DATA_SETS]
-ALL_PATHS = [ROOT + ads for ads in ALL_DATA_SETS]
 
 # Subpath for rockstar files
 ROCKSTAR = "dm_gadget/rockstar/"
