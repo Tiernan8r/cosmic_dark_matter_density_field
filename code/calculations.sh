@@ -22,4 +22,4 @@ cd ${SLURM_SUBMIT_DIR}
 . activate_environment.sh
 
 # srun -n ${ntasks} -c ${nthreads} python calculations.py
-mpirun -np ${ntasks} python calculations.py
+mpirun -np ${ntasks} python calculations.py default_config.yaml

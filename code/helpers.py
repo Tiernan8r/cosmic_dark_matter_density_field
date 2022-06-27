@@ -1,40 +1,17 @@
-import functools
 import logging
 import math
 import os
-import pickle
 import re
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
-from constants import (DATA, DIR_KEY, GROUPS_KEY, PATH_TO_HELPERS_CACHE, REDSHIFTS_KEY,
-                       ROCKSTAR, ROCKSTARS_KEY, ROOT, SNAPSHOTS_KEY,
-                       groups_regex, rockstar_a_factor, rockstar_ascii_reg,
-                       rockstar_regex, rockstar_root_regex, sim_regex,
-                       snapshots_regex)
+import caching
+from constants import (DATA, DIR_KEY, GROUPS_KEY, PATH_TO_HELPERS_CACHE,
+                       REDSHIFTS_KEY, ROCKSTAR, ROCKSTARS_KEY, ROOT,
+                       SNAPSHOTS_KEY, groups_regex, rockstar_a_factor,
+                       rockstar_ascii_reg, rockstar_regex, rockstar_root_regex,
+                       sim_regex, snapshots_regex)
 
-
-@functools.lru_cache(maxsize=1)
-def _get_cache() -> Dict[str, Any]:
-    logger = logging.getLogger(__name__ + "." + _get_cache.__name__)
-
-    if os.path.exists(PATH_TO_HELPERS_CACHE):
-        with open(PATH_TO_HELPERS_CACHE, "rb") as f:
-            logger.debug("Found existing cache, reading...")
-            return pickle.load(f)
-    else:
-        logger.debug("Found no existing cache, creating empty dict")
-        return {}
-
-
-GLOBAL_CACHE = _get_cache()
-
-
-def _save_cache():
-    logger = logging.getLogger(__name__ + "." + _save_cache.__name__)
-    global GLOBAL_CACHE
-    with open(PATH_TO_HELPERS_CACHE, "wb") as f:
-        logger.debug(f"Saving cache to '{PATH_TO_HELPERS_CACHE}'")
-        pickle.dump(GLOBAL_CACHE, f)
+CACHE = caching.Cacher(PATH_TO_HELPERS_CACHE)
 
 
 def _find_directories(sim_name: str) -> Tuple[str, str, str]:
@@ -74,12 +51,12 @@ def find_data_files(sim_name: str) -> Tuple[List[str], List[str], List[str]]:
 
         return l
 
-    global GLOBAL_CACHE
+    global CACHE
 
-    if sim_name not in GLOBAL_CACHE:
-        GLOBAL_CACHE[sim_name] = {}
+    if sim_name not in CACHE:
+        CACHE[sim_name] = {}
 
-    if DIR_KEY not in GLOBAL_CACHE[sim_name]:
+    if DIR_KEY not in CACHE[sim_name]:
         logger.debug(
             f"'{DIR_KEY}' key not found in cache, compiling new entry...")
 
@@ -95,21 +72,21 @@ def find_data_files(sim_name: str) -> Tuple[List[str], List[str], List[str]]:
             ROCKSTARS_KEY: sorted(rockstars),
         }
 
-        GLOBAL_CACHE[sim_name][DIR_KEY] = dirs
-        _save_cache()
+        CACHE[sim_name][DIR_KEY] = dirs
+        CACHE.save_cache()
 
-    dirs = GLOBAL_CACHE[sim_name][DIR_KEY]
+    dirs = CACHE[sim_name][DIR_KEY]
     return dirs[SNAPSHOTS_KEY], dirs[GROUPS_KEY], dirs[ROCKSTARS_KEY]
 
 
 def determine_redshifts(sim_name: str) -> Dict[float, str]:
     logger = logging.getLogger(__name__ + "." + determine_redshifts.__name__)
-    global GLOBAL_CACHE
 
-    if sim_name not in GLOBAL_CACHE:
-        GLOBAL_CACHE[sim_name] = {}
+    global CACHE
+    if sim_name not in CACHE:
+        CACHE[sim_name] = {}
 
-    if REDSHIFTS_KEY not in GLOBAL_CACHE[sim_name]:
+    if REDSHIFTS_KEY not in CACHE[sim_name]:
         logger.warn(
             f"'{REDSHIFTS_KEY}' key not found in cache, creating entry...")
 
@@ -134,10 +111,10 @@ def determine_redshifts(sim_name: str) -> Dict[float, str]:
 
                         map[z] = rockstar_ascii_reg.match(file).group(2)
 
-        GLOBAL_CACHE[sim_name][REDSHIFTS_KEY] = map
-        _save_cache()
+        CACHE[sim_name][REDSHIFTS_KEY] = map
+        CACHE.save_cache()
 
-    return GLOBAL_CACHE[sim_name][REDSHIFTS_KEY]
+    return CACHE[sim_name][REDSHIFTS_KEY]
 
 
 def filter_redshifts(sim_name: str, desired: List[float], tolerance=0.02) -> Dict[float, str]:
