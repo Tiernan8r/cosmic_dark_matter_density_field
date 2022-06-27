@@ -83,7 +83,7 @@ rockstar_ascii_reg = re.compile("^(halos_(\d+).0).ascii$")
 rockstar_a_factor = re.compile("^#a = (.*)$")
 
 # Path to the cache used to optimise helpers functions
-PATH_TO_CACHE = "../data/helpers.pickle"
+PATH_TO_HELPERS_CACHE = "../data/helpers.pickle"
 
 # Keys used in the helpers cache:
 REDSHIFTS_KEY = "redshifts"
@@ -91,3 +91,15 @@ DIR_KEY = "dirs"
 SNAPSHOTS_KEY = "snapshots"
 GROUPS_KEY = "groups"
 ROCKSTARS_KEY = "rockstars"
+
+# Path to the cache used to store random coords generated
+PATH_TO_COORDS_CACHE = "../data/coordinates.pickle"
+
+# Path to cache for calculated values
+PATH_TO_CALCULATIONS_CACHE = "../data/calculations.pickle"
+# Keys used in the cache
+TOTAL_MASS_FUNCTION_KEY = "all_masses"
+MASS_FUNCTION_KEY = "masses"
+RHO_BAR_KEY = "rho_bar"
+OVERDENSITIES_KEY = "overdensities"
+REDSHIFT_KEY = "redshift"

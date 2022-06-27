@@ -1,23 +1,51 @@
+#!/usr/bin/env python
+import functools
 import json
 import logging
 import logging.config
 import os
+import pickle
+from typing import Any, Dict
 
-import matplotlib.pyplot as plt
 import numpy as np
 import unyt
 import yt
 import yt.extensions.legacy
 
+import coordinates
+import dataset_cacher
 import helpers
+import plotting
 from constants import (DESIRED_RADII, DESIRED_REDSHIFTS, LOG_FILENAME,
-                       MASS_FN_PLOTS_DIR, MASS_FN_PLOTS_FNAME_PTRN,
-                       NUM_HIST_BINS, NUM_OVERDENSITY_HIST_BINS,
-                       NUM_SPHERE_SAMPLES, OVERDENSITY_PLOTS_DIR,
-                       OVERDENSITY_PLOTS_FNAME_PTRN, ROOT, SIM_FOLDER,
-                       SIM_NAME)
+                       MASS_FN_PLOTS_DIR, MASS_FUNCTION_KEY,
+                       NUM_SPHERE_SAMPLES, OVERDENSITIES_KEY,
+                       PATH_TO_CALCULATIONS_CACHE, REDSHIFT_KEY, RHO_BAR_KEY,
+                       ROOT, SIM_FOLDER, SIM_NAME, TOTAL_MASS_FUNCTION_KEY)
 
-# TODO: cache calced results...
+
+@functools.lru_cache(maxsize=1)
+def _get_cache() -> Dict[str, Any]:
+    logger = logging.getLogger(_get_cache.__name__)
+
+    if os.path.exists(PATH_TO_CALCULATIONS_CACHE):
+        with open(PATH_TO_CALCULATIONS_CACHE, "rb") as f:
+            logger.debug("Found existing cache, reading...")
+            return pickle.load(f)
+    else:
+        logger.debug("Found no existing cache, creating empty dict")
+        return {}
+
+
+GLOBAL_CACHE = _get_cache()
+DATASET_CACHE = dataset_cacher.new()
+
+
+def _save_cache():
+    logger = logging.getLogger(_save_cache.__name__)
+    global GLOBAL_CACHE
+    with open(PATH_TO_CALCULATIONS_CACHE, "wb") as f:
+        logger.debug(f"Saving cache to '{PATH_TO_CALCULATIONS_CACHE}'")
+        pickle.dump(GLOBAL_CACHE, f)
 
 
 def setup_logging() -> logging.Logger:
@@ -54,10 +82,18 @@ def main():
             total_mass_function(rck)
 
             for radius in DESIRED_RADII:
-                z, masses, deltas = halo_work(rck, radius)
+
+                # Errors handled in code, so can ignore...
+                try:
+                    z, masses, deltas = halo_work(rck, radius)
+                except:
+                    continue
 
                 logger.debug("Generating plot for this data...")
-                plot(z, radius, masses, deltas, sim_name=SIM_NAME)
+                plotting.plot(z, radius, masses, deltas, sim_name=SIM_NAME)
+
+        # Save the dataset cache to disk...
+        DATASET_CACHE.save()
 
         logger.info("DONE calculations\n")
 
@@ -70,19 +106,37 @@ def total_mass_function(rck):
 
     logger.debug("Calculating total mass function:")
 
-    ds = yt.load(rck)
-    try:
-        ad = ds.all_data()
-    except TypeError as te:
-        logger.error("error reading all_data(), ignoring...")
-        logger.error(te)
-        return
+    global GLOBAL_CACHE
+    if rck not in GLOBAL_CACHE:
+        GLOBAL_CACHE[rck] = {}
 
-    masses = ad["halos", "particle_mass"].to(ds.units.Msun / ds.units.h)
+    ds = DATASET_CACHE.load(rck)
+
+    if TOTAL_MASS_FUNCTION_KEY not in GLOBAL_CACHE[rck]:
+        logger.debug(f"No masses cached for '{rck}' data set, caching...")
+
+        try:
+            ad = DATASET_CACHE.all_data(rck)
+        except TypeError as te:
+            logger.error("error reading all_data(), ignoring...")
+            logger.error(te)
+            return
+
+        masses = ad["halos", "particle_mass"].to(ds.units.Msun / ds.units.h)
+
+        if REDSHIFT_KEY not in GLOBAL_CACHE[rck]:
+            GLOBAL_CACHE[rck][REDSHIFT_KEY] = ds.current_redshift
+
+        GLOBAL_CACHE[rck][TOTAL_MASS_FUNCTION_KEY] = masses
+        _save_cache()
+    else:
+        logger.debug("Using cached masses in plots...")
+
+    masses = GLOBAL_CACHE[rck][TOTAL_MASS_FUNCTION_KEY]
 
     hist, bins = np.histogram(masses)
 
-    z = ds.current_redshift
+    z = GLOBAL_CACHE[rck][REDSHIFT_KEY]
     a = 1 / (1+z)
 
     V = (ds.domain_width[0] * a)**3
@@ -93,18 +147,140 @@ def total_mass_function(rck):
     plot_name = (MASS_FN_PLOTS_DIR +
                  "total_mass_function_z{1:.2f}.png").format(SIM_FOLDER, z)
 
-    plot_mass_function(hist, bins, title, save_dir, plot_name)
+    plotting.plot_mass_function(hist, bins, title, save_dir, plot_name)
 
 
 def halo_work(rck: str, radius: float):
     logger = logging.getLogger(halo_work.__name__)
+    global GLOBAL_CACHE
 
-    ds = yt.load(rck)
+    if rck not in GLOBAL_CACHE:
+        GLOBAL_CACHE[rck] = {}
+
+    logger.info("Working on rho_bar value:")
+
+    if RHO_BAR_KEY not in GLOBAL_CACHE[rck]:
+        logger.debug(
+            f"No entries found in cache for '{RHO_BAR_KEY}', calculating...")
+
+        try:
+            rb = _calc_rho_bar(rck)
+        except TypeError as te:
+            logger.error("error getting all dataset region")
+            logger.error(te)
+            raise te
+        except unyt.exceptions.IterableUnitCoercionError as iuce:
+            logger.error(
+                "Error reading regions quantities from database, ignoring...")
+            logger.error(iuce)
+            raise iuce
+
+        GLOBAL_CACHE[rck][RHO_BAR_KEY] = rb
+        _save_cache()
+    else:
+        logger.debug("Using cached `rho_bar` value...")
+
+    rho_bar = GLOBAL_CACHE[rck][RHO_BAR_KEY]
+
+    logger.info("Working on overdensities:")
+
+    if OVERDENSITIES_KEY not in GLOBAL_CACHE[rck]:
+        GLOBAL_CACHE[rck][OVERDENSITIES_KEY] = {}
+
+    if radius not in GLOBAL_CACHE[rck][OVERDENSITIES_KEY]:
+        logger.debug(
+            f"No entries found in cache for '{OVERDENSITIES_KEY}', calculating...")
+
+        GLOBAL_CACHE[rck][OVERDENSITIES_KEY][radius] = _calc_overdensities(
+            rck, radius, rho_bar)
+        _save_cache()
+    else:
+        ods = GLOBAL_CACHE[rck][OVERDENSITIES_KEY][radius]
+
+        if len(ods) < NUM_SPHERE_SAMPLES:
+            logger.debug(
+                f"Entries in cache exist, but need {NUM_SPHERE_SAMPLES - len(ods)} more values...")
+
+            GLOBAL_CACHE[rck][OVERDENSITIES_KEY][radius] = _calc_overdensities(
+                rck, radius, rho_bar, existing=ods)
+            _save_cache()
+
+        else:
+            logger.debug("Using cached overdensities...")
+
+    logger.info("Working on mass function:")
+
+    if MASS_FUNCTION_KEY not in GLOBAL_CACHE[rck]:
+        GLOBAL_CACHE[rck][MASS_FUNCTION_KEY] = {}
+
+    if radius not in GLOBAL_CACHE[rck][MASS_FUNCTION_KEY]:
+        logger.debug(
+            f"No entries found in cache for '{MASS_FUNCTION_KEY}', calculating...")
+
+        GLOBAL_CACHE[rck][MASS_FUNCTION_KEY][radius] = _sample_masses(
+            rck, radius)
+        _save_cache()
+    else:
+        ms = GLOBAL_CACHE[rck][MASS_FUNCTION_KEY][radius]
+        if len(ms) < NUM_SPHERE_SAMPLES:
+            logger.debug(
+                f"Entries in cache exist, but need {NUM_SPHERE_SAMPLES - len(ods)} more values...")
+            GLOBAL_CACHE[rck][MASS_FUNCTION_KEY][radius] = _sample_masses(
+                rck, radius, existing=ms)
+            _save_cache()
+        else:
+            logger.debug("Using cached halo masses...")
+
+    z = GLOBAL_CACHE[rck][REDSHIFT_KEY]
+    # Get the values from the cache, and truncate the lists to the desired number of values
+    # if there are too many
+    masses = GLOBAL_CACHE[rck][MASS_FUNCTION_KEY][radius][:NUM_SPHERE_SAMPLES]
+    deltas = GLOBAL_CACHE[rck][OVERDENSITIES_KEY][radius][:NUM_SPHERE_SAMPLES]
+
+    return z, masses, deltas
+
+
+def _calc_rho_bar(rck):
+    logger = logging.getLogger(_calc_rho_bar.__name__)
+
+    ds = DATASET_CACHE.load(rck)
+
+    dist_units = ds.units.Mpc / ds.units.h
+
+    global GLOBAL_CACHE
+    if REDSHIFT_KEY not in GLOBAL_CACHE[rck]:
+        GLOBAL_CACHE[rck][REDSHIFT_KEY] = ds.current_redshift
+
+    z = GLOBAL_CACHE[rck][REDSHIFT_KEY]
+    a = 1/(1+z)
+
+    logger.debug(f"Redshift z={z}")
+
+    sim_size = (ds.domain_width[0]).to(dist_units)
+    logger.debug(f"Simulation size = {sim_size}")
+
+    # Try to get the entire dataset region
+    ad = DATASET_CACHE.all_data(rck)
+
+    # Get the average density over the region
+    rho_bar = ad.quantities.total_mass()[1] / (sim_size*a)**3
+
+    return rho_bar
+
+
+def _calc_overdensities(rck, radius, rho_bar, existing: unyt.unyt_array = None):
+    logger = logging.getLogger(_calc_overdensities.__name__)
+
+    ds = DATASET_CACHE.load(rck)
 
     dist_units = ds.units.Mpc / ds.units.h
     R = radius * dist_units
 
-    z = ds.current_redshift
+    global GLOBAL_CACHE
+    if REDSHIFT_KEY not in GLOBAL_CACHE[rck]:
+        GLOBAL_CACHE[rck][REDSHIFT_KEY] = ds.current_redshift
+
+    z = GLOBAL_CACHE[rck][REDSHIFT_KEY]
     a = 1/(1+z)
 
     logger.debug(f"Redshift z={z}")
@@ -117,27 +293,15 @@ def halo_work(rck: str, radius: float):
     coord_min = radius
     coord_max = sim_size.value - radius
 
-    coords = rand_coords(
+    coords = coordinates.rand_coords(
         NUM_SPHERE_SAMPLES, min=coord_min, max=coord_max) * dist_units
 
-    masses = unyt.unyt_array([], ds.units.Msun/ds.units.h)
-    deltas = []
+    # If there are existing entries, truncate the number of new calculations...
+    deltas = unyt.unyt_array([])
+    if existing is not None:
+        coords = coords[len(existing):]
 
-    # Try to get the entire dataset region
-    try:
-        ad = ds.all_data()
-    except TypeError as te:
-        logger.error("error getting all dataset region")
-        logger.error(te)
-        return z, unyt.unyt_array(masses), unyt.unyt_array(deltas)
-
-    # Get the average density over the region
-    try:
-        rho_bar = ad.quantities.total_mass()[1] / (sim_size*a)**3
-    except unyt.exceptions.IterableUnitCoercionError as te:
-        logger.error(
-            "Error reading regions quantities from database, ignoring...")
-        logger.error(te)
+        deltas = existing
 
     # Iterate over all the randomly sampled coordinates
     for c in yt.parallel_objects(coords):
@@ -145,7 +309,64 @@ def halo_work(rck: str, radius: float):
             f"Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
         # Try to sample a sphere of the given radius at this coord
         try:
-            sp = ds.sphere(c, R)
+            sp = DATASET_CACHE.sphere(rck, c, R)
+        except TypeError as te:
+            logger.error("error creating sphere sample")
+            logger.error(te)
+            continue
+
+        # Try to calculate the overdensity of the sphere
+        try:
+            rho = sp.quantities.total_mass()[1] / V
+            delta = (rho - rho_bar) / rho_bar
+            d = unyt.unyt_array([delta])
+
+            deltas = unyt.uconcatenate((deltas, d))
+        except unyt.exceptions.IterableUnitCoercionError as iuce:
+            logger.error("Error reading sphere quantities, ignoring...")
+            logger.error(iuce)
+
+    return unyt.unyt_array(deltas)
+
+
+def _sample_masses(rck, radius, existing: unyt.unyt_array = None):
+    logger = logging.getLogger(_sample_masses.__name__)
+
+    ds = DATASET_CACHE.load(rck)
+
+    dist_units = ds.units.Mpc / ds.units.h
+    R = radius * dist_units
+
+    global GLOBAL_CACHE
+    if REDSHIFT_KEY not in GLOBAL_CACHE[rck]:
+        GLOBAL_CACHE[rck][REDSHIFT_KEY] = ds.current_redshift
+
+    z = GLOBAL_CACHE[rck][REDSHIFT_KEY]
+
+    logger.debug(f"Redshift z={z}")
+
+    sim_size = (ds.domain_width[0]).to(dist_units)
+    logger.debug(f"Simulation size = {sim_size}")
+
+    coord_min = radius
+    coord_max = sim_size.value - radius
+
+    coords = coordinates.rand_coords(
+        NUM_SPHERE_SAMPLES, min=coord_min, max=coord_max) * dist_units
+
+    # Truncate the number of values to calculate, if some already exist...
+    masses = unyt.unyt_array([], ds.units.Msun/ds.units.h)
+    if existing is not None:
+        coords = coords[len(existing):]
+        masses = existing
+
+    # Iterate over all the randomly sampled coordinates
+    for c in yt.parallel_objects(coords):
+        logger.debug(
+            f"Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
+        # Try to sample a sphere of the given radius at this coord
+        try:
+            sp = DATASET_CACHE.sphere(rck, c, R)
         except TypeError as te:
             logger.error("error creating sphere sample")
             logger.error(te)
@@ -163,93 +384,9 @@ def halo_work(rck: str, radius: float):
 
         masses = unyt.uconcatenate((masses, m))
 
-        # Try to calculate the overdensity of the sphere
-        try:
-            rho = sp.quantities.total_mass()[1] / V
-            delta = (rho - rho_bar) / rho_bar
-            deltas.append(delta)
-        except unyt.exceptions.IterableUnitCoercionError as te:
-            logger.error("Error reading sphere quantities, ignoring...")
-            logger.error(te)
-
     logger.info(f"DONE reading {NUM_SPHERE_SAMPLES} sphere samples\n")
 
-    return z, masses, unyt.unyt_array(deltas)
-
-
-def rand_coords(amount: int, min: int = 0, max: int = 100, seed=0):
-    np.random.seed(seed)
-    coords = np.random.rand(amount, 3)
-
-    return (max - min) * coords + min
-
-
-def plot(z, radius, masses, deltas, sim_name="default"):
-    if not yt.is_root():
-        return
-
-    logger = logging.getLogger(plot.__name__)
-
-    mass_hist, mass_bin_edges = np.histogram(masses, bins=NUM_HIST_BINS)
-
-    a = 1 / (1+z)
-    V = 4/3 * np.pi * (a*radius)**3
-
-    mass_hist = mass_hist / V
-
-    logger.debug(f"Plotting mass function at z={z:.2f}...")
-
-    title = f"Mass Function for {sim_name} @ z={z:.2f}"
-    save_dir = MASS_FN_PLOTS_DIR.format(sim_name)
-    plot_name = MASS_FN_PLOTS_FNAME_PTRN.format(sim_name, radius, z)
-
-    plot_mass_function(mass_hist, mass_bin_edges, title, save_dir, plot_name)
-
-    logger.debug(f"Plotting overdensities at z={z:.2f}...")
-
-    title = f"Overdensity for {sim_name} @ z={z:.2f}"
-    save_dir = OVERDENSITY_PLOTS_DIR.format(sim_name)
-    plot_name = OVERDENSITY_PLOTS_FNAME_PTRN.format(sim_name, radius, z)
-    plot_delta(deltas, title, save_dir, plot_name)
-
-
-def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
-    if not yt.is_root():
-        return
-
-    x = np.log(bin_edges[:-1])
-    y = np.log(hist)
-
-    plt.plot(x, y)
-    plt.gca().set_xscale("log")
-
-    plt.title(title)
-    plt.xlabel("$\log{M_{vir}}$")
-    plt.ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
-
-    # Ensure the folders exist before attempting to save an image to it...
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
-
-    plt.savefig(plot_f_name)
-    plt.cla()
-
-
-def plot_delta(deltas, title, save_dir, plot_f_name):
-    if not yt.is_root():
-        return
-
-    plt.hist(deltas, bins=NUM_OVERDENSITY_HIST_BINS)
-
-    plt.title(title)
-    plt.xlabel("Overdensity value")
-    plt.ylabel("Overdensity $\delta$")
-
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
-
-    plt.savefig(plot_f_name)
-    plt.cla()
+    return masses
 
 
 if __name__ == "__main__":
