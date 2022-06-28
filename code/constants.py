@@ -13,10 +13,12 @@ CONF_KEY_NUM_SPHERE_SAMPLES = "number_of_sphere_samples"
 CONF_KEY_RADII = "radii"
 CONF_KEY_REDSHIFTS = "redshifts"
 CONF_KEY_ROOT = "root"
-CONF_KEY_SIM_NAME = "simulation_name"
+CONF_KEY_SIM_NAMES = "simulation_names"
 CONF_KEY_CACHE_TOTAL = "use_total_cache"
 CONF_KEY_CACHE_MASS = "use_masses_cache"
 CONF_KEY_CACHE_OD = "use_overdensities_cache"
+CONF_KEY_CACHE_RHO_BAR = "use_rho_bar_cache"
+CONF_KEY_CACHE_STD_DEV = "use_standard_deviation_cache"
 
 # Plot save path parameters
 
@@ -98,3 +100,4 @@ MASS_FUNCTION_KEY = "masses"
 RHO_BAR_KEY = "rho_bar"
 OVERDENSITIES_KEY = "overdensities"
 REDSHIFT_KEY = "redshift"
+STD_DEV_KEY = "standard_deviation"

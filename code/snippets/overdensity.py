@@ -61,6 +61,17 @@ for c in coords:
     # be concatenated to the total list
     all_overdensities = np.concatenate((all_overdensities, [od]))
 
+# =============
+# STD DEVIATION
+# =============
+
+std_dev = np.std(all_overdensities)
+print("Standard Deviation is:", std_dev)
+
+# ========
+# PLOTTING
+# ========
+
 z = ds.current_redshift
 
 print("All Overdensities:", all_overdensities)

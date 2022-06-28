@@ -49,7 +49,10 @@ class CachedDataSet:
             logger.debug(
                 f"No dataset found for file '{fname}' with key '{self._load_key}', reading into cache...")
             with self._mutex:
-                self._cache[fname][self._load_key] = yt.load(fname)
+                ds = yt.load(fname)
+                ds.parameters["format_revision"] = 2
+
+                self._cache[fname][self._load_key] = ds
 
         return self._cache[fname][self._load_key]
 

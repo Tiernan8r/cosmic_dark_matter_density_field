@@ -17,4 +17,5 @@ redshifts:
 - 6
 - 10
 root: /disk12/legacy
-simulation_name: GVD_C700_l1600n2048_SLEGAC
+simulation_names:
+- GVD_C700_l1600n2048_SLEGAC
