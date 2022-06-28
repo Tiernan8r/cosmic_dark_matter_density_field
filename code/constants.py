@@ -14,6 +14,9 @@ CONF_KEY_RADII = "radii"
 CONF_KEY_REDSHIFTS = "redshifts"
 CONF_KEY_ROOT = "root"
 CONF_KEY_SIM_NAME = "simulation_name"
+CONF_KEY_CACHE_TOTAL = "use_total_cache"
+CONF_KEY_CACHE_MASS = "use_masses_cache"
+CONF_KEY_CACHE_OD = "use_overdensities_cache"
 
 # Plot save path parameters
 
@@ -27,7 +30,7 @@ OVERDENSITY_PLOTS_FNAME_PTRN = OVERDENSITY_PLOTS_DIR + \
 
 # Constants for helpers.py:
 
-ROOT = "/disk12/legacy"
+ROOT = "/disk12/legacy/"
 
 # All data set names
 DATA_SETS = [

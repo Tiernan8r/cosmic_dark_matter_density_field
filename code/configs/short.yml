@@ -1,21 +1,15 @@
 %YAML 1.2
 ---
-number_of_histogram_bins: 100
-number_of_overdensity_histogram_bins: 100
+number_of_histogram_bins: 1000
+number_of_overdensity_histogram_bins: 1000
 number_of_sphere_samples: 1000
 radii:
 - 10
-- 20
-- 50
-- 100
 redshifts:
 - 0
-- 1
-- 2
-- 6
-- 10
 root: /disk12/legacy
 simulation_name: GVD_C700_l1600n2048_SLEGAC
-use_total_cache: True
+
+use_total_cache: False
 use_masses_cache: True
 use_overdensities_cache: True
