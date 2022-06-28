@@ -17,7 +17,8 @@ import helpers
 import plotting
 from constants import (LOG_FILENAME, MASS_FN_PLOTS_DIR, MASS_FUNCTION_KEY,
                        OVERDENSITIES_KEY, PATH_TO_CALCULATIONS_CACHE,
-                       REDSHIFT_KEY, RHO_BAR_KEY, TOTAL_MASS_FUNCTION_KEY)
+                       REDSHIFT_KEY, RHO_BAR_KEY, STD_DEV_KEY,
+                       TOTAL_MASS_FUNCTION_KEY)
 
 CACHE = caching.Cacher(PATH_TO_CALCULATIONS_CACHE)
 DATASET_CACHE = dataset_cacher.new()
@@ -32,6 +33,7 @@ def setup_logging() -> logging.Logger:
 
 
 CONFIG = configuration.Configuration()
+CURRENT_SIM_NAME = None
 
 
 def setup(args):
@@ -49,7 +51,7 @@ def setup(args):
     yt.enable_parallelism()
     logger.info("Parallelism enabled...")
 
-    logger.debug(f"Reading data set in '{CONFIG.path}'")
+    logger.debug(f"Reading data set(s) in: {CONFIG.paths}")
 
 
 def main(args):
@@ -59,22 +61,29 @@ def main(args):
         setup(args)
         logger = logging.getLogger(main.__name__)
 
-        # Find halos for data set
-        logger.debug(
-            f"Filtering halo files to look for redshifts: {CONFIG.redshifts}")
-        _, _, rockstars = helpers.filter_data_files(
-            CONFIG.sim_name, CONFIG.redshifts)
-        logger.debug(
-            f"Found {len(rockstars)} rockstar files that match these redshifts")
+        global CURRENT_SIM_NAME
 
-        # Run the calculations over all the rockstar files found
-        for rck in rockstars:
-            tasks(rck)
+        for sim_name in CONFIG.sim_names:
+            CURRENT_SIM_NAME = sim_name
 
-        # Save the dataset cache to disk...
-        DATASET_CACHE.save()
+            logger.info(f"Working on simulation: {sim_name}")
 
-        logger.info("DONE calculations\n")
+            # Find halos for data set
+            logger.debug(
+                f"Filtering halo files to look for redshifts: {CONFIG.redshifts}")
+            _, _, rockstars = helpers.filter_data_files(
+                CURRENT_SIM_NAME, CONFIG.redshifts)
+            logger.debug(
+                f"Found {len(rockstars)} rockstar files that match these redshifts")
+
+            # Run the calculations over all the rockstar files found
+            for rck in rockstars:
+                tasks(rck)
+
+            # Save the dataset cache to disk...
+            DATASET_CACHE.save()
+
+            logger.info("DONE calculations\n")
 
 
 def tasks(rck: str):
@@ -83,7 +92,19 @@ def tasks(rck: str):
     logger.debug(f"Working on rockstar file '{rck}'")
 
     logger.debug("Calculating total halo mass function")
+
+    # =================================================================
+    # TOTAL MASS FUNCTION
+    # =================================================================
     total_mass_function(rck)
+
+    # =================================================================
+    # RHO BAR
+    # =================================================================
+    try:
+        rho_bar(rck)
+    except Exception as e:
+        logger.error(e)
 
     # Iterate over the radii to sample for
     for radius in CONFIG.radii:
@@ -104,7 +125,7 @@ def tasks(rck: str):
                       deltas,
                       num_hist_bins=CONFIG.num_hist_bins,
                       num_overdensity_hist_bins=CONFIG.num_overdensity_hist_bins,
-                      sim_name=CONFIG.sim_name)
+                      sim_name=CURRENT_SIM_NAME)
 
 
 def total_mass_function(rck):
@@ -126,6 +147,9 @@ def total_mass_function(rck):
     # so need to use the get() notation
     masses = CACHE[rck].get(TOTAL_MASS_FUNCTION_KEY, [])
 
+    if len(masses) > 0:
+        logger.info(f"Mass units are: {masses.units}")
+
     # Calculate the histogram of the masses
     hist, bins = np.histogram(masses, bins=CONFIG.num_hist_bins)
 
@@ -136,20 +160,23 @@ def total_mass_function(rck):
 
     # Get the redshift from the cache
     z = CACHE[rck].get(REDSHIFT_KEY, 99)
-    # Calculate the expansion coefficient
+    # Calculate the scale factor
     a = 1 / (1+z)
 
     # Calculate the area of the box (is a cube)
-    V = (ds.domain_width[0])**3
+    sim_size = ds.domain_width[0].to(ds.units.Mpc)
+    V = (a * sim_size)**3
+
+    logger.info(f"Volume units are: {V.units}")
 
     # Divide the number of halos per bin by the volume to get the number density
     hist = hist / V
 
     # Set the parameters used for the plotting & plot the mass function
     title = f"Total Mass Function for z={z:.2f}"
-    save_dir = MASS_FN_PLOTS_DIR.format(CONFIG.sim_name)
+    save_dir = MASS_FN_PLOTS_DIR.format(CURRENT_SIM_NAME)
     plot_name = (MASS_FN_PLOTS_DIR +
-                 "total_mass_function_z{1:.2f}.png").format(CONFIG.sim_folder, z)
+                 "total_mass_function_z{1:.2f}.png").format(CURRENT_SIM_NAME, z)
 
     plotting.plot_mass_function(hist, bins, title, save_dir, plot_name)
 
@@ -200,12 +227,7 @@ def _cache_total_mass_function(rck: str):
         logger.debug("Using cached masses in plots...")
 
 
-def halo_work(rck: str, radius: float):
-    """
-    Calculates the halo mass function when sampling with spheres, and the
-    overdensities at the same time
-    """
-
+def rho_bar(rck):
     logger = logging.getLogger(halo_work.__name__)
 
     # Ensure there is an entry in the cache for this rockstar data file
@@ -219,7 +241,7 @@ def halo_work(rck: str, radius: float):
     logger.info("Working on rho_bar value:")
 
     # Calculate the density of the entire region if is not cached...
-    if RHO_BAR_KEY not in CACHE[rck] or not CONFIG.use_overdensities_cache:
+    if RHO_BAR_KEY not in CACHE[rck] or not CONFIG.use_rho_bar_cache:
         logger.debug(
             f"No entries found in cache for '{RHO_BAR_KEY}', calculating...")
 
@@ -248,6 +270,65 @@ def halo_work(rck: str, radius: float):
 
     # Get the cached rho_bar value
     rho_bar = CACHE[rck][RHO_BAR_KEY]
+    logger.info(f"Average density calculated as: {rho_bar}")
+    logger.info(f"Density units are: {rho_bar.units}")
+
+
+def _calc_rho_bar(rck):
+    """
+    Calculates the overdensity of the entire data set
+    """
+    logger = logging.getLogger(_calc_rho_bar.__name__)
+
+    # Load the data set, if it is cached already this operation will be faster...
+    ds = DATASET_CACHE.load(rck)
+
+    # Get the distance units used in the code
+    dist_units = ds.units.Mpc / ds.units.h
+
+    # Ensure the redshift is cached for this data set
+    global CACHE
+    if REDSHIFT_KEY not in CACHE[rck]:
+        CACHE[rck][REDSHIFT_KEY] = ds.current_redshift
+
+    # Get the redshift and calculate the expansion factor
+    z = CACHE[rck][REDSHIFT_KEY]
+    # Calculate the scale factor
+    a = 1/(1+z)
+
+    logger.debug(f"Redshift z={z}")
+
+    # Get the size of one side of the box
+    sim_size = (ds.domain_width[0]).to(dist_units)
+    logger.debug(f"Simulation size = {sim_size}")
+
+    # Get the entire dataset region, can be cached for performance
+    # optimisation
+    ad = DATASET_CACHE.all_data(rck)
+
+    # Get the average density over the region
+    total_mass = ad.quantities.total_mass()[1]
+    volume = (sim_size * a)**3
+
+    rho_bar = total_mass / volume
+
+    logger.debug(f"Calculated a rho_bar of '{rho_bar}' for dataset '{rck}'")
+
+    return rho_bar
+
+
+def halo_work(rck: str, radius: float):
+    """
+    Calculates the halo mass function when sampling with spheres, and the
+    overdensities at the same time
+    """
+
+    logger = logging.getLogger(halo_work.__name__)
+
+    # Ensure there is an entry in the cache for this rockstar data file
+    global CACHE
+    if rck not in CACHE:
+        CACHE[rck] = {}
 
     # =================================================================
     # OVERDENSITIES:
@@ -265,6 +346,9 @@ def halo_work(rck: str, radius: float):
     if radius not in CACHE[rck][OVERDENSITIES_KEY] or not CONFIG.use_overdensities_cache:
         logger.debug(
             f"No entries found in cache for '{OVERDENSITIES_KEY}', calculating...")
+
+        # Get the cached rho_bar value
+        rho_bar = CACHE[rck][RHO_BAR_KEY]
 
         # Do the full sampling and save the cache to disk
         CACHE[rck][OVERDENSITIES_KEY][radius] = _calc_overdensities(
@@ -288,6 +372,36 @@ def halo_work(rck: str, radius: float):
 
         else:
             logger.debug("Using cached overdensities...")
+
+    ods = CACHE[rck][OVERDENSITIES_KEY][radius]
+    logger.info(f"Overdensity units: {ods.units}")
+
+    # =================================================================
+    # STANDARD DEVIATION
+    # =================================================================
+    logger.debug("Working on standard deviation")
+
+    # Ensure there is a key in the cache
+    if STD_DEV_KEY not in CACHE[rck]:
+        CACHE[rck][STD_DEV_KEY] = {}
+
+    # If the radius key is missing, need to calculate the standard deviation
+    # for that radius sampling
+    if radius not in CACHE[rck][STD_DEV_KEY] or not CONFIG.use_standard_deviation_cache:
+        logger.debug(
+            f"No standard deviation found in cache for '{STD_DEV_KEY}', calculating...")
+
+        # Get the overdensities calculated for this radius
+        overdensities = CACHE[rck][OVERDENSITIES_KEY][radius]
+
+        std_dev = np.std(overdensities)
+        CACHE[rck][STD_DEV_KEY][radius] = std_dev
+        CACHE.save_cache()
+    else:
+        logger.debug("Standard deviation already cached.")
+
+    std_dev = CACHE[rck][STD_DEV_KEY][radius]
+    logger.info(f"Overdensities standard deviation is {std_dev}")
 
     # =================================================================
     # MASS FUNCTION:
@@ -333,46 +447,9 @@ def halo_work(rck: str, radius: float):
     masses = CACHE[rck][MASS_FUNCTION_KEY][radius][:num_sphere_samples]
     deltas = CACHE[rck][OVERDENSITIES_KEY][radius][:num_sphere_samples]
 
+    logger.info(f"Mass units are: {masses.units}")
+
     return z, masses, deltas
-
-
-def _calc_rho_bar(rck):
-    """
-    Calculates the overdensity of the entire data set
-    """
-    logger = logging.getLogger(_calc_rho_bar.__name__)
-
-    # Load the data set, if it is cached already this operation will be faster...
-    ds = DATASET_CACHE.load(rck)
-
-    # Get the distance units used in the code
-    dist_units = ds.units.Mpc / ds.units.h
-
-    # Ensure the redshift is cached for this data set
-    global CACHE
-    if REDSHIFT_KEY not in CACHE[rck]:
-        CACHE[rck][REDSHIFT_KEY] = ds.current_redshift
-
-    # Get the redshift and calculate the expansion factor
-    z = CACHE[rck][REDSHIFT_KEY]
-    a = 1/(1+z)
-
-    logger.debug(f"Redshift z={z}")
-
-    # Get the size of one side of the box
-    sim_size = (ds.domain_width[0]).to(dist_units)
-    logger.debug(f"Simulation size = {sim_size}")
-
-    # Get the entire dataset region, can be cached for performance
-    # optimisation
-    ad = DATASET_CACHE.all_data(rck)
-
-    # Get the average density over the region
-    rho_bar = ad.quantities.total_mass()[1] / (sim_size)**3
-
-    logger.debug(f"Calculated a rho_bar of '{rho_bar}' for dataset '{rck}'")
-
-    return rho_bar
 
 
 def _calc_overdensities(rck, radius, rho_bar, existing: unyt.unyt_array = None):
@@ -402,11 +479,11 @@ def _calc_overdensities(rck, radius, rho_bar, existing: unyt.unyt_array = None):
 
     logger.debug(f"Redshift z={z}")
 
-    # Calculate the volume of the spheres that we sample on
+    # Calculate the volume of the spheres that we sample on in comoving units
     V = 4/3 * np.pi * (R)**3
 
     # Get the size of the simulation
-    sim_size = (ds.domain_width[0]).to(dist_units)
+    sim_size = (ds.domain_width[0]).to(dist_units) * a
     logger.debug(f"Simulation size = {sim_size}")
 
     # Since we are sampling with spheres, don't want to get a coord too close to the
@@ -431,9 +508,11 @@ def _calc_overdensities(rck, radius, rho_bar, existing: unyt.unyt_array = None):
         deltas = existing
 
     # Iterate over all the randomly sampled coordinates
+    i = 0
     for c in yt.parallel_objects(coords):
         logger.debug(
-            f"Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
+            f"({i}) Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
+        i += 1
 
         # Try to sample a sphere of the given radius at this coord
         try:
@@ -488,11 +567,12 @@ def _sample_masses(rck, radius, existing: unyt.unyt_array = None):
 
     # Get the redshift from the cache
     z = CACHE[rck][REDSHIFT_KEY]
+    a = 1 / (1+z)
 
     logger.debug(f"Redshift z={z}")
 
     # Get the size of the simulation
-    sim_size = (ds.domain_width[0]).to(dist_units)
+    sim_size = (ds.domain_width[0]).to(dist_units) * a
     logger.debug(f"Simulation size = {sim_size}")
 
     # Bound the coordinate sampling, so that the spheres only overlap with
@@ -511,9 +591,11 @@ def _sample_masses(rck, radius, existing: unyt.unyt_array = None):
         masses = existing
 
     # Iterate over all the randomly sampled coordinates
+    i = 0
     for c in yt.parallel_objects(coords):
         logger.debug(
-            f"Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
+            f"({i}) Creating sphere @ ({c[0]}, {c[1]}, {c[2]}) with radius {R}")
+        i += 1
 
         # Try to sample a sphere of the given radius at this coord
         try:
@@ -539,6 +621,9 @@ def _sample_masses(rck, radius, existing: unyt.unyt_array = None):
         masses = unyt.uconcatenate((masses, m))
 
     logger.info(f"DONE reading {CONFIG.num_sphere_samples} sphere samples\n")
+
+    # Convert mass units to Msun
+    masses = masses.to(ds.units.Msun)
 
     return masses
 

@@ -84,6 +84,7 @@ def plot_delta(deltas, num_bins, title, save_dir, plot_f_name):
     ax = fig.gca()
 
     ax.hist(deltas, bins=num_bins)
+    ax.set_xlim(left=-1, right=2)
 
     fig.suptitle(title)
     ax.set_xlabel("Overdensity value")
