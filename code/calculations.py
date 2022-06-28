@@ -122,11 +122,12 @@ def total_mass_function(rck):
     # Cache the masses if they are not already
     _cache_total_mass_function(rck)
 
-    # Get the cached values
-    masses = CACHE[rck][TOTAL_MASS_FUNCTION_KEY]
+    # Get the cached values, the _cache_total_mass_function() method can error,
+    # so need to use the get() notation
+    masses = CACHE[rck].get(TOTAL_MASS_FUNCTION_KEY, [])
 
     # Calculate the histogram of the masses
-    hist, bins = np.histogram(masses)
+    hist, bins = np.histogram(masses, bins=CONFIG.num_hist_bins)
 
     # Filter hist/bins for non-zero masses
     valid_idxs = np.where(hist > 0)
@@ -134,18 +135,18 @@ def total_mass_function(rck):
     bins = bins[valid_idxs]
 
     # Get the redshift from the cache
-    z = CACHE[rck][REDSHIFT_KEY]
+    z = CACHE[rck].get(REDSHIFT_KEY, 99)
     # Calculate the expansion coefficient
     a = 1 / (1+z)
 
     # Calculate the area of the box (is a cube)
-    V = (ds.domain_width[0] * a)**3
+    V = (ds.domain_width[0])**3
 
     # Divide the number of halos per bin by the volume to get the number density
     hist = hist / V
 
     # Set the parameters used for the plotting & plot the mass function
-    title = f"Total Mass Function for @ z={z:.2f}"
+    title = f"Total Mass Function for z={z:.2f}"
     save_dir = MASS_FN_PLOTS_DIR.format(CONFIG.sim_name)
     plot_name = (MASS_FN_PLOTS_DIR +
                  "total_mass_function_z{1:.2f}.png").format(CONFIG.sim_folder, z)
@@ -171,7 +172,7 @@ def _cache_total_mass_function(rck: str):
     ds = DATASET_CACHE.load(rck)
 
     # If a value for the calculation doesn't exist in the cache, need to calculate it...
-    if TOTAL_MASS_FUNCTION_KEY not in CACHE[rck]:
+    if TOTAL_MASS_FUNCTION_KEY not in CACHE[rck] or not CONFIG.use_total_masses_cache:
 
         logger.debug(f"No masses cached for '{rck}' data set, caching...")
 
@@ -185,7 +186,7 @@ def _cache_total_mass_function(rck: str):
             return
 
         # Get the halo virial masses from the data
-        masses = ad["halos", "particle_mass"].to(ds.units.Msun / ds.units.h)
+        masses = ad["halos", "particle_mass"]
 
         # Also store the redshift of this data set if it isn't cached already
         if REDSHIFT_KEY not in CACHE[rck]:
@@ -218,7 +219,7 @@ def halo_work(rck: str, radius: float):
     logger.info("Working on rho_bar value:")
 
     # Calculate the density of the entire region if is not cached...
-    if RHO_BAR_KEY not in CACHE[rck]:
+    if RHO_BAR_KEY not in CACHE[rck] or not CONFIG.use_overdensities_cache:
         logger.debug(
             f"No entries found in cache for '{RHO_BAR_KEY}', calculating...")
 
@@ -261,7 +262,7 @@ def halo_work(rck: str, radius: float):
     num_sphere_samples = CONFIG.num_sphere_samples
 
     # If there isn't an entry for this radius sample size, need to do full sampling
-    if radius not in CACHE[rck][OVERDENSITIES_KEY]:
+    if radius not in CACHE[rck][OVERDENSITIES_KEY] or not CONFIG.use_overdensities_cache:
         logger.debug(
             f"No entries found in cache for '{OVERDENSITIES_KEY}', calculating...")
 
@@ -298,7 +299,7 @@ def halo_work(rck: str, radius: float):
         CACHE[rck][MASS_FUNCTION_KEY] = {}
 
     # If the radius key is missing, need to do a full sample run
-    if radius not in CACHE[rck][MASS_FUNCTION_KEY]:
+    if radius not in CACHE[rck][MASS_FUNCTION_KEY] or not CONFIG.use_masses_cache:
         logger.debug(
             f"No entries found in cache for '{MASS_FUNCTION_KEY}', calculating...")
 
@@ -367,7 +368,7 @@ def _calc_rho_bar(rck):
     ad = DATASET_CACHE.all_data(rck)
 
     # Get the average density over the region
-    rho_bar = ad.quantities.total_mass()[1] / (sim_size*a)**3
+    rho_bar = ad.quantities.total_mass()[1] / (sim_size)**3
 
     logger.debug(f"Calculated a rho_bar of '{rho_bar}' for dataset '{rck}'")
 
@@ -402,7 +403,7 @@ def _calc_overdensities(rck, radius, rho_bar, existing: unyt.unyt_array = None):
     logger.debug(f"Redshift z={z}")
 
     # Calculate the volume of the spheres that we sample on
-    V = 4/3 * np.pi * (a*R)**3
+    V = 4/3 * np.pi * (R)**3
 
     # Get the size of the simulation
     sim_size = (ds.domain_width[0]).to(dist_units)

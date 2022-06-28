@@ -47,21 +47,29 @@ def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
     if not yt.is_root():
         return
 
+    logger = logging.getLogger(__name__ + "." + plot_mass_function.__name__)
+
     x = np.log(bin_edges)
     y = np.log(hist)
 
-    plt.plot(x, y)
-    plt.gca().set_xscale("log")
+    fig = plt.figure()
+    ax = fig.gca()
 
-    plt.title(title)
-    plt.xlabel("$\log{M_{vir}}$")
-    plt.ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
+    ax.plot(x, y)
+    ax.set_xscale("log")
+
+    fig.suptitle(title)
+    ax.set_xlabel("$\log{M_{vir}}$")
+    ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
 
     # Ensure the folders exist before attempting to save an image to it...
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
-    plt.savefig(plot_f_name)
+    fig.savefig(plot_f_name)
+
+    logger.debug(f"Saved mass function figure to '{plot_f_name}'")
+
     plt.cla()
     plt.clf()
 
@@ -70,15 +78,23 @@ def plot_delta(deltas, num_bins, title, save_dir, plot_f_name):
     if not yt.is_root():
         return
 
-    plt.hist(deltas, bins=num_bins)
+    logger = logging.getLogger(__name__ + "." + plot_delta.__name__)
 
-    plt.title(title)
-    plt.xlabel("Overdensity value")
-    plt.ylabel("Overdensity $\delta$")
+    fig = plt.figure()
+    ax = fig.gca()
+
+    ax.hist(deltas, bins=num_bins)
+
+    fig.suptitle(title)
+    ax.set_xlabel("Overdensity value")
+    ax.set_ylabel("Overdensity $\delta$")
 
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
-    plt.savefig(plot_f_name)
+    fig.savefig(plot_f_name)
+
+    logger.debug(f"Saved overdensity plot to '{plot_f_name}'")
+
     plt.cla()
     plt.clf()

@@ -107,7 +107,7 @@ def determine_redshifts(sim_name: str) -> Dict[float, str]:
                         z = (1 / a_val) - 1
 
                         logger.debug(
-                            f"Read a readshift of z={z} from '{file}'")
+                            f"Read a redshift of z={z} from '{file}'")
 
                         map[z] = rockstar_ascii_reg.match(file).group(2)
 
