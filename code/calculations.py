@@ -1,4 +1,4 @@
-import json
+#!/usr/bin/env python3
 import logging
 import logging.config
 import os
@@ -6,6 +6,7 @@ import sys
 
 import numpy as np
 import unyt
+import yaml
 import yt
 import yt.extensions.legacy
 
@@ -27,7 +28,7 @@ DATASET_CACHE = dataset_cacher.new()
 def setup_logging() -> logging.Logger:
     logging_path = os.path.abspath(LOG_FILENAME)
     with open(logging_path) as f:
-        dict_config = json.load(f)
+        dict_config = yaml.safe_load(f)
 
     logging.config.dictConfig(dict_config)
 
@@ -79,9 +80,14 @@ def main(args):
             # Run the calculations over all the rockstar files found
             for rck in rockstars:
                 tasks(rck)
+                # Clear the data set cache between iterations as the
+                # data isn't persistent anyway, and this saves memory
+                logger.debug("Clearing dataset cache for new iteration")
+                DATASET_CACHE.clear()
 
             # Save the dataset cache to disk...
-            DATASET_CACHE.save()
+            # TODO: Make work??
+            # DATASET_CACHE.save()
 
             logger.info("DONE calculations\n")
 
@@ -145,13 +151,21 @@ def total_mass_function(rck):
 
     # Get the cached values, the _cache_total_mass_function() method can error,
     # so need to use the get() notation
-    masses = CACHE[rck].get(TOTAL_MASS_FUNCTION_KEY, [])
+    if TOTAL_MASS_FUNCTION_KEY not in CACHE[rck]:
+        logger.debug("Skipping plotting this total mass function...")
+        return
+
+    masses = CACHE[rck][TOTAL_MASS_FUNCTION_KEY]
 
     if len(masses) > 0:
         logger.info(f"Mass units are: {masses.units}")
 
+    bin_min = np.log10(np.min(masses))
+    bin_max = np.log10(np.max(masses))
+    log_bins = np.logspace(bin_min, bin_max, CONFIG.num_hist_bins)
+
     # Calculate the histogram of the masses
-    hist, bins = np.histogram(masses, bins=CONFIG.num_hist_bins)
+    hist, bins = np.histogram(masses, bins=log_bins)
 
     # Filter hist/bins for non-zero masses
     valid_idxs = np.where(hist > 0)
@@ -198,8 +212,24 @@ def _cache_total_mass_function(rck: str):
     # Load in the rockstar data set, potentially from a cache to optimise it
     ds = DATASET_CACHE.load(rck)
 
+    # If key is in cache, doesn't neet recalculation
+    needs_recalculation = TOTAL_MASS_FUNCTION_KEY not in CACHE[rck]
+    # entry could be in cache, but there might not be enough values
+    # cached
+    if not needs_recalculation:
+        amount_entries = len(CACHE[rck][TOTAL_MASS_FUNCTION_KEY])
+        logger.debug(
+            f"Cache entries exist: Have {amount_entries}, need {CONFIG.num_sphere_samples}")
+        needs_recalculation = amount_entries < CONFIG.num_sphere_samples
+        logger.debug(f"Need more calculations: {needs_recalculation}")
+    # Could potentially just force recalculation
+    needs_recalculation |= not CONFIG.use_total_masses_cache
+
+    logger.debug(
+        f"Override total mass cache? {not CONFIG.use_total_masses_cache}")
+
     # If a value for the calculation doesn't exist in the cache, need to calculate it...
-    if TOTAL_MASS_FUNCTION_KEY not in CACHE[rck] or not CONFIG.use_total_masses_cache:
+    if needs_recalculation:
 
         logger.debug(f"No masses cached for '{rck}' data set, caching...")
 
@@ -266,7 +296,7 @@ def rho_bar(rck):
         CACHE.save_cache()
 
     else:
-        logger.debug("Using cached `rho_bar` value...")
+        logger.debug("Using cached 'rho_bar' value...")
 
     # Get the cached rho_bar value
     rho_bar = CACHE[rck][RHO_BAR_KEY]
@@ -342,36 +372,40 @@ def halo_work(rck: str, radius: float):
     # Get the number of samples needed
     num_sphere_samples = CONFIG.num_sphere_samples
 
-    # If there isn't an entry for this radius sample size, need to do full sampling
-    if radius not in CACHE[rck][OVERDENSITIES_KEY] or not CONFIG.use_overdensities_cache:
+    # If cache entries exist, probably don't need to recalculate
+    needs_recalculation = radius not in CACHE[rck][OVERDENSITIES_KEY]
+    # Calculation required if not enough entries cached
+    if not needs_recalculation:
+        amount_entries = len(CACHE[rck][OVERDENSITIES_KEY][radius])
         logger.debug(
-            f"No entries found in cache for '{OVERDENSITIES_KEY}', calculating...")
+            f"Cache entries exist: Have {amount_entries}, need {num_sphere_samples}")
+        needs_recalculation = amount_entries < num_sphere_samples
+        logger.debug(f"Need more calculations: {needs_recalculation}")
+    # Could force recalculation
+    needs_recalculation |= not CONFIG.use_overdensities_cache
+
+    logger.debug(
+        f"Override overdensities cache? {not CONFIG.use_overdensities_cache}")
+
+    # If there isn't an entry for this radius sample size, need to do full sampling
+    if needs_recalculation:
+        logger.debug(
+            f"Calculating cache values for '{OVERDENSITIES_KEY}'...")
 
         # Get the cached rho_bar value
         rho_bar = CACHE[rck][RHO_BAR_KEY]
 
+        # Attempt to get the existing overdensities if they exist
+        existing_ods = CACHE[rck][OVERDENSITIES_KEY].get(
+            radius, unyt.unyt_array([]))
+
         # Do the full sampling and save the cache to disk
         CACHE[rck][OVERDENSITIES_KEY][radius] = _calc_overdensities(
-            rck, radius, rho_bar)
+            rck, radius, rho_bar, existing=existing_ods)
         CACHE.save_cache()
 
-    # The radius key can exist in the cache, but there may not be enough samples cached.
     else:
-        # Get the existing cached overdensities.
-        ods = CACHE[rck][OVERDENSITIES_KEY][radius]
-
-        # If there are two few samples, need to sample extra to make up the difference
-        if len(ods) < num_sphere_samples:
-            logger.debug(
-                f"Entries in cache exist, but need {num_sphere_samples - len(ods)} more values...")
-
-            # Make the extra samples and save to cache
-            CACHE[rck][OVERDENSITIES_KEY][radius] = _calc_overdensities(
-                rck, radius, rho_bar, existing=ods)
-            CACHE.save_cache()
-
-        else:
-            logger.debug("Using cached overdensities...")
+        logger.debug("Using cached overdensities...")
 
     ods = CACHE[rck][OVERDENSITIES_KEY][radius]
     logger.info(f"Overdensity units: {ods.units}")
@@ -412,33 +446,37 @@ def halo_work(rck: str, radius: float):
     if MASS_FUNCTION_KEY not in CACHE[rck]:
         CACHE[rck][MASS_FUNCTION_KEY] = {}
 
-    # If the radius key is missing, need to do a full sample run
-    if radius not in CACHE[rck][MASS_FUNCTION_KEY] or not CONFIG.use_masses_cache:
+    # If cache entries exist, may not need to recalculate
+    needs_recalculation = radius not in CACHE[rck][MASS_FUNCTION_KEY]
+    # run calculation if not enough values cached
+    if not needs_recalculation:
+        amount_entries = len(CACHE[rck][MASS_FUNCTION_KEY][radius])
         logger.debug(
-            f"No entries found in cache for '{MASS_FUNCTION_KEY}', calculating...")
+            f"Cache entries exist: Have {amount_entries}, need {num_sphere_samples}")
+        needs_recalculation = amount_entries < num_sphere_samples
+        logger.debug(f"Need more calculations: {needs_recalculation}")
+    # Could force recalculation
+    needs_recalculation |= not CONFIG.use_masses_cache
+
+    logger.debug(f"Override masses cache? {not CONFIG.use_masses_cache}")
+
+    # If the radius key is missing, need to do a full sample run
+    if needs_recalculation:
+        logger.debug(
+            f"Calculating cache values for '{MASS_FUNCTION_KEY}'...")
+
+        # Try get existing masses
+        existing_ms = CACHE[rck][MASS_FUNCTION_KEY].get(
+            radius, unyt.unyt_array([], "Msun/h"))
 
         # Run the full sample, and save the result to the cache
         CACHE[rck][MASS_FUNCTION_KEY][radius] = _sample_masses(
-            rck, radius)
+            rck, radius, existing=existing_ms)
         CACHE.save_cache()
 
     # The key can exist, but there may not be enough samples...
     else:
-        # Get the current cached halo masses
-        ms = CACHE[rck][MASS_FUNCTION_KEY][radius]
-
-        # If there are two few samples, need to make up the difference
-        if len(ms) < num_sphere_samples:
-            logger.debug(
-                f"Entries in cache exist, but need {num_sphere_samples - len(ms)} more values...")
-
-            # Run the extra sampling, and save all to the cache
-            CACHE[rck][MASS_FUNCTION_KEY][radius] = _sample_masses(
-                rck, radius, existing=ms)
-            CACHE.save_cache()
-
-        else:
-            logger.debug("Using cached halo masses...")
+        logger.debug("Using cached halo masses...")
 
     # Get the cached redshift for this data set file
     z = CACHE[rck][REDSHIFT_KEY]
