@@ -2,11 +2,11 @@ import re
 
 # Log file parameters
 
-LOG_FILENAME = "logging.json"
+LOG_FILENAME = "logging.yml"
 
 # Configuration parameters:
 
-CONFIGURATION_FILE = "default_config.yaml"
+CONFIGURATION_FILE = "configs/default_config.yml"
 CONF_KEY_NUM_HIST_BINS = "number_of_histogram_bins"
 CONF_KEY_NUM_OD_HIST_BINS = "number_of_overdensity_histogram_bins"
 CONF_KEY_NUM_SPHERE_SAMPLES = "number_of_sphere_samples"
@@ -19,6 +19,7 @@ CONF_KEY_CACHE_MASS = "use_masses_cache"
 CONF_KEY_CACHE_OD = "use_overdensities_cache"
 CONF_KEY_CACHE_RHO_BAR = "use_rho_bar_cache"
 CONF_KEY_CACHE_STD_DEV = "use_standard_deviation_cache"
+CONF_KEY_CACHE_PS = "use_press_schechter_cache"
 
 # Plot save path parameters
 
@@ -98,6 +99,11 @@ PATH_TO_CALCULATIONS_CACHE = "../data/calculations.pickle"
 TOTAL_MASS_FUNCTION_KEY = "all_masses"
 MASS_FUNCTION_KEY = "masses"
 RHO_BAR_KEY = "rho_bar"
+RHO_BAR_0_KEY = "rho_bar_0"
 OVERDENSITIES_KEY = "overdensities"
 REDSHIFT_KEY = "redshift"
 STD_DEV_KEY = "standard_deviation"
+PRESS_SCHECHTER_KEY = "press_schechter"
+UNITS_KEY = "units"
+UNITS_PS_MASS = "ps_mass"
+UNITS_PS_STD_DEV = "ps_std_dev"

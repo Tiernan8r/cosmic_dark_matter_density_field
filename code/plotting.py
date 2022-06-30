@@ -49,14 +49,15 @@ def plot_mass_function(hist, bin_edges, title, save_dir, plot_f_name):
 
     logger = logging.getLogger(__name__ + "." + plot_mass_function.__name__)
 
-    x = np.log(bin_edges)
-    y = np.log(hist)
+    x = np.log10(bin_edges)
+    y = np.log10(hist)
 
     fig = plt.figure()
     ax = fig.gca()
 
     ax.plot(x, y)
-    ax.set_xscale("log")
+    # ax.set_xscale("log")
+    # ax.set_yscale("log")
 
     fig.suptitle(title)
     ax.set_xlabel("$\log{M_{vir}}$")

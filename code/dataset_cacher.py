@@ -39,6 +39,10 @@ class CachedDataSet:
         else:
             return {}
 
+    def clear(self):
+        with self._mutex:
+            self._cache = {}
+
     def load(self, fname):
         logger = logging.getLogger(__name__ + "." + self.load.__name__)
 
