@@ -5,13 +5,12 @@ import re
 from typing import Dict, List, Tuple
 
 import caching
-from constants import (DATA, DIR_KEY, GROUPS_KEY, PATH_TO_HELPERS_CACHE,
-                       REDSHIFTS_KEY, ROCKSTAR, ROCKSTARS_KEY, ROOT,
-                       SNAPSHOTS_KEY, groups_regex, rockstar_a_factor,
-                       rockstar_ascii_reg, rockstar_regex, rockstar_root_regex,
-                       sim_regex, snapshots_regex)
+from constants import (DATA, DIR_KEY, GROUPS_KEY, REDSHIFTS_KEY, ROCKSTAR,
+                       ROCKSTARS_KEY, ROOT, SNAPSHOTS_KEY, groups_regex,
+                       rockstar_a_factor, rockstar_ascii_reg, rockstar_regex,
+                       rockstar_root_regex, sim_regex, snapshots_regex)
 
-CACHE = caching.Cacher(PATH_TO_HELPERS_CACHE)
+CACHE = caching.Cache()
 
 
 def _find_directories(sim_name: str) -> Tuple[str, str, str]:
@@ -53,10 +52,8 @@ def find_data_files(sim_name: str) -> Tuple[List[str], List[str], List[str]]:
 
     global CACHE
 
-    if sim_name not in CACHE:
-        CACHE[sim_name] = {}
-
-    if DIR_KEY not in CACHE[sim_name]:
+    halo_dirs = CACHE[sim_name, DIR_KEY].val
+    if halo_dirs is None:
         logger.debug(
             f"'{DIR_KEY}' key not found in cache, compiling new entry...")
 
@@ -66,27 +63,25 @@ def find_data_files(sim_name: str) -> Tuple[List[str], List[str], List[str]]:
         rockstars = find(rock, rockstar_regex, rockstar_root_regex)
         snapshots = find(snap, snapshots_regex)
 
-        dirs = {
+        halo_dirs = {
             SNAPSHOTS_KEY: sorted(snapshots),
             GROUPS_KEY: sorted(groups),
             ROCKSTARS_KEY: sorted(rockstars),
         }
 
-        CACHE[sim_name][DIR_KEY] = dirs
-        CACHE.save_cache()
+        CACHE[sim_name, DIR_KEY] = halo_dirs
 
-    dirs = CACHE[sim_name][DIR_KEY]
-    return dirs[SNAPSHOTS_KEY], dirs[GROUPS_KEY], dirs[ROCKSTARS_KEY]
+    return halo_dirs[SNAPSHOTS_KEY], halo_dirs[GROUPS_KEY], halo_dirs[ROCKSTARS_KEY]
 
 
 def determine_redshifts(sim_name: str) -> Dict[float, str]:
     logger = logging.getLogger(__name__ + "." + determine_redshifts.__name__)
 
     global CACHE
-    if sim_name not in CACHE:
-        CACHE[sim_name] = {}
 
-    if REDSHIFTS_KEY not in CACHE[sim_name]:
+    map = CACHE[sim_name, REDSHIFTS_KEY].val
+    # If the map is an empty dictionary
+    if map is None:
         logger.warn(
             f"'{REDSHIFTS_KEY}' key not found in cache, creating entry...")
 
@@ -111,10 +106,9 @@ def determine_redshifts(sim_name: str) -> Dict[float, str]:
 
                         map[z] = rockstar_ascii_reg.match(file).group(2)
 
-        CACHE[sim_name][REDSHIFTS_KEY] = map
-        CACHE.save_cache()
+        CACHE[sim_name, REDSHIFTS_KEY] = map
 
-    return CACHE[sim_name][REDSHIFTS_KEY]
+    return map
 
 
 def filter_redshifts(sim_name: str, desired: List[float], tolerance=0.02) -> Dict[float, str]:
