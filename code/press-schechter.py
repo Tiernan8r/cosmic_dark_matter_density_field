@@ -20,7 +20,7 @@ from constants import (LOG_FILENAME, MASS_FN_PLOTS_DIR,
                        REDSHIFT_KEY, RHO_BAR_0_KEY, STD_DEV_KEY, UNITS_KEY,
                        UNITS_PS_MASS, UNITS_PS_STD_DEV)
 
-CACHE = caching.Cacher(PATH_TO_CALCULATIONS_CACHE)
+CACHE = caching.Cache()
 DATASET_CACHE = dataset_cacher.new()
 
 DELTA_CRIT = 1.686
@@ -92,21 +92,15 @@ def tasks(rck):
 
     logger = logging.getLogger(tasks.__name__)
 
-    if rck not in CACHE:
-        logger.warning(f"'{rck}' entry not found in cache, nothing to do...")
-        return
-
-    if REDSHIFT_KEY not in CACHE[rck]:
-        ds = DATASET_CACHE.load(rck)
-        CACHE[rck][REDSHIFT_KEY] = ds.current_redshift
-
-    z = CACHE[rck][REDSHIFT_KEY]
+    ds = DATASET_CACHE.load(rck)
+    z = ds.current_redshift
 
     # =================================================================
     # CALCULATING RHO BAR 0
     # =================================================================
 
-    if RHO_BAR_0_KEY not in CACHE[rck] or not CONFIG.use_rho_bar_cache:
+    rho_0 = CACHE[rck, RHO_BAR_0_KEY, z].val
+    if rho_0 is None or not CONFIG.use_rho_bar_cache:
         logger.debug(
             f"No entries found in cache for '{RHO_BAR_0_KEY}', calculating...")
         ds = DATASET_CACHE.load(rck)
@@ -122,20 +116,19 @@ def tasks(rck):
         simulation_volume = simulation_size ** 3
         rho_0 = simulation_total_mass / simulation_volume
 
-        CACHE[rck][RHO_BAR_0_KEY] = rho_0
-        CACHE.save_cache()
+        CACHE[rck, RHO_BAR_0_KEY, z] = rho_0
 
     else:
         logger.debug("Using cached 'rho_bar_0' value...")
 
-    rho_0 = CACHE[rck][RHO_BAR_0_KEY]
     logger.info(f"Simulation average density is: {rho_0}")
 
     # =================================================================
     # PRESS SCHECHTER MASS FUNCTION
     # =================================================================
 
-    if PRESS_SCHECHTER_KEY not in CACHE[rck] or not CONFIG.use_press_schechter_cache:
+    press_schechter = CACHE[rck, PRESS_SCHECHTER_KEY, z].val
+    if press_schechter is None or not CONFIG.use_press_schechter_cache:
         logger.debug(
             f"No press-schechter values cached for '{rck}' data set, caching...")
 
@@ -156,13 +149,10 @@ def tasks(rck):
         for i in range(len(masses)):
             press_schechter[masses[i]] = ps[i]
 
-        CACHE[rck][PRESS_SCHECHTER_KEY] = press_schechter
-        CACHE.save_cache()
+        CACHE[rck, PRESS_SCHECHTER_KEY, z] = press_schechter
 
     else:
         logger.debug("Using cached press schechter values...")
-
-    press_schechter = CACHE[rck][PRESS_SCHECHTER_KEY]
 
     # =================================================================
     # PLOTTING
@@ -173,25 +163,19 @@ def tasks(rck):
 def _std_dev_func_mass(rck):
     logger = logging.getLogger(_std_dev_func_mass.__name__)
 
-    if rck not in CACHE:
-        logger.warning(f"'{rck}' entry not found in cache, nothing to do...")
-        return
+    ds = DATASET_CACHE.load(rck)
+    z = ds.current_redshift
 
-    if STD_DEV_KEY not in CACHE[rck]:
+    std_dev_radii = CACHE[rck, STD_DEV_KEY, z].val
+    if std_dev_radii is None:
         logger.warning(
             f"No standard deviations calculated for data set '{rck}'")
         return
 
-    std_dev_radii = CACHE[rck][STD_DEV_KEY]
-
-    if MASS_FUNCTION_KEY not in CACHE[rck]:
+    mass_radii = CACHE[rck, MASS_FUNCTION_KEY, z].val
+    if mass_radii is None:
         logger.warning(f"No masses calculated for data set '{rck}'")
         return
-
-    if UNITS_KEY not in CACHE[rck]:
-        CACHE[rck][UNITS_KEY] = {}
-
-    mass_radii = CACHE[rck][MASS_FUNCTION_KEY]
 
     matching_radii = [r for r in std_dev_radii if r in mass_radii]
 
@@ -199,24 +183,25 @@ def _std_dev_func_mass(rck):
 
     std_dev_map = {}
 
+    key = (rck, MASS_FUNCTION_KEY, z, float(radius))
     for radius in sorted(matching_radii):
-        total_mass = np.sum(CACHE[rck][MASS_FUNCTION_KEY][radius])
-        std_dev = CACHE[rck][STD_DEV_KEY][radius]
+        total_mass = np.sum(CACHE[key].val)
+        std_dev = CACHE[rck, STD_DEV_KEY, z, float(radius)]
 
         # Ensure that mass units are consistent
-        if UNITS_PS_MASS not in CACHE[rck][UNITS_KEY]:
-            CACHE[rck][UNITS_KEY][UNITS_PS_MASS] = total_mass.units
+        mass_units = CACHE[rck, UNITS_KEY, z, UNITS_PS_MASS].val
+        if mass_units is None:
+            CACHE[rck, UNITS_KEY, z, UNITS_PS_MASS] = total_mass.units
             logger.debug(f"Cached mass units as: {total_mass.units}")
 
-        mass_units = CACHE[rck][UNITS_KEY][UNITS_PS_MASS]
         total_mass = total_mass.to(mass_units)
 
         # Ensure that std dev units are consistent:
-        if UNITS_PS_STD_DEV not in CACHE[rck][UNITS_KEY]:
-            CACHE[rck][UNITS_KEY][UNITS_PS_STD_DEV] = std_dev.units
+        std_dev_units = CACHE[rck, UNITS_KEY, z, UNITS_PS_STD_DEV].val
+        if std_dev_units is None:
+            CACHE[rck, UNITS_KEY, z, UNITS_PS_STD_DEV] = std_dev.units
             logger.debug(f"Cached std dev units as: {std_dev.units}")
 
-        std_dev_units = CACHE[rck][UNITS_KEY][UNITS_PS_STD_DEV]
         std_dev = std_dev.to(std_dev_units)
 
         mass_value = float(total_mass.v)

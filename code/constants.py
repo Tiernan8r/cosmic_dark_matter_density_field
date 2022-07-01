@@ -74,14 +74,11 @@ snapshots_regex = re.compile("^snapshot_\d{3}.0.hdf5$")
 rockstar_root_regex = re.compile(".*rockstar/$")
 
 # Regex to match against the naming pattern of the simulation data sets
-sim_regex = re.compile("^(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC)$")
+sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
 
 # Regex to find redshifts from rockstar files
 rockstar_ascii_reg = re.compile("^(halos_(\d+).0).ascii$")
 rockstar_a_factor = re.compile("^#a = (.*)$")
-
-# Path to the cache used to optimise helpers functions
-PATH_TO_HELPERS_CACHE = "../data/helpers.pickle"
 
 # Keys used in the helpers cache:
 REDSHIFTS_KEY = "redshifts"
@@ -90,11 +87,8 @@ SNAPSHOTS_KEY = "snapshots"
 GROUPS_KEY = "groups"
 ROCKSTARS_KEY = "rockstars"
 
-# Path to the cache used to store random coords generated
-PATH_TO_COORDS_CACHE = "../data/coordinates.pickle"
+COORDINATES_CACHE_NAME = "coordinates"
 
-# Path to cache for calculated values
-PATH_TO_CALCULATIONS_CACHE = "../data/calculations.pickle"
 # Keys used in the cache
 TOTAL_MASS_FUNCTION_KEY = "all_masses"
 MASS_FUNCTION_KEY = "masses"

@@ -1,47 +1,114 @@
 import logging
 import os
 import pickle
-from typing import Any, Dict
+from typing import Dict, Sequence
+from constants import sim_regex
+import functools
 
 
-class Cacher:
+class Cache:
 
-    def __init__(self, cache_name: str):
-        self._path = cache_name
-        self._cache_loaded = False
-        self._cache = self.get_cache()
+    def __init__(self, caches_dir: str = "../data/"):
+        self._dir = caches_dir
+        self._cache: Dict[tuple, CacheEntry] = {}
 
-    def get_cache(self) -> Dict[str, Any]:
-        logger = logging.getLogger(__name__ + "." + self.get_cache.__name__)
+    def reset(self):
+        logger = logging.getLogger(__name__ + "." + self.reset.__name__)
+        logger.debug("Reseting cache...")
 
-        if not self._cache_loaded:
-            logger.debug(
-                f"Cache not loaded for '{self._path}', attempting to load...")
+        self._cache = {}
 
-            if os.path.exists(self._path):
-                with open(self._path, "rb") as f:
-                    logger.debug("Found existing cache, reading...")
-                    self._cache = pickle.load(f)
-            else:
-                logger.debug("Found no existing cache, creating empty dict")
-                self._cache = {}
+    def _parse_keys(self, keys: Sequence) -> tuple:
+        if not isinstance(keys, Sequence):
+            return keys
 
-            self._cache_loaded = True
+        key_copy = list(keys)
 
-        return self._cache
+        for i in range(len(key_copy)):
+            key = str(key_copy[i])
 
-    def save_cache(self):
-        logger = logging.getLogger(self.save_cache.__name__)
+            # Simplify the path to data files to just the data set type
+            m = sim_regex.match(key)
+            if m:
+                key = m.group(1)
+            key_copy[i] = key
+
+        return tuple(key_copy)
+
+    def __getitem__(self, keys: tuple):
+        keys = self._parse_keys(keys)
+
+        if keys not in self._cache:
+            self._cache[keys] = CacheEntry(self._dir, keys)
+
+        return self._cache[keys]
+
+    def __setitem__(self, keys: str, val):
+        keys = self._parse_keys(keys)
+
+        cache_entry = self[keys]
+        cache_entry.val = val
+
+    def __contains__(self, keys: str):
+        keys = self._parse_keys(keys)
+
+        return keys in self._cache
+
+
+class CacheEntry:
+
+    def __init__(self, dir: str, keys: tuple):
+        self._dir = dir
+        self._keys = keys
+        self._path = self._compile_path()
+        self._val = self._load()
+
+    def _compile_path(self):
+        nkeys = len(self._keys)
+
+        fname = ""
+        for i in range(nkeys):
+            fname += str(self._keys[i])
+            if i < nkeys - 1:
+                fname += "_"
+
+        fname += ".pickle"
+
+        return os.path.join(self._dir, fname)
+
+    @functools.lru_cache(maxsize=1)
+    def _load(self):
+        logger = logging.getLogger(__name__ + "." + self.__class__.__name__ + "." + self._load.__name__)
+
+        if os.path.exists(self._path):
+            logger.debug(f"Opening existing cache at '{self._path}'")
+
+            with open(self._path, "rb") as f:
+                return pickle.load(f)
+        else:
+            logger.debug(f"Cache doesn't exist for '{self._path}', creating one...")
+
+            return None
+
+    def _save(self):
+        logger = logging.getLogger(__name__ + "." + self.__class__.__name__ + "." + self._save.__name__)
+        logger.debug(f"Saving cache to '{self._path}'")
+
         with open(self._path, "wb") as f:
-            logger.debug(f"Saving cache to '{self._path}'")
-            pickle.dump(self._cache, f)
+            pickle.dump(self._val, f)
 
-    def __getitem__(self, key: str):
-        if key in self._cache:
-            return self._cache[key]
+    def set(self, val):
+        self._val = val
+        self._save()
 
-    def __setitem__(self, key: str, val):
-        self._cache[key] = val
+    def get(self):
+        self._val = self._load()
+        return self._val
 
-    def __contains__(self, key: str):
-        return key in self._cache
+    @property
+    def val(self):
+        return self.get()
+
+    @val.setter
+    def val(self, v):
+        self.set(v)
