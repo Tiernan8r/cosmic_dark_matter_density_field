@@ -3,7 +3,6 @@ import os
 import pickle
 from typing import Dict, Sequence
 from constants import sim_regex
-import functools
 
 
 class Cache:
@@ -61,7 +60,6 @@ class CacheEntry:
         self._dir = dir
         self._keys = keys
         self._path = self._compile_path()
-        self._val = self._load()
 
     def _compile_path(self):
         nkeys = len(self._keys)
@@ -76,9 +74,9 @@ class CacheEntry:
 
         return os.path.join(self._dir, fname)
 
-    @functools.lru_cache(maxsize=1)
     def _load(self):
-        logger = logging.getLogger(__name__ + "." + self.__class__.__name__ + "." + self._load.__name__)
+        logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__ + "." + self._load.__name__)
 
         if os.path.exists(self._path):
             logger.debug(f"Opening existing cache at '{self._path}'")
@@ -86,29 +84,23 @@ class CacheEntry:
             with open(self._path, "rb") as f:
                 return pickle.load(f)
         else:
-            logger.debug(f"Cache doesn't exist for '{self._path}', creating one...")
+            logger.debug(
+                f"Cache doesn't exist for '{self._path}', creating one...")
 
             return None
 
-    def _save(self):
-        logger = logging.getLogger(__name__ + "." + self.__class__.__name__ + "." + self._save.__name__)
+    def _save(self, val):
+        logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__ + "." + self._save.__name__)
         logger.debug(f"Saving cache to '{self._path}'")
 
         with open(self._path, "wb") as f:
-            pickle.dump(self._val, f)
-
-    def set(self, val):
-        self._val = val
-        self._save()
-
-    def get(self):
-        self._val = self._load()
-        return self._val
+            pickle.dump(val, f)
 
     @property
     def val(self):
-        return self.get()
+        return self._load()
 
     @val.setter
     def val(self, v):
-        self.set(v)
+        self._save(v)

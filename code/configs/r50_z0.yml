@@ -7,10 +7,6 @@ radii:
 - 50
 redshifts:
 - 0
-- 1
-- 2
-- 6
-- 10
 root: /disk12/legacy
 simulation_names:
 - GVD_C700_l1600n2048_SLEGAC

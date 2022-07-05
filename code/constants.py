@@ -6,7 +6,7 @@ LOG_FILENAME = "logging.yml"
 
 # Configuration parameters:
 
-CONFIGURATION_FILE = "configs/default_config.yml"
+CONFIGURATION_FILE = "configs/default.yml"
 CONF_KEY_NUM_HIST_BINS = "number_of_histogram_bins"
 CONF_KEY_NUM_OD_HIST_BINS = "number_of_overdensity_histogram_bins"
 CONF_KEY_NUM_SPHERE_SAMPLES = "number_of_sphere_samples"
@@ -20,6 +20,7 @@ CONF_KEY_CACHE_OD = "use_overdensities_cache"
 CONF_KEY_CACHE_RHO_BAR = "use_rho_bar_cache"
 CONF_KEY_CACHE_STD_DEV = "use_standard_deviation_cache"
 CONF_KEY_CACHE_PS = "use_press_schechter_cache"
+CONF_KEY_CACHE_SPHERE_SAMPLES = "use_sphere_samples"
 
 # Plot save path parameters
 
@@ -101,3 +102,4 @@ PRESS_SCHECHTER_KEY = "press_schechter"
 UNITS_KEY = "units"
 UNITS_PS_MASS = "ps_mass"
 UNITS_PS_STD_DEV = "ps_std_dev"
+SPHERES_KEY = "spheres"
