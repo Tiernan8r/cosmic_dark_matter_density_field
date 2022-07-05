@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH -p all
-#SBATCH --job-name=r100
-#SBATCH -o logs/r100.log
+#SBATCH --job-name=r100_z0
+#SBATCH -o logs/r100_z0.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
@@ -16,7 +16,7 @@
 
 NTASKS=1
 NTHREAD=1
-CONFIG_FILE="configs/r100.yml"
+CONFIG_FILE="configs/r100_z0.yml"
 
 cd ${SLURM_SUBMIT_DIR}
 

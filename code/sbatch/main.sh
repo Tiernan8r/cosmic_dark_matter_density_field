@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH -p all
-#SBATCH --job-name=calculations
-#SBATCH -o calculations.log
+#SBATCH --job-name=main
+#SBATCH -o logs/main.log
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=2
@@ -22,5 +22,5 @@ cd ${SLURM_SUBMIT_DIR}
 
 . activate_environment.sh
 
-# srun -n ${NTASKS} -c ${NTHREAD} python calculations.py
-mpirun -np ${NTASKS} python calculations.py "${CONFIG_FILE}"
+# srun -n ${NTASKS} -c ${NTHREAD} python main.py
+mpirun -np ${NTASKS} python main.py "${CONFIG_FILE}"

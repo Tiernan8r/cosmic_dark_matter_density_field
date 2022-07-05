@@ -8,17 +8,17 @@ import yaml
 
 from constants import (CONF_KEY_CACHE_MASS, CONF_KEY_CACHE_OD,
                        CONF_KEY_CACHE_PS, CONF_KEY_CACHE_RHO_BAR,
-                       CONF_KEY_CACHE_STD_DEV, CONF_KEY_CACHE_TOTAL,
-                       CONF_KEY_NUM_HIST_BINS, CONF_KEY_NUM_OD_HIST_BINS,
-                       CONF_KEY_NUM_SPHERE_SAMPLES, CONF_KEY_RADII,
-                       CONF_KEY_REDSHIFTS, CONF_KEY_ROOT, CONF_KEY_SIM_NAMES,
-                       CONFIGURATION_FILE)
+                       CONF_KEY_CACHE_SPHERE_SAMPLES, CONF_KEY_CACHE_STD_DEV,
+                       CONF_KEY_CACHE_TOTAL, CONF_KEY_NUM_HIST_BINS,
+                       CONF_KEY_NUM_OD_HIST_BINS, CONF_KEY_NUM_SPHERE_SAMPLES,
+                       CONF_KEY_RADII, CONF_KEY_REDSHIFTS, CONF_KEY_ROOT,
+                       CONF_KEY_SIM_NAMES, CONFIGURATION_FILE)
 from defaults import (DEF_NUM_HIST_BINS, DEF_NUM_OD_HIST_BINS,
                       DEF_NUM_SPHERE_SAMPLES, DEF_RADII, DEF_REDSHIFTS,
                       DEF_ROOT, DEF_SIM_NAMES, DEF_USE_MASSES_CACHE,
                       DEF_USE_OVERDENSITIES_CACHE, DEF_USE_PS_CACHE,
-                      DEF_USE_RHO_BAR_CACHE, DEF_USE_STD_DEV_CACHE,
-                      DEF_USE_TOTAL_MASSES_CACHE)
+                      DEF_USE_RHO_BAR_CACHE, DEF_USE_SPHERE_SAMPLES,
+                      DEF_USE_STD_DEV_CACHE, DEF_USE_TOTAL_MASSES_CACHE)
 
 
 def new(args: List[str]) -> Configuration:
@@ -113,3 +113,7 @@ class Configuration:
     @property
     def use_press_schechter_cache(self):
         return self._config.get(CONF_KEY_CACHE_PS, DEF_USE_PS_CACHE)
+
+    @property
+    def use_sphere_samples(self):
+        return self._config.get(CONF_KEY_CACHE_SPHERE_SAMPLES, DEF_USE_SPHERE_SAMPLES)

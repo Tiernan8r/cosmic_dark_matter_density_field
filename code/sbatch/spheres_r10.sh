@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH -p all
-#SBATCH --job-name=r100
-#SBATCH -o logs/r100.log
+#SBATCH --job-name=spheres_r10
+#SBATCH -o logs/spheres_r10.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
@@ -16,11 +16,11 @@
 
 NTASKS=1
 NTHREAD=1
-CONFIG_FILE="configs/r100.yml"
+CONFIG_FILE="configs/r10.yml"
 
 cd ${SLURM_SUBMIT_DIR}
 
 . activate_environment.sh
 
 # srun -n ${NTASKS} -c ${NTHREAD} python main.py
-mpirun -np ${NTASKS} python main.py "${CONFIG_FILE}"
+mpirun -np ${NTASKS} python sample.py "${CONFIG_FILE}"

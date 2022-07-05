@@ -1,12 +1,13 @@
+import __future__
+
 import logging
 import os
-import pickle
-import numpy as np
-
-import yt
-import unyt
 import threading
-import __future__
+
+import numpy as np
+import unyt
+import yt
+import yt.extensions.legacy
 
 _existing_instance = None
 

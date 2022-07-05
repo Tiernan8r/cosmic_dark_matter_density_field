@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -100,3 +101,32 @@ def plot_delta(deltas, num_bins, title, save_dir, plot_f_name):
 
     plt.cla()
     plt.clf()
+
+
+def ps_mass_function(z, ps: Dict, title, save_dir, plot_name):
+    logger = logging.getLogger(plot_mass_function.__name__)
+    logger.info(f"Generating figure for redshift {z}")
+
+    x = np.array(list(ps.keys()))
+    y = np.array(list(ps.values()))
+
+    fig = plt.figure()
+    ax = fig.gca()
+
+    ax.plot(np.log10(x), np.log10(y))
+    fig.suptitle(title)
+
+    # ax = plt.gca()
+    # ax.set_xscale("log")
+    # ax.set_yscale("log")
+
+    ax.set_xlabel("$\log{M_{vir}}$")
+    ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
+
+    # Ensure the folders exist before attempting to save an image to it...
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
+
+    fig.savefig(plot_name)
+
+    logger.debug(f"Saved mass function figure to '{plot_name}'")
