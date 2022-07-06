@@ -6,7 +6,4 @@ redshifts:
 - 2
 - 6
 - 10
-root: /disk12/legacy
-simulation_names:
-- GVD_C700_l1600n2048_SLEGAC
 use_rho_bar_cache: true

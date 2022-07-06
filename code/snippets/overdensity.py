@@ -20,10 +20,10 @@ ds = yt.load(fname)
 
 ad = ds.all_data()
 
-sim_size = ds.domain_width[0].to(ds.units.Mpc)
+sim_size = ds.domain_width[0].to(ds.units.Mpc / ds.units.h)
 total_volume = sim_size ** 3
 
-total_mass = ad.quantities.total_mass()[1].to(ds.units.Msun)
+total_mass = ad.quantities.total_mass()[1].to(ds.units.Msun / ds.units.h)
 
 rho_bar = total_mass / total_volume
 
@@ -51,7 +51,7 @@ volume = 4 / 3 * np.pi * r**3
 for c in coords:
     sp = ds.sphere(c, RADIUS)
 
-    mass = sp.quantities.total_mass()[1].to(ds.units.Msun)
+    mass = sp.quantities.total_mass()[1].to(ds.units.Msun / ds.units.h)
     density = mass / volume
 
     od = (density - rho_bar) / rho_bar

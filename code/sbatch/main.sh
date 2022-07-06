@@ -16,11 +16,11 @@
 
 NTASKS=16
 NTHREAD=1
-CONFIG_FILE="configs/massive.yml"
+CONFIG_FILE="configs/default.yml"
 
 cd ${SLURM_SUBMIT_DIR}
 
 . activate_environment.sh
 
-# srun -n ${NTASKS} -c ${NTHREAD} python main.py
-mpirun -np ${NTASKS} python main.py "${CONFIG_FILE}"
+# srun -n ${NTASKS} -c ${NTHREAD} python src/main.py
+mpirun -np ${NTASKS} python src/main.py "${CONFIG_FILE}"

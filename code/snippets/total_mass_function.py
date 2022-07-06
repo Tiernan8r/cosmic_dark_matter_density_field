@@ -15,12 +15,12 @@ fname = DATAFILE.format(REDSHIFT_NUMBER)
 ds = yt.load(fname)
 ad = ds.all_data()
 
-masses = ad["halos", "particle_mass"].to(ds.units.Msun)
+masses = ad["halos", "particle_mass"].to(ds.units.Msun / ds.units.h)
 
 print("Mass units:", masses.units)
 
 # Volume of the box
-sim_size = ds.domain_width[0].to(ds.units.Mpc)
+sim_size = ds.domain_width[0].to(ds.units.Mpc / ds.units.h)
 volume = sim_size ** 3
 
 print("Volume of simulation:", volume)
