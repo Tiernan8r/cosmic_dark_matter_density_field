@@ -22,5 +22,5 @@ cd ${SLURM_SUBMIT_DIR}
 
 . activate_environment.sh
 
-# srun -n ${NTASKS} -c ${NTHREAD} python rho_bar.py
-mpirun -np ${NTASKS} python rho_bar.py "${CONFIG_FILE}"
+# srun -n ${NTASKS} -c ${NTHREAD} python src/calc/rho_bar.py
+mpirun -np ${NTASKS} python src/calc/rho_bar.py "${CONFIG_FILE}"
