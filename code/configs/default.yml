@@ -1,26 +1,7 @@
 %YAML 1.2
 ---
-number_of_histogram_bins: 100
-number_of_overdensity_histogram_bins: 100
-number_of_sphere_samples: 1000
-radii:
-- 10
-- 20
-- 50
-- 100
-redshifts:
-- 0
-- 1
-- 2
-- 6
-# - 10
-root: /disk12/legacy
-simulation_names:
-- GVD_C700_l1600n2048_SLEGAC
-use_masses_cache: true
-use_overdensities_cache: true
-use_rho_bar_cache: true
-use_standard_deviation_cache: true
-use_total_cache: false
-use_press_schechter_cache: false
-use_sphere_samples: true
+sampling: !include defaults/sampling.yaml
+radii: !include defaults/radii.yaml
+redshifts: !include defaults/redshifts.yaml
+sim_data: !include defaults/sim_data.yaml
+caches: !include defaults/caches.yaml

@@ -9,14 +9,13 @@ if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
 import unyt
-from src.cache import caching
-from src.calc.classes import calculator
+import src.calc.sample as sample
 from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY, sim_regex
 from src.init import setup
 from src.util import helpers
 
 
-class RhoBar(calculator.Calculator):
+class RhoBar(sample.Sampler):
 
     def rho_bar_0(self, rck):
 
@@ -26,7 +25,8 @@ class RhoBar(calculator.Calculator):
 
         logger.debug(
             f"Finding rockstar file for a redshift of 0 on simulation '{sim_name}'")
-        _, _, rockstars = helpers.filter_data_files(sim_name, desired=[0])
+        _, _, rockstars = helpers.filter_data_files(
+            sim_name, self._config.sim_data.root, desired=[0])
 
         if len(rockstars) > 1:
             logger.warning(
@@ -47,7 +47,7 @@ class RhoBar(calculator.Calculator):
         logger.info(f"Working on rho bar 0 value:")
 
         rho_0 = self._cache[rck, RHO_BAR_0_KEY].val
-        if rho_0 is None or not self._config.use_rho_bar_cache:
+        if rho_0 is None or not self._config.caches.use_rho_bar_cache:
             logger.debug(
                 f"No entries found in cache for '{RHO_BAR_0_KEY}', calculating...")
             try:
@@ -96,7 +96,7 @@ class RhoBar(calculator.Calculator):
 
         # Calculate the density of the entire region if is not cached...
         rho_bar = self._cache[rck, RHO_BAR_KEY, z].val
-        if rho_bar is None or not self._config.use_rho_bar_cache:
+        if rho_bar is None or not self._config.caches.use_rho_bar_cache:
             logger.debug(
                 f"No entries found in cache for '{RHO_BAR_KEY}', calculating...")
 
@@ -124,6 +124,8 @@ class RhoBar(calculator.Calculator):
 
         logger.info(f"Average density calculated as: {rho_bar}")
         logger.info(f"Density units are: {rho_bar.units}")
+
+        return rho_bar
 
     def _calc_rho_bar(self, rck):
         """
@@ -167,28 +169,27 @@ class RhoBar(calculator.Calculator):
 
 
 def main(args):
-    conf, ds_cache = setup.setup(args)
+    d = setup.setup(args)
 
     logger = logging.getLogger(main.__name__)
 
-    sim_names = conf.sim_names
+    sim_names = d.config.sim_data.simulation_names
     for sim_name in sim_names:
         logger.debug(f"Showing average densities for '{sim_name}'")
 
-        cache = caching.Cache()
-
-        rb = RhoBar(conf, ds_cache, cache, sim_name)
-        _, _, rockstars = helpers.filter_data_files(sim_name, conf.redshifts)
+        rb = RhoBar(d)
+        _, _, rockstars = helpers.filter_data_files(
+            sim_name, d.config.sim_data.root, d.config.redshifts)
         for rck in rockstars:
 
-            if not conf.use_rho_bar_cache:
+            if not d.config.caches.use_rho_bar_cache:
                 try:
                     rb.rho_bar_0(rck)
                     rb.rho_bar(rck)
                 except TypeError as te:
                     logger.warning(te)
 
-            ds = ds_cache.load(rck)
+            ds = d.dataset_cache.load(rck)
             z = ds.current_redshift
 
             key_0 = (rck, RHO_BAR_0_KEY)
@@ -198,7 +199,7 @@ def main(args):
             dist_units = ds.units.Mpc / ds.units.h
             standard_units = mass_units / dist_units**3
 
-            rho_bar_0 = cache[key_0].val
+            rho_bar_0 = d.cache[key_0].val
             if rho_bar_0 is None:
                 logger.warning(f"No rho_bar_0 found!")
             else:
@@ -206,7 +207,7 @@ def main(args):
                 logger.info(
                     f"Rho bar 0 is: {rho_bar_0.to(standard_units)}")
 
-            rho_bar = cache[key].val
+            rho_bar = d.cache[key].val
             if rho_bar is None:
                 logger.warning(f"No rho bar found!")
             else:

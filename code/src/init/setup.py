@@ -1,16 +1,16 @@
 import logging
 import logging.config
 import os
-from typing import Tuple
 
 import yaml
 import yt
-from src.cache import dataset
+from src.cache import caching, dataset
 from src.const.constants import LOG_FILENAME
+from src.data import Data
 from src.init import conf as config
 
 
-def setup(args) -> Tuple[config.Configuration, dataset.CachedDataSet]:
+def setup(args) -> Data:
     """
     Default initialisation steps
     """
@@ -21,19 +21,19 @@ def setup(args) -> Tuple[config.Configuration, dataset.CachedDataSet]:
     logger.debug("Logging initialised")
 
     # Read the configuration file from the args if provided.
-    conf = config.new(args)
+    conf, conf_file = config.new(args)
 
-    logger.debug(f"Configuration read from file '{conf._config_file}'")
+    logger.debug(f"Configuration read from file '{conf_file}'")
 
     yt.enable_parallelism()
     logger.info("Parallelism enabled...")
 
-    logger.debug(f"Reading data set(s) in: {conf.paths}")
-
     ds_cache = dataset.new()
     logger.debug("Created data set cached reader")
 
-    return conf, ds_cache 
+    cache = caching.Cache()
+
+    return Data(conf, ds_cache, cache)
 
 
 def setup_logging() -> logging.Logger:

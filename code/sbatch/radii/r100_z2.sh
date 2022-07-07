@@ -16,7 +16,7 @@
 
 NTASKS=1
 NTHREAD=1
-CONFIG_FILE="configs/radii/r100_Z2.yml"
+CONFIG_FILE="configs/radii/r100_z2.yml"
 
 cd ${SLURM_SUBMIT_DIR}
 

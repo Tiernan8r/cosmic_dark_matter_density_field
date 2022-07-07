@@ -7,22 +7,24 @@ import sys
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
-import src.calc.classes.calculator as calculator
+from src import data
 import yt
-from src.cache import caching
 from src.const.constants import SPHERES_KEY
 from src.init import setup
 from src.util import coordinates, helpers
 
 
-class Sampler(calculator.Calculator):
+class Sampler(data.Data):
+
+    def __init__(self, d: data.Data):
+        super().__init__(*d.compile())
 
     def sample(self, rck, radius, z) -> list:
 
         key = (rck, SPHERES_KEY, z, float(radius))
 
         existing_samples = []
-        if self._config.use_sphere_samples:
+        if self._config.caches.use_sphere_samples:
             existing_samples = self._cache[key].val
 
         new_samples = self._cache_sample(rck, radius, existing_samples)
@@ -45,7 +47,7 @@ class Sampler(calculator.Calculator):
         # Get the distance units used by the simulation
         dist_units = ds.units.Mpc / ds.units.h
         # Convert the radius to the distance units
-        R = radius * dist_units
+        R = (radius * dist_units).to("code_length")
 
         z = ds.current_redshift
 
@@ -55,7 +57,7 @@ class Sampler(calculator.Calculator):
         logger.debug(f"Redshift z={z}")
 
         # Get the size of the simulation
-        sim_size = (ds.domain_width[0]).to(dist_units) * a
+        sim_size = ds.domain_width[0]
         logger.debug(f"Simulation size = {sim_size}")
 
         # Bound the coordinate sampling, so that the spheres only overlap with
@@ -65,7 +67,7 @@ class Sampler(calculator.Calculator):
 
         # Get the desired number of random coords for this sampling
         coords = coordinates.rand_coords(
-            self._config.num_sphere_samples, min=coord_min, max=coord_max) * dist_units
+            self._config.sampling.num_sp_samples, min=coord_min, max=coord_max) * dist_units
 
         # Truncate the number of values to calculate, if some already exist...
         masses = []
@@ -73,7 +75,7 @@ class Sampler(calculator.Calculator):
             coords = coords[len(existing):]
             masses = existing
             logger.debug(
-                f"Have {len(existing)} existing samples, need {self._config.num_sphere_samples - len(existing)} more...")
+                f"Have {len(existing)} existing samples, need {self._config.sampling.num_sp_samples - len(existing)} more...")
 
         indexed_coords = [(i, coords[i]) for i in range(len(coords))]
 
@@ -108,7 +110,7 @@ class Sampler(calculator.Calculator):
             masses.append(m)
 
         logger.info(
-            f"DONE reading {self._config.num_sphere_samples} sphere samples\n")
+            f"DONE reading {self._config.sampling.num_sp_samples} sphere samples\n")
 
         # Convert mass units to Msun
         # masses = masses.to(ds.units.Msun / ds.units.h)
@@ -116,57 +118,46 @@ class Sampler(calculator.Calculator):
         return masses
 
 
-CACHE = caching.Cache()
-CONFIG = None
-CURRENT_SIM_NAME = None
-DATASET_CACHE = None
-
-
 def main(args):
     if yt.is_root():
 
         # Setup logging/config reading & parallelisation
-        global CONFIG, DATASET_CACHE
-
-        CONFIG, DATASET_CACHE = setup.setup(args)
+        d = setup.setup(args)
 
         logger = logging.getLogger(main.__name__)
 
-        global CURRENT_SIM_NAME
-
-        for sim_name in CONFIG.sim_names:
-            CURRENT_SIM_NAME = sim_name
+        for sim_name in d.config.sim_data.simulation_names:
+            d.sim_name = sim_name
 
             logger.info(f"Working on simulation: {sim_name}")
 
             # Find halos for data set
             logger.debug(
-                f"Filtering halo files to look for redshifts: {CONFIG.redshifts}")
+                f"Filtering halo files to look for redshifts: {d.config.redshifts}")
             _, _, rockstars = helpers.filter_data_files(
-                CURRENT_SIM_NAME, CONFIG.redshifts)
+                d.sim_name, d.config.sim_data.root, d.config.redshifts)
             logger.debug(
                 f"Found {len(rockstars)} rockstar files that match these redshifts")
 
             # Run the calculations over all the rockstar files found
             for rck in rockstars:
 
-                sampler = Sampler(CONFIG, DATASET_CACHE,
-                                  CACHE, CURRENT_SIM_NAME)
+                sampler = Sampler(d)
 
-                ds = DATASET_CACHE.load(rck)
+                ds = d.dataset_cache.load(rck)
                 z = ds.current_redshift
                 logger.info(f"Redshift is: {z}")
 
-                for radius in CONFIG.radii:
+                for radius in d.config.radii:
                     logger.info(f"Generating samples at r={radius} & z={z}")
                     sampler.sample(rck, radius, z)
 
                 # Clear the data set cache between iterations as the
                 # data isn't persistent anyway, and this saves memory
                 logger.debug("Clearing dataset cache for new iteration")
-                DATASET_CACHE.clear()
+                d.dataset_cache.clear()
 
-            CACHE.reset()
+            d.cache.reset()
 
             logger.info("DONE calculations\n")
 

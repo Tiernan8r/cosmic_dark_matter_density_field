@@ -5,7 +5,6 @@ import os
 import threading
 
 import numpy as np
-import unyt
 import yt
 import yt.extensions.legacy
 

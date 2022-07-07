@@ -2,12 +2,12 @@ import logging
 from typing import Dict
 
 import numpy as np
-from src.calc.classes import calculator
+import src.calc.sample as sample
 from src.const.constants import (MASS_FUNCTION_KEY, STD_DEV_KEY, UNITS_KEY,
                                  UNITS_PS_MASS, UNITS_PS_STD_DEV)
 
 
-class StandardDeviation(calculator.Calculator):
+class StandardDeviation(sample.Sampler):
 
     def std_dev_func_mass(self, rck) -> Dict[float, float]:
         logger = logging.getLogger(
@@ -22,14 +22,16 @@ class StandardDeviation(calculator.Calculator):
 
             masses = self._cache[rck, MASS_FUNCTION_KEY, z, float(radius)].val
             if masses is None:
-                logger.warning(f"No masses calculated for dataset '{rck}' at a radius of '{radius}'")
+                logger.warning(
+                    f"No masses calculated for dataset '{rck}' at a radius of '{radius}'")
                 continue
 
             avg_mass = np.average(masses)
 
             std_dev = self._cache[rck, STD_DEV_KEY, z, float(radius)].val
             if std_dev is None:
-                logger.warning(f"No standard deviation calculated for data set '{rck}' at a radius '{radius}'")
+                logger.warning(
+                    f"No standard deviation calculated for data set '{rck}' at a radius '{radius}'")
                 continue
 
             # Ensure that mass units are consistent

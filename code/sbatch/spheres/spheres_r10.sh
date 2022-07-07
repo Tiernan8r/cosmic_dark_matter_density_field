@@ -23,4 +23,4 @@ cd ${SLURM_SUBMIT_DIR}
 . activate_environment.sh
 
 # srun -n ${NTASKS} -c ${NTHREAD} python src/calc/main.py
-mpirun -np ${NTASKS} python src/calc/classes/sample.py "${CONFIG_FILE}"
+mpirun -np ${NTASKS} python src/calc/sample.py "${CONFIG_FILE}"

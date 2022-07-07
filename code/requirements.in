@@ -1,6 +1,7 @@
 pip-tools
 numpy
 matplotlib
-yt
+git+https://github.com/brittonsmith/yt@gadget4
 yt-astro-analysis
 autopep8
+unyt

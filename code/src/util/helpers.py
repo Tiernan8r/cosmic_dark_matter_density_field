@@ -5,7 +5,7 @@ import re
 from typing import Dict, List, Tuple
 
 from src.const.constants import (DATA, DIR_KEY, GROUPS_KEY, REDSHIFTS_KEY, ROCKSTAR,
-                       ROCKSTARS_KEY, ROOT, SNAPSHOTS_KEY, groups_regex,
+                       ROCKSTARS_KEY, SNAPSHOTS_KEY, groups_regex,
                        rockstar_a_factor, rockstar_ascii_reg, rockstar_regex,
                        rockstar_root_regex, sim_regex, snapshots_regex)
 from src.cache import caching
@@ -13,7 +13,7 @@ from src.cache import caching
 CACHE = caching.Cache()
 
 
-def _find_directories(sim_name: str) -> Tuple[str, str, str]:
+def _find_directories(sim_name: str, root) -> Tuple[str, str, str]:
     logger = logging.getLogger(__name__ + "." + _find_directories.__name__)
 
     if not sim_regex.match(sim_name):
@@ -24,15 +24,15 @@ def _find_directories(sim_name: str) -> Tuple[str, str, str]:
     logger.debug(
         f"Compiling paths using the provided '{sim_name}' simulation data set name.")
 
-    snapshots_root = ROOT + sim_name + "/" + DATA
+    snapshots_root = root + sim_name + "/" + DATA
     groups_root = snapshots_root
-    rockstar_root = ROOT + sim_name + "/" + ROCKSTAR
+    rockstar_root = root + sim_name + "/" + ROCKSTAR
 
     return snapshots_root, groups_root, rockstar_root
 
 
-def find_data_files(sim_name: str) -> Tuple[List[str], List[str], List[str]]:
-    logger = logging.getLogger(__name__ + "." + find_data_files.__name__)
+def _find_data_files(sim_name: str, root: str) -> Tuple[List[str], List[str], List[str]]:
+    logger = logging.getLogger(__name__ + "." + _find_data_files.__name__)
 
     def find(dirname: str, file_reg: re.Pattern, root_reg: re.Pattern = None):
         lg = logging.getLogger(logger.name + "." + find.__name__)
@@ -57,7 +57,7 @@ def find_data_files(sim_name: str) -> Tuple[List[str], List[str], List[str]]:
         logger.debug(
             f"'{DIR_KEY}' key not found in cache, compiling new entry...")
 
-        snap, group, rock = _find_directories(sim_name)
+        snap, group, rock = _find_directories(sim_name, root)
 
         groups = find(group, groups_regex)
         rockstars = find(rock, rockstar_regex, rockstar_root_regex)
@@ -74,8 +74,8 @@ def find_data_files(sim_name: str) -> Tuple[List[str], List[str], List[str]]:
     return halo_dirs[SNAPSHOTS_KEY], halo_dirs[GROUPS_KEY], halo_dirs[ROCKSTARS_KEY]
 
 
-def determine_redshifts(sim_name: str) -> Dict[float, str]:
-    logger = logging.getLogger(__name__ + "." + determine_redshifts.__name__)
+def _determine_redshifts(sim_name: str, root: str) -> Dict[float, str]:
+    logger = logging.getLogger(__name__ + "." + _determine_redshifts.__name__)
 
     global CACHE
 
@@ -85,7 +85,7 @@ def determine_redshifts(sim_name: str) -> Dict[float, str]:
         logger.warn(
             f"'{REDSHIFTS_KEY}' key not found in cache, creating entry...")
 
-        _, _, rock = _find_directories(sim_name)
+        _, _, rock = _find_directories(sim_name, root)
 
         map = {}
 
@@ -111,10 +111,10 @@ def determine_redshifts(sim_name: str) -> Dict[float, str]:
     return map
 
 
-def filter_redshifts(sim_name: str, desired: List[float], tolerance=0.02) -> Dict[float, str]:
-    logger = logging.getLogger(__name__ + "." + filter_redshifts.__name__)
+def _filter_redshifts(sim_name: str, root: str, desired: List[float], tolerance=0.02) -> Dict[float, str]:
+    logger = logging.getLogger(__name__ + "." + _filter_redshifts.__name__)
 
-    all_redshifts = determine_redshifts(sim_name)
+    all_redshifts = _determine_redshifts(sim_name, root)
 
     redshifts = {}
 
@@ -127,11 +127,11 @@ def filter_redshifts(sim_name: str, desired: List[float], tolerance=0.02) -> Dic
     return redshifts
 
 
-def filter_data_files(sim_name: str, desired: List[float], tolerance=0.02) -> Tuple[List[str], List[str], List[str]]:
+def filter_data_files(sim_name: str, root: str, desired: List[float], tolerance=0.02) -> Tuple[List[str], List[str], List[str]]:
     logger = logging.getLogger(__name__ + "." + filter_data_files.__name__)
 
-    redshifts = filter_redshifts(sim_name, desired, tolerance)
-    snaps, groups, rocks = find_data_files(sim_name)
+    redshifts = _filter_redshifts(sim_name, root, desired, tolerance)
+    snaps, groups, rocks = _find_data_files(sim_name, root)
 
     logger.debug(f"Filtering data files around redshifts '{desired}'")
 
