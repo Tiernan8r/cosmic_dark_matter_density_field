@@ -1,32 +1,17 @@
-from __future__ import annotations
-
 import logging
-import os
-from typing import Any, Dict, List
+import types
+from typing import Any, Dict, List, Tuple
 
 import yaml
-from src.const.constants import (CONF_KEY_CACHE_MASS, CONF_KEY_CACHE_OD,
-                                 CONF_KEY_CACHE_PS, CONF_KEY_CACHE_RHO_BAR,
-                                 CONF_KEY_CACHE_SPHERE_SAMPLES,
-                                 CONF_KEY_CACHE_STD_DEV, CONF_KEY_CACHE_TOTAL,
-                                 CONF_KEY_NUM_HIST_BINS,
-                                 CONF_KEY_NUM_OD_HIST_BINS,
-                                 CONF_KEY_NUM_SPHERE_SAMPLES, CONF_KEY_RADII,
-                                 CONF_KEY_REDSHIFTS, CONF_KEY_ROOT,
-                                 CONF_KEY_SIM_NAMES, CONFIGURATION_FILE)
-from src.const.defaults import (DEF_NUM_HIST_BINS, DEF_NUM_OD_HIST_BINS,
-                                DEF_NUM_SPHERE_SAMPLES, DEF_RADII,
-                                DEF_REDSHIFTS, DEF_ROOT, DEF_SIM_NAMES,
-                                DEF_USE_MASSES_CACHE,
-                                DEF_USE_OVERDENSITIES_CACHE, DEF_USE_PS_CACHE,
-                                DEF_USE_RHO_BAR_CACHE, DEF_USE_SPHERE_SAMPLES,
-                                DEF_USE_STD_DEV_CACHE,
-                                DEF_USE_TOTAL_MASSES_CACHE)
+from src.const.constants import CONFIGURATION_FILE
+from src.init.yaml_loader import IncludeLoader
 
 
-def new(args: List[str]) -> Configuration:
+def new(args: List[str]) -> Tuple[types.SimpleNamespace, str]:
     logger = logging.getLogger(__name__ + "." + new.__name__)
     logger.debug(f"Initialising config parsing with arguments: {args}")
+
+    default_config = _load(CONFIGURATION_FILE)
 
     config_file = CONFIGURATION_FILE
     if len(args) > 0:
@@ -35,88 +20,54 @@ def new(args: List[str]) -> Configuration:
     logger.debug(
         f"Attempting to create Configuration object with config file='{config_file}'")
 
-    # Return the default Configuration if there was an issue reading
-    # the provided file, eg: doesn't exist, or yaml loading error
-    try:
-        return Configuration(config_file)
-    except:
-        return Configuration()
+    conf = _load(config_file)
+
+    # recursively merge nested dicts
+    final_config = _merge_configs(default_config, conf)
+
+    logger.info("Read config as:")
+    print(yaml.safe_dump(final_config))
+
+    # Recursively compile into namespaces:
+    namespace = _compile_namespace(final_config)
+
+    return namespace, config_file
 
 
-class Configuration:
+def _load(fname) -> Dict[str, Any]:
+    with open(fname, "rb") as f:
+        return yaml.load(f, Loader=IncludeLoader)
 
-    def __init__(self, config_file=CONFIGURATION_FILE):
-        self._config_file = config_file
-        self._config = self._load()
 
-    def _load(self) -> Dict[str, Any]:
-        conf = {}
-        with open(self._config_file) as f:
-            conf = yaml.load(f, Loader=yaml.SafeLoader)
+def _compile_namespace(d: Dict[str, Any]) -> types.SimpleNamespace:
+    for k in d.keys():
+        if type(d[k]) is dict:
+            new_entry = _compile_namespace(d[k])
+            d[k] = new_entry
+    return types.SimpleNamespace(**d)
 
-        return conf
 
-    @property
-    def num_hist_bins(self):
-        return self._config.get(CONF_KEY_NUM_HIST_BINS, DEF_NUM_HIST_BINS)
+def _merge_configs(d1: Dict[str, Any], d2: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    d2 overwrites d1
+    """
+    d1_keys = set(d1.keys())
+    d2_keys = set(d2.keys())
+    overlap_keys = d1_keys & d2_keys
+    d1_uniqs = d1_keys - overlap_keys
+    d2_uniqs = d2_keys - overlap_keys
 
-    @property
-    def num_overdensity_hist_bins(self):
-        return self._config.get(CONF_KEY_NUM_OD_HIST_BINS, DEF_NUM_OD_HIST_BINS)
+    final = {}
+    for k in d1_uniqs:
+        final[k] = d1[k]
+    for k in d2_uniqs:
+        final[k] = d2[k]
 
-    @property
-    def num_sphere_samples(self):
-        return self._config.get(CONF_KEY_NUM_SPHERE_SAMPLES, DEF_NUM_SPHERE_SAMPLES)
+    for k in overlap_keys:
+        val = d2[k]
+        # recursively merge nested dicts
+        if type(d1[k]) is dict and type(d2[k]) is dict:
+            val = _merge_configs(d1[k], d2[k])
+        final[k] = val
 
-    @property
-    def radii(self):
-        return self._config.get(CONF_KEY_RADII, DEF_RADII)
-
-    @property
-    def redshifts(self):
-        return self._config.get(CONF_KEY_REDSHIFTS, DEF_REDSHIFTS)
-
-    @property
-    def root(self):
-        return self._config.get(CONF_KEY_ROOT, DEF_ROOT)
-
-    @property
-    def sim_names(self):
-        return self._config.get(CONF_KEY_SIM_NAMES, DEF_SIM_NAMES)
-
-    @property
-    def paths(self):
-        pths = []
-        for sm in self.sim_names:
-            pth = os.path.join(self.root, sm)
-            pths.append(pth)
-
-        return pths
-
-    @property
-    def use_total_masses_cache(self):
-        return self._config.get(CONF_KEY_CACHE_TOTAL, DEF_USE_TOTAL_MASSES_CACHE)
-
-    @property
-    def use_masses_cache(self):
-        return self._config.get(CONF_KEY_CACHE_MASS, DEF_USE_MASSES_CACHE)
-
-    @property
-    def use_overdensities_cache(self):
-        return self._config.get(CONF_KEY_CACHE_OD, DEF_USE_OVERDENSITIES_CACHE)
-
-    @property
-    def use_rho_bar_cache(self):
-        return self._config.get(CONF_KEY_CACHE_RHO_BAR, DEF_USE_RHO_BAR_CACHE)
-
-    @property
-    def use_standard_deviation_cache(self):
-        return self._config.get(CONF_KEY_CACHE_STD_DEV, DEF_USE_STD_DEV_CACHE)
-
-    @property
-    def use_press_schechter_cache(self):
-        return self._config.get(CONF_KEY_CACHE_PS, DEF_USE_PS_CACHE)
-
-    @property
-    def use_sphere_samples(self):
-        return self._config.get(CONF_KEY_CACHE_SPHERE_SAMPLES, DEF_USE_SPHERE_SAMPLES)
+    return final

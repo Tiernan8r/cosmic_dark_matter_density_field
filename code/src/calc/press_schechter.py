@@ -14,17 +14,13 @@ import src.calc.rho_bar as rho_bar
 import src.calc.standard_deviation as standard_deviation
 import unyt
 import yt
-from src.cache import caching, dataset
+from src import data
 from src.const.constants import (MASS_FN_PLOTS_DIR, MASS_FUNCTION_KEY,
                                  PRESS_SCHECHTER_KEY)
 from src.init import setup
 from src.plot import plotting
 from src.util import helpers
 
-CACHE = caching.Cache()
-CONFIG = None
-CURRENT_SIM_NAME = None
-DATASET_CACHE = dataset.new()
 DELTA_CRIT = 1.686
 
 
@@ -32,21 +28,20 @@ def main(args):
     if yt.is_root():
 
         # Setup logging/config reading & parallelisation
-        global CONFIG, DATASET_CACHE, CURRENT_SIM_NAME
-        CONFIG, DATASET_CACHE = setup.setup(args)
+        d = setup.setup(args)
 
         logger = logging.getLogger(main.__name__)
 
-        for sim_name in CONFIG.sim_names:
-            CURRENT_SIM_NAME = sim_name
+        for sim_name in d.config.sim_data.simulation_names:
+            d.sim_name = sim_name
 
             logger.info(f"Working on simulation: {sim_name}")
 
             # Find halos for data set
             logger.debug(
-                f"Filtering halo files to look for redshifts: {CONFIG.redshifts}")
+                f"Filtering halo files to look for redshifts: {d.config.redshifts}")
             _, _, rockstars = helpers.filter_data_files(
-                CURRENT_SIM_NAME, CONFIG.redshifts)
+                d.sim_name, d.config.sim_data.root, d.config.redshifts)
             logger.debug(
                 f"Found {len(rockstars)} rockstar files that match these redshifts")
 
@@ -60,18 +55,15 @@ def main(args):
             logger.info("DONE calculations\n")
 
 
-def tasks(rck):
-    global CACHE, CONFIG, CURRENT_SIM_NAME, DATASET_CACHE
-
+def tasks(rck, d: data.Data):
     logger = logging.getLogger(tasks.__name__)
 
-    ds = DATASET_CACHE.load(rck)
+    ds = d.dataset_cache.load(rck)
     z = ds.current_redshift
     logger.info(f"Redshift is: {z}")
 
-    rb = rho_bar.RhoBar(CONFIG, DATASET_CACHE, CACHE, CURRENT_SIM_NAME)
-    std_dev = standard_deviation.StandardDeviation(
-        CONFIG, DATASET_CACHE, CACHE, CURRENT_SIM_NAME)
+    rb = rho_bar.RhoBar(d)
+    std_dev = standard_deviation.StandardDeviation(d)
 
     rho_0 = rb.rho_bar_0(rck)
     if rho_0 is None:
@@ -84,8 +76,8 @@ def tasks(rck):
     # PRESS SCHECHTER MASS FUNCTION
     # =================================================================
 
-    press_schechter = CACHE[rck, PRESS_SCHECHTER_KEY, z].val
-    if press_schechter is None or not CONFIG.use_press_schechter_cache:
+    press_schechter = d.cache[rck, PRESS_SCHECHTER_KEY, z].val
+    if press_schechter is None or not d.config.caches.use_press_schechter_cache:
         logger.debug(
             f"No press-schechter values cached for '{rck}' data set, caching...")
 
@@ -113,7 +105,7 @@ def tasks(rck):
         for i in range(len(masses)):
             press_schechter[masses[i]] = ps[i]
 
-        CACHE[rck, PRESS_SCHECHTER_KEY, z] = press_schechter
+        d.cache[rck, PRESS_SCHECHTER_KEY, z] = press_schechter
 
     else:
         logger.debug("Using cached press schechter values...")
@@ -122,26 +114,29 @@ def tasks(rck):
     # PLOTTING
     # =================================================================
     title = f"Press Schecter Mass Function at z={z:.2f}"
-    save_dir = MASS_FN_PLOTS_DIR.format(CURRENT_SIM_NAME)
+    save_dir = MASS_FN_PLOTS_DIR.format(d.sim_name)
     PS_MASS_FN_PLOTS_FNAME_PTRN = MASS_FN_PLOTS_DIR + \
         "press_schechter_mass_function_z{1:.2f}.png"
-    plot_name = PS_MASS_FN_PLOTS_FNAME_PTRN.format(CURRENT_SIM_NAME, z)
+    plot_name = PS_MASS_FN_PLOTS_FNAME_PTRN.format(d.sim_name, z)
 
     plotting.ps_mass_function(z, press_schechter, title, save_dir, plot_name)
 
-    for radius in CONFIG.radii:
+    for radius in d.config.radii:
 
-        ms = CACHE[rck, MASS_FUNCTION_KEY, z, float(radius)].val
+        ms = d.cache[rck, MASS_FUNCTION_KEY, z, float(radius)].val
         if ms is None:
             continue
 
         title = f"Compared Press Schecter Mass Function at z={z:.2f}; r={radius:.0f}"
-        save_dir = MASS_FN_PLOTS_DIR.format(CURRENT_SIM_NAME)
+        save_dir = MASS_FN_PLOTS_DIR.format(d.sim_name)
         PS_MASS_FN_PLOTS_FNAME_PTRN = MASS_FN_PLOTS_DIR + \
             "composite_press_schechter_mass_function_z{1:.2f}_r{2:.0f}.png"
-        plot_name = PS_MASS_FN_PLOTS_FNAME_PTRN.format(CURRENT_SIM_NAME, z, radius)
+        plot_name = PS_MASS_FN_PLOTS_FNAME_PTRN.format(
+            d.sim_name, z, radius)
 
-        plotting.plot_ps_both(z, radius, ms, CONFIG.num_hist_bins, press_schechter, title, save_dir, plot_name)
+        plotting.plot_ps_both(z, radius, ms, d.config.sampling.num_hist_bins,
+                              press_schechter, title, save_dir, plot_name)
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

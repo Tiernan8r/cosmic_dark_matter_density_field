@@ -1,1 +1,1 @@
-from src.init import conf, setup
+from src.init import conf, setup, yaml_loader

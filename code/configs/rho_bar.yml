@@ -6,4 +6,5 @@ redshifts:
 - 2
 - 6
 - 10
-use_rho_bar_cache: true
+caches:
+  use_rho_bar_cache: true

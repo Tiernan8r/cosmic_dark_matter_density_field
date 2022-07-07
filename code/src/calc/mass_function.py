@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import unyt
 import yt
-from src.calc.classes import sample
+import src.calc.sample as sample
 from src.const.constants import MASS_FN_PLOTS_DIR, TOTAL_MASS_FUNCTION_KEY
 from src.plot import plotting
 
@@ -40,7 +40,8 @@ class MassFunction(sample.Sampler):
 
         bin_min = np.log10(np.min(masses))
         bin_max = np.log10(np.max(masses))
-        log_bins = np.logspace(bin_min, bin_max, self._config.num_hist_bins)
+        log_bins = np.logspace(
+            bin_min, bin_max, self._config.sampling.num_hist_bins)
 
         # Calculate the histogram of the masses
         hist, bins = np.histogram(masses, bins=log_bins)
@@ -62,13 +63,7 @@ class MassFunction(sample.Sampler):
         # Divide the number of halos per bin by the volume to get the number density
         hist = hist / V
 
-        # Set the parameters used for the plotting & plot the mass function
-        title = f"Total Mass Function for z={z:.2f}"
-        save_dir = MASS_FN_PLOTS_DIR.format(self._sim_name)
-        plot_name = (MASS_FN_PLOTS_DIR +
-                     "total_mass_function_z{1:.2f}.png").format(self._sim_name, z)
-
-        plotting.plot_mass_function(hist, bins, title, save_dir, plot_name)
+        plotting.plot_total_mass_function(z, hist, bins, self._sim_name)
 
     def cache_total_mass_function(self, rck: str):
         """
@@ -87,10 +82,10 @@ class MassFunction(sample.Sampler):
         # If key is in cache, doesn't neet recalculation
         masses = self._cache[rck, TOTAL_MASS_FUNCTION_KEY, z].val
         logger.debug(
-            f"Override total mass cache? {not self._config.use_total_masses_cache}")
+            f"Override total mass cache? {not self._config.caches.use_total_cache}")
 
         # If a value for the calculation doesn't exist in the cache, need to calculate it...
-        if masses is None or not self._config.use_total_masses_cache:
+        if masses is None or not self._config.caches.use_total_cache:
 
             logger.debug(f"No masses cached for '{rck}' data set, caching...")
 
@@ -117,7 +112,7 @@ class MassFunction(sample.Sampler):
 
         return masses
 
-    def sample_masses(self, rck, radius, existing: unyt.unyt_array = None):
+    def sample_masses(self, rck, radius):
         """
         Randomly samples the data set with spheres of the given radius to find
         halos within that sample
