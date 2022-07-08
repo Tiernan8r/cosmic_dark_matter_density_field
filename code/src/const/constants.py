@@ -6,17 +6,6 @@ LOG_FILENAME = "logging.yml"
 # Configuration parameters:
 CONFIGURATION_FILE = "configs/default.yml"
 
-# Plot save path parameters
-
-MASS_FN_PLOTS_DIR = "../plots/mass_function/{0}/"
-MASS_FN_PLOTS_FNAME_PTRN = MASS_FN_PLOTS_DIR + \
-    "mass_function_r{1:.2f}-z{2:.2f}.png"
-
-OVERDENSITY_PLOTS_DIR = "../plots/deltas/{0}/"
-OVERDENSITY_PLOTS_FNAME_PTRN = OVERDENSITY_PLOTS_DIR + \
-    "overdensity_r{1:.2f}-z{2:.2f}.png"
-
-
 # Subpath for rockstar files
 ROCKSTAR = "dm_gadget/rockstar/"
 # Subpath for snapshot/group files

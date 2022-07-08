@@ -22,5 +22,5 @@ cd ${SLURM_SUBMIT_DIR}
 
 . activate_environment.sh
 
-# srun -n ${NTASKS} -c ${NTHREAD} python src/calc/press_schechter.py
-mpirun -np ${NTASKS} python src/calc/press_schechter.py "${CONFIG_FILE}"
+# srun -n ${NTASKS} -c ${NTHREAD} python src/runners/press_schechter.py
+mpirun -np ${NTASKS} python src/runners/press_schechter.py "${CONFIG_FILE}"

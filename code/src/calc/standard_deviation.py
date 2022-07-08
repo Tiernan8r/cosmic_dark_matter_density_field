@@ -3,7 +3,7 @@ from typing import Dict
 
 import numpy as np
 import src.calc.sample as sample
-from src.const.constants import (MASS_FUNCTION_KEY, STD_DEV_KEY, UNITS_KEY,
+from src.const.constants import (MASS_FUNCTION_KEY, OVERDENSITIES_KEY, STD_DEV_KEY, UNITS_KEY,
                                  UNITS_PS_MASS, UNITS_PS_STD_DEV)
 
 
@@ -67,3 +67,36 @@ class StandardDeviation(sample.Sampler):
             #     std_dev_map[mass_value] = np.concatenate((std_dev_map[mass_value], [std_dev]))
 
         return std_dev_map
+
+    def std_dev(self, rck, radius):
+        logger = logging.getLogger(__name__ + "." + self.std_dev.__name__)
+
+        ds = self.dataset_cache.load(rck)
+        z = ds.current_redshift
+
+        # If cache entries exist, may not need to recalculate
+        key = (rck, STD_DEV_KEY, z, float(radius))
+        std_dev = self._cache[key].val
+        needs_recalculation = std_dev is None
+        # Could force recalculation
+        needs_recalculation |= not self.config.caches.use_standard_deviation_cache
+        logger.debug(
+            f"Override standard deviation cache? {not self.config.caches.use_standard_deviation_cache}")
+
+        if needs_recalculation:
+            logger.debug(
+                f"No standard deviation found in cache for '{STD_DEV_KEY}', calculating...")
+
+            # Get the overdensities calculated for this radius
+            od_key = (rck, OVERDENSITIES_KEY, z, float(radius))
+            overdensities = self.cache[od_key].val
+
+            std_dev = np.std(overdensities)
+            self.cache[key] = std_dev
+
+        else:
+            logger.debug("Standard deviation already cached.")
+
+        logger.info(f"Overdensities standard deviation is {std_dev}")
+
+        return std_dev
