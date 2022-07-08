@@ -8,10 +8,9 @@ import sys
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
-import unyt
 import src.calc.sample as sample
+import unyt
 from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY, sim_regex
-from src.init import setup
 from src.util import helpers
 
 
@@ -166,57 +165,3 @@ class RhoBar(sample.Sampler):
             f"Calculated a rho_bar of '{rho_bar}' for dataset '{rck}'")
 
         return rho_bar
-
-
-def main(args):
-    d = setup.setup(args)
-
-    logger = logging.getLogger(main.__name__)
-
-    sim_names = d.config.sim_data.simulation_names
-    for sim_name in sim_names:
-        logger.debug(f"Showing average densities for '{sim_name}'")
-
-        rb = RhoBar(d)
-        _, _, rockstars = helpers.filter_data_files(
-            sim_name, d.config.sim_data.root, d.config.redshifts)
-        for rck in rockstars:
-
-            if not d.config.caches.use_rho_bar_cache:
-                try:
-                    rb.rho_bar_0(rck)
-                    rb.rho_bar(rck)
-                except TypeError as te:
-                    logger.warning(te)
-
-            ds = d.dataset_cache.load(rck)
-            z = ds.current_redshift
-
-            key_0 = (rck, RHO_BAR_0_KEY)
-            key = (rck, RHO_BAR_KEY, z)
-
-            mass_units = ds.units.Msun / ds.units.h
-            dist_units = ds.units.Mpc / ds.units.h
-            standard_units = mass_units / dist_units**3
-
-            rho_bar_0 = d.cache[key_0].val
-            if rho_bar_0 is None:
-                logger.warning(f"No rho_bar_0 found!")
-            else:
-                logger.info(f"Rho bar 0 is: {rho_bar_0}")
-                logger.info(
-                    f"Rho bar 0 is: {rho_bar_0.to(standard_units)}")
-
-            rho_bar = d.cache[key].val
-            if rho_bar is None:
-                logger.warning(f"No rho bar found!")
-            else:
-                logger.info(f"Rho bar is: {rho_bar}")
-                logger.info(
-                    f"Rho bar is: {rho_bar.to(standard_units)}")
-
-            logger.info("\n")
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])

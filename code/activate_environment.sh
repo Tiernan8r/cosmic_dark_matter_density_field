@@ -1,7 +1,11 @@
 #!/usr/bin/bash
 
-module purge
+echo "Activating environment from working dir = ${PWD}"
 
-source /home/brs/tmox/tmox_conda
-tmox_activate
-conda activate yt
+# module purge
+
+# source /home/brs/tmox/tmox_conda
+# tmox_activate
+# conda activate yt
+
+. venv/bin/activate

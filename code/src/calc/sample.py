@@ -7,7 +7,7 @@ import sys
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
-from src import data
+from src import data, runner
 import yt
 from src.const.constants import SPHERES_KEY
 from src.init import setup
@@ -21,17 +21,32 @@ class Sampler(data.Data):
 
     def sample(self, rck, radius, z) -> list:
 
+        logger = logging.getLogger(
+            __name__ + "." + Sampler.__name__ + "." + self.sample.__name__)
+
         key = (rck, SPHERES_KEY, z, float(radius))
+        num_sphere_samples = self._config.sampling.num_sp_samples
+        samples = self._cache[key].val
+        needs_recalculation = samples is None
+        # run calculation if not enough values cached
+        if not needs_recalculation:
+            amount_entries = len(samples)
+            logger.debug(
+                f"Cache entries exist: Have {amount_entries}, need {num_sphere_samples}")
+            needs_recalculation = amount_entries < num_sphere_samples
+            logger.debug(f"Need more calculations: {needs_recalculation}")
+        # Could force recalculation
+        needs_recalculation |= not self._config.caches.use_sphere_samples
+        logger.debug(
+            f"Override spheres cache? {not self._config.caches.use_sphere_samples}")
 
-        existing_samples = []
-        if self._config.caches.use_sphere_samples:
-            existing_samples = self._cache[key].val
+        if needs_recalculation:
+            samples = self._cache_sample(rck, radius, existing=samples)
 
-        new_samples = self._cache_sample(rck, radius, existing_samples)
+            self._cache[key] = samples
 
-        self._cache[key] = new_samples
-
-        return new_samples
+        # Limit the sphere samples to be the number required if too many
+        return samples[:num_sphere_samples]
 
     def _cache_sample(self, rck, radius, existing: list = None) -> list:
         """
@@ -67,7 +82,8 @@ class Sampler(data.Data):
 
         # Get the desired number of random coords for this sampling
         coords = coordinates.rand_coords(
-            self._config.sampling.num_sp_samples, min=coord_min, max=coord_max) * dist_units
+            self._config.sampling.num_sp_samples, min=coord_min, max=coord_max)
+        coords = (coords * dist_units).to("code_length")
 
         # Truncate the number of values to calculate, if some already exist...
         masses = []
@@ -116,51 +132,3 @@ class Sampler(data.Data):
         # masses = masses.to(ds.units.Msun / ds.units.h)
 
         return masses
-
-
-def main(args):
-    if yt.is_root():
-
-        # Setup logging/config reading & parallelisation
-        d = setup.setup(args)
-
-        logger = logging.getLogger(main.__name__)
-
-        for sim_name in d.config.sim_data.simulation_names:
-            d.sim_name = sim_name
-
-            logger.info(f"Working on simulation: {sim_name}")
-
-            # Find halos for data set
-            logger.debug(
-                f"Filtering halo files to look for redshifts: {d.config.redshifts}")
-            _, _, rockstars = helpers.filter_data_files(
-                d.sim_name, d.config.sim_data.root, d.config.redshifts)
-            logger.debug(
-                f"Found {len(rockstars)} rockstar files that match these redshifts")
-
-            # Run the calculations over all the rockstar files found
-            for rck in rockstars:
-
-                sampler = Sampler(d)
-
-                ds = d.dataset_cache.load(rck)
-                z = ds.current_redshift
-                logger.info(f"Redshift is: {z}")
-
-                for radius in d.config.radii:
-                    logger.info(f"Generating samples at r={radius} & z={z}")
-                    sampler.sample(rck, radius, z)
-
-                # Clear the data set cache between iterations as the
-                # data isn't persistent anyway, and this saves memory
-                logger.debug("Clearing dataset cache for new iteration")
-                d.dataset_cache.clear()
-
-            d.cache.reset()
-
-            logger.info("DONE calculations\n")
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])

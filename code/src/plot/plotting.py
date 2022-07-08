@@ -6,183 +6,163 @@ import matplotlib.pyplot as plt
 import numpy as np
 import unyt
 import yt
-from src.const.constants import (MASS_FN_PLOTS_DIR, MASS_FN_PLOTS_FNAME_PTRN,
-                                 OVERDENSITY_PLOTS_DIR,
-                                 OVERDENSITY_PLOTS_FNAME_PTRN)
+from src import data
 
 
-def plot_overdensities(z: float, radius: float, deltas: unyt.unyt_array, sim_name: str, num_bins: int):
-    if not yt.is_root():
-        return
+class Plotter:
 
-    logger = logging.getLogger(__name__ + "." + plot_overdensities.__name__)
-    logger.debug(f"Plotting overdensities at z={z:.2f}...")
+    def __init__(self, d: data.Data):
+        self._conf = d.config
 
-    title = f"Overdensity for {sim_name} @ z={z:.2f}"
-    save_dir = OVERDENSITY_PLOTS_DIR.format(sim_name)
-    plot_name = OVERDENSITY_PLOTS_FNAME_PTRN.format(sim_name, radius, z)
+    def _compile_plot_dir(self, subdir, *args):
+        dirname = os.path.join(self._conf.plotting.dirs.root, subdir)
 
-    fig = plt.figure()
-    ax = fig.gca()
+        return dirname.format(*args)
 
-    ax.hist(deltas, bins=num_bins)
-    ax.set_xlim(left=-1, right=2)
+    def _compile_plot_fname(self, subdir, fname, *args):
+        plot_fname = os.path.join(self._conf.plotting.dirs.root, subdir, fname)
 
-    fig.suptitle(title)
-    ax.set_xlabel("Overdensity value")
-    ax.set_ylabel("Overdensity $\delta$")
+        return plot_fname.format(*args)
 
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
+    def mass_fn_dir(self, sim_name: str):
+        return self._compile_plot_dir(self._conf.plotting.dirs.mass_function, sim_name)
 
-    fig.savefig(plot_name)
+    def mass_fn_fname(self, sim_name, radius, z):
+        return self._compile_plot_fname(self._conf.plotting.dirs.mass_function,
+                                        self._conf.plotting.pattern.mass_function,
+                                        sim_name, radius, z)
 
-    logger.debug(f"Saved overdensity plot to '{plot_name}'")
+    def overdensity_dir(self, sim_name):
+        return self._compile_plot_dir(self._conf.plotting.dirs.overdensity, sim_name)
 
-    plt.cla()
-    plt.clf()
+    def overdensity_fname(self, sim_name, radius, z):
+        return self._compile_plot_fname(self._conf.plotting.dirs.overdensity,
+                                        self._conf.plotting.pattern.overdensity,
+                                        sim_name, radius, z)
 
+    def total_dir(self, sim_name):
+        return self._compile_plot_dir(self._conf.plotting.dirs.total, sim_name)
 
-def plot_mass_function(z: float, radius: float, mass_hist: np.ndarray, bin_edges: np.ndarray, sim_name: str):
-    if not yt.is_root():
-        return
+    def total_fname(self, sim_name, z):
+        return self._compile_plot_fname(self._conf.plotting.dirs.total,
+                                        self._conf.plotting.pattern.total,
+                                        sim_name, z)
 
-    logger = logging.getLogger(__name__ + "." + plot_mass_function.__name__)
-    logger.debug(f"Plotting mass function at z={z:.2f}...")
+    def press_schechter_dir(self, sim_name):
+        return self._compile_plot_dir(self._conf.plotting.dirs.press_schechter, sim_name)
 
-    title = f"Mass Function for {sim_name}; z={z:.2f}"
-    save_dir = MASS_FN_PLOTS_DIR.format(sim_name)
-    plot_name = MASS_FN_PLOTS_FNAME_PTRN.format(sim_name, radius, z)
+    def press_schechter_fname(self, sim_name, z):
+        return self._compile_plot_fname(self._conf.plotting.dirs.press_schechter,
+                                        self._conf.plotting.pattern.press_schechter,
+                                        sim_name, z)
 
-    _mass_function(mass_hist, bin_edges, title, save_dir, plot_name)
-    logger.debug(f"Saved mass function figure to '{plot_name}'")
+    def compared_dir(self, sim_name):
+        return self._compile_plot_dir(self._conf.plotting.dirs.compared, sim_name)
 
+    def compared_fname(self, sim_name, radius, z):
+        return self._compile_plot_fname(self._conf.plotting.dirs.compared,
+                                        self._conf.plotting.pattern.compared,
+                                        sim_name, radius, z)
 
-def plot_total_mass_function(z: float, mass_hist, mass_bins, sim_name: str):
-    # Set the parameters used for the plotting & plot the mass function
-    title = f"Total Mass Function for z={z:.2f}"
-    save_dir = MASS_FN_PLOTS_DIR.format(sim_name)
-    plot_name = (MASS_FN_PLOTS_DIR +
-                 "total_mass_function_z{1:.2f}.png").format(sim_name, z)
+    def overdensities(self, z: float, radius: float, deltas: unyt.unyt_array, sim_name: str, num_bins: int):
+        if not yt.is_root():
+            return
 
-    _mass_function(mass_hist, mass_bins, title, save_dir, plot_name)
+        logger = logging.getLogger(
+            __name__ + "." + self.overdensities.__name__)
+        logger.debug(f"Plotting overdensities at z={z:.2f}...")
 
+        title = f"Overdensity for {sim_name} @ z={z:.2f}"
+        save_dir = self.overdensity_dir(sim_name)
+        plot_name = self.overdensity_fname(sim_name, radius, z)
 
-def _mass_function(mass_hist, bin_edges, title, save_dir, plot_name):
-    x = np.log10(bin_edges)
-    y = np.log10(mass_hist)
+        fig = plt.figure()
+        ax = fig.gca()
 
-    fig = plt.figure()
-    ax = fig.gca()
+        ax.hist(deltas, bins=num_bins)
+        ax.set_xlim(left=-1, right=2)
 
-    ax.plot(x, y)
-    # ax.set_xscale("log")
-    # ax.set_yscale("log")
+        fig.suptitle(title)
+        ax.set_xlabel("Overdensity value")
+        ax.set_ylabel("Overdensity $\delta$")
 
-    fig.suptitle(title)
-    ax.set_xlabel("$\log{M_{vir}}$")
-    ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
 
-    # Ensure the folders exist before attempting to save an image to it...
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
+        fig.savefig(plot_name)
 
-    fig.savefig(plot_name)
+        logger.debug(f"Saved overdensity plot to '{plot_name}'")
 
-    plt.cla()
-    plt.clf()
+        plt.cla()
+        plt.clf()
 
+    def mass_function(self, z: float, radius: float, mass_hist: np.ndarray, bin_edges: np.ndarray, sim_name: str):
+        if not yt.is_root():
+            return
 
-def ps_mass_function(z, ps: Dict, title, save_dir, plot_name):
-    logger = logging.getLogger(plot_mass_function.__name__)
-    logger.info(f"Generating figure for redshift {z}")
+        logger = logging.getLogger(
+            __name__ + "." + self.mass_function.__name__)
+        logger.debug(f"Plotting mass function at z={z:.2f}...")
 
-    x = np.array(list(ps.keys()))
-    y = np.array(list(ps.values()))
+        title = f"Mass Function for {sim_name}; z={z:.2f}"
+        save_dir = self.mass_fn_dir(sim_name)
+        plot_name = self.mass_fn_fname(sim_name, radius, z)
 
-    fig = plt.figure()
-    ax = fig.gca()
+        self._mass_function(mass_hist, bin_edges, title, save_dir, plot_name)
+        logger.debug(f"Saved mass function figure to '{plot_name}'")
 
-    ax.plot(np.log10(x), np.log10(y))
-    fig.suptitle(title)
+    def total_mass_function(self, z: float, mass_hist, mass_bins, sim_name: str):
+        # Set the parameters used for the plotting & plot the mass function
+        title = f"Total Mass Function for z={z:.2f}"
+        save_dir = self.total_dir(sim_name)
+        plot_name = self.total_fname(sim_name, z)
 
-    # ax = plt.gca()
-    # ax.set_xscale("log")
-    # ax.set_yscale("log")
+        self._mass_function(mass_hist, mass_bins, title, save_dir, plot_name)
 
-    ax.set_xlabel("$\log{M_{vir}}$")
-    ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
+    def press_schechter(self, z: float, press_schechter, sim_name: str):
+        title = f"Press Schecter Mass Function at z={z:.2f}"
+        save_dir = self.press_schechter_dir(sim_name)
+        plot_name = self.press_schechter_fname(sim_name, z)
 
-    # Ensure the folders exist before attempting to save an image to it...
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
+        x = press_schechter.keys()
+        y = press_schechter.values()
 
-    fig.savefig(plot_name)
+        self._mass_function(x, y, title, save_dir, plot_name)
 
-    logger.debug(f"Saved mass function figure to '{plot_name}'")
+    def _mass_function(self, x, y, title, save_dir, plot_name, fig=None):
+        autosave = fig is None
+        if autosave:
+            fig = plt.figure()
+        ax = fig.gca()
 
+        ax.plot(x, y)
+        # ax.set_xscale("log")
+        # ax.set_yscale("log")
 
-def plot_ps_both(z, radius, masses, num_hist_bins, ps: Dict, title, save_dir, plot_name):
+        fig.suptitle(title)
+        ax.set_xlabel("$\log{M_{vir}}$")
+        ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
 
-    logger = logging.getLogger(__name__ + "." + plot_ps_both.__name__)
+        # Ensure the folders exist before attempting to save an image to it...
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
 
-    x = np.array(list(ps.keys()))
-    y = np.array(list(ps.values()))
+        if autosave:
+            fig.savefig(plot_name)
 
-    fig = plt.figure()
-    ax = fig.gca()
+            plt.cla()
+            plt.clf()
 
-    ax.plot(np.log10(x), np.log10(y))
-    fig.suptitle(title)
+    def press_schechter_comparison(self, z, radius, hist, bins, ps: Dict, sim_name):
+        fig = plt.figure()
 
-    # ax = plt.gca()
-    # ax.set_xscale("log")
-    # ax.set_yscale("log")
+        title = f"Compared Press Schecter Mass Function at z={z:.2f}; r={radius:.0f}"
+        save_dir = self.compared_dir(sim_name)
+        plot_name = self.compared_fname(sim_name, radius, z)
 
-    ax.set_xlabel("$\log{M_{vir}}$")
-    ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
+        self._mass_function(hist, bins, title, save_dir, plot_name, fig=fig)
+        x = ps.keys()
+        y = ps.values()
+        self._mass_function(x, y, title, save_dir, plot_name, fig=fig)
 
-    # Ensure the folders exist before attempting to save an image to it...
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
-
-    # fig.savefig(plot_name)
-
-    logger.debug(f"Saved mass function figure to '{plot_name}'")
-
-    mass_hist, mass_bin_edges = np.histogram(masses, bins=num_hist_bins)
-
-    # Filter hist/bins for non-zero masses
-    valid_idxs = np.where(mass_hist > 0)
-    mass_hist = mass_hist[valid_idxs]
-    mass_bin_edges = mass_bin_edges[valid_idxs]
-
-    a = 1 / (1+z)
-    V = 4/3 * np.pi * (a*radius)**3
-
-    mass_hist = mass_hist / V
-
-    x = np.log10(mass_bin_edges)
-    y = np.log10(mass_hist)
-
-    # fig = plt.figure()
-    # ax = fig.gca()
-
-    ax.plot(x, y)
-    # ax.set_xscale("log")
-    # ax.set_yscale("log")
-
-    fig.suptitle(title)
-    ax.set_xlabel("$\log{M_{vir}}$")
-    ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
-
-    # Ensure the folders exist before attempting to save an image to it...
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
-
-    fig.savefig(plot_name)
-
-    logger.debug(f"Saved mass function figure to '{plot_name}'")
-
-    plt.cla()
-    plt.clf()
+        fig.savefig(plot_name)

@@ -1,11 +1,11 @@
 import logging
+from typing import Tuple
 
 import numpy as np
+import src.calc.sample as sample
 import unyt
 import yt
-import src.calc.sample as sample
-from src.const.constants import MASS_FN_PLOTS_DIR, TOTAL_MASS_FUNCTION_KEY
-from src.plot import plotting
+from src.const.constants import MASS_FUNCTION_KEY, TOTAL_MASS_FUNCTION_KEY
 
 
 class MassFunction(sample.Sampler):
@@ -28,8 +28,7 @@ class MassFunction(sample.Sampler):
 
         # Cache the masses if they are not already
 
-        # Get the cached values, the _cache_total_mass_function() method can error,
-        # so need to use the get() notation
+        # Get the cached values
         masses = self.cache_total_mass_function(rck)
         if masses is None:
             logger.debug("Skipping plotting this total mass function...")
@@ -38,18 +37,7 @@ class MassFunction(sample.Sampler):
         if len(masses) > 0:
             logger.info(f"Mass units are: {masses.units}")
 
-        bin_min = np.log10(np.min(masses))
-        bin_max = np.log10(np.max(masses))
-        log_bins = np.logspace(
-            bin_min, bin_max, self._config.sampling.num_hist_bins)
-
-        # Calculate the histogram of the masses
-        hist, bins = np.histogram(masses, bins=log_bins)
-
-        # Filter hist/bins for non-zero masses
-        valid_idxs = np.where(hist > 0)
-        hist = hist[valid_idxs]
-        bins = bins[valid_idxs]
+        hist, bins = self.create_histogram(masses)
 
         # Calculate the scale factor
         a = 1 / (1+z)
@@ -63,7 +51,7 @@ class MassFunction(sample.Sampler):
         # Divide the number of halos per bin by the volume to get the number density
         hist = hist / V
 
-        plotting.plot_total_mass_function(z, hist, bins, self._sim_name)
+        return hist, bins
 
     def cache_total_mass_function(self, rck: str):
         """
@@ -101,9 +89,6 @@ class MassFunction(sample.Sampler):
             # Get the halo virial masses from the data
             masses = ad["halos", "particle_mass"]
 
-            # Also store the redshift of this data set if it isn't cached already
-            z = ds.current_redshift
-
             # Cache the calculated values, and save the cache to disk
             self._cache[rck, TOTAL_MASS_FUNCTION_KEY, z] = masses
 
@@ -111,6 +96,50 @@ class MassFunction(sample.Sampler):
             logger.debug("Using cached masses in plots...")
 
         return masses
+
+    def mass_function(self, rck, radius):
+        logger = logging.getLogger(
+            __name__ + "." + self.mass_function.__name__)
+
+        ds = self.dataset_cache.load(rck)
+        z = ds.current_redshift
+
+        # Get the number of samples needed
+        num_sphere_samples = self.config.sampling.num_sp_samples
+
+        # If cache entries exist, may not need to recalculate
+        key = (rck, MASS_FUNCTION_KEY, z, float(radius))
+        masses = self._cache[key].val
+        needs_recalculation = masses is None
+        needs_recalculation |= not self.config.caches.use_masses_cache
+
+        logger.debug(
+            f"Override masses cache? {not self.config.caches.use_masses_cache}")
+
+        # If the radius key is missing, need to do a full sample run
+        if needs_recalculation:
+            logger.debug(
+                f"Calculating cache values for '{MASS_FUNCTION_KEY}'...")
+
+            # Run the full sample, and save the result to the cache
+            masses = self.sample_masses(rck, radius)
+            self.cache[key] = masses
+
+        # The key can exist, but there may not be enough samples...
+        else:
+            logger.debug("Using cached halo masses...")
+
+        logger.info(f"Mass units are: {masses.units}")
+
+        mass_hist, mass_bin_edges = self.create_histogram(masses)
+
+        # Scale the histogram bins by the total volume sampled.
+        a = 1 / (1+z)
+        V = 4/3 * np.pi * (a*radius)**3 * num_sphere_samples
+
+        mass_hist = mass_hist / V
+
+        return mass_hist, mass_bin_edges
 
     def sample_masses(self, rck, radius):
         """
@@ -138,3 +167,20 @@ class MassFunction(sample.Sampler):
         masses = masses.to(ds.units.Msun / ds.units.h)
 
         return masses
+
+    def create_histogram(self, masses: unyt.unyt_array) -> Tuple[np.ndarray, np.ndarray]:
+        bin_min = np.min(masses.v)
+        bin_max = np.max(masses.v)
+        log_bins = np.logspace(
+            bin_min, bin_max, self._config.sampling.num_hist_bins, base=10)
+
+        # Calculate the histogram of the masses
+        hist, bins = np.histogram(masses, bins=log_bins)
+        # hist, bins = np.histogram(masses, bins=self._config.sampling.num_hist_bins)
+
+        # Filter hist/bins for non-zero masses
+        valid_idxs = np.where(hist > 0)
+        hist = hist[valid_idxs]
+        bins = bins[valid_idxs]
+
+        return hist, bins

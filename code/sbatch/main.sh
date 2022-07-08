@@ -3,18 +3,18 @@
 #SBATCH -p all
 #SBATCH --job-name=main
 #SBATCH -o logs/main.log
-#SBATCH --nodes=4
-#SBATCH --ntasks-per-node=4
-#SBATCH --cpus-per-task=2
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
 #SBATCH --time=72:00:00
-#SBATCH --mem=64G
+#SBATCH --mem=16G
 # email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s2222340@ed.ac.uk
 
 #################
 
-NTASKS=16
+NTASKS=1
 NTHREAD=1
 CONFIG_FILE="configs/default.yml"
 

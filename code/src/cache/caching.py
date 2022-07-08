@@ -96,15 +96,15 @@ class CacheEntry:
     def _save(self, val):
         logger = logging.getLogger(
             __name__ + "." + self.__class__.__name__ + "." + self._save.__name__)
-        logger.debug(f"Saving cache to '{self._path}'")
+
+        pth = os.path.join(self._path, self._fname)
+        logger.debug(f"Saving cache to '{pth}'")
 
         try:
             if not os.path.exists(self._path):
                 os.makedirs(self._path)
         except FileExistsError as fee:
             logger.error(fee)
-
-        pth = os.path.join(self._path, self._fname)
         with open(pth, "wb") as f:
             pickle.dump(val, f)
 

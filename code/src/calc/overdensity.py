@@ -15,16 +15,40 @@ class Overdensity(rho_bar.RhoBar):
         logger.debug(
             f"Calculating cache values for '{OVERDENSITIES_KEY}'...")
 
-        ds = self._dataset_cache.load(rck)
+        ds = self.dataset_cache.load(rck)
         z = ds.current_redshift
+
+        # Get the number of samples needed
+        num_sphere_samples = self.config.sampling.num_sp_samples
 
         # Attempt to get the existing overdensities if they exist
         key = (rck, OVERDENSITIES_KEY, z, float(radius))
 
-        # Do the full sampling and save the cache to disk
-        deltas = self._overdensities(rck, radius)
-        # Cache the new values
-        self._cache[key] = deltas
+        # Determine if new entries need to be calculates
+        deltas = self.cache[key].val
+        needs_recalculation = deltas is None
+
+        # Calculation required if not enough entries cached
+        if not needs_recalculation:
+            amount_entries = len(deltas)
+            logger.debug(
+                f"Cache entries exist: Have {amount_entries}, need {num_sphere_samples}")
+            needs_recalculation = amount_entries < num_sphere_samples
+            logger.debug(f"Need more calculations: {needs_recalculation}")
+        # Could force recalculation
+        needs_recalculation |= not self.config.caches.use_overdensities_cache
+
+        logger.debug(
+            f"Override overdensities cache? {not self.config.caches.use_overdensities_cache}")
+
+        # Calculate if required...
+        if needs_recalculation:
+            # Do the full sampling and save the cache to disk
+            deltas = self._overdensities(rck, radius)
+            # Cache the new values
+            self.cache[key] = deltas
+        else:
+            logger.debug("Using cached overdensities...")
 
         return deltas
 

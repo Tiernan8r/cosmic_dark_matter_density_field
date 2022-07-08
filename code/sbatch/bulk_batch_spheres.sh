@@ -1,4 +1,4 @@
-#!/usr/env/bin bash
+#!/usr/bin/env bash
 
 FILES=$(ls -d "$PWD/sbatch/spheres"/* | grep -E ".*spheres_r[[:digit:]]+_z[[:digit:]]+.sh$")
 

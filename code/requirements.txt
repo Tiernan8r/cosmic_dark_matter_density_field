@@ -61,7 +61,10 @@ yt @ git+https://github.com/brittonsmith/yt@gadget4
     # via
     #   -r requirements.in
     #   yt-astro-analysis
+    #   yt-legacy
 yt-astro-analysis==1.1.1
+    # via -r requirements.in
+yt-legacy @ git+https://github.com/brittonsmith/yt_legacy@master
     # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
