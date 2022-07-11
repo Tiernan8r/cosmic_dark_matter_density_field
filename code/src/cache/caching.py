@@ -79,7 +79,9 @@ class CacheEntry:
 
     def _load(self):
         logger = logging.getLogger(
-            __name__ + "." + self.__class__.__name__ + "." + self._load.__name__)
+            __name__ + "." +
+            self.__class__.__name__ + "." +
+            self._load.__name__)
 
         pth = os.path.join(self._path, self._fname)
         if os.path.exists(pth):
@@ -95,7 +97,9 @@ class CacheEntry:
 
     def _save(self, val):
         logger = logging.getLogger(
-            __name__ + "." + self.__class__.__name__ + "." + self._save.__name__)
+            __name__ + "." +
+            self.__class__.__name__ + "." +
+            self._save.__name__)
 
         pth = os.path.join(self._path, self._fname)
         logger.debug(f"Saving cache to '{pth}'")

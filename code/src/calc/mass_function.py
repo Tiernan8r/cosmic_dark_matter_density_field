@@ -20,7 +20,8 @@ class MassFunction(sample.Sampler):
 
         logger.debug("Calculating total mass function...")
 
-        # Load in the rockstar data set, potentially from a cache to optimise it
+        # Load in the rockstar data set, potentially from
+        # a cache to optimise it
         ds = self._dataset_cache.load(rck)
 
         # Get the redshift from the data set
@@ -48,14 +49,16 @@ class MassFunction(sample.Sampler):
 
         logger.info(f"Volume units are: {V.units}")
 
-        # Divide the number of halos per bin by the volume to get the number density
+        # Divide the number of halos per bin by the
+        # volume to get the number density
         hist = hist / V
 
         return hist, bins
 
     def cache_total_mass_function(self, rck: str):
         """
-        Runs the calculations of halo masses for the entire data set and caches the results
+        Runs the calculations of halo masses for the
+        entire data set and caches the results
         """
 
         logger = logging.getLogger(
@@ -63,22 +66,25 @@ class MassFunction(sample.Sampler):
 
         logger.debug("Calculating total mass function...")
 
-        # Load in the rockstar data set, potentially from a cache to optimise it
+        # Load in the rockstar data set, potentially
+        # from a cache to optimise it
         ds = self._dataset_cache.load(rck)
         z = ds.current_redshift
 
         # If key is in cache, doesn't neet recalculation
         masses = self._cache[rck, TOTAL_MASS_FUNCTION_KEY, z].val
         logger.debug(
-            f"Override total mass cache? {not self._config.caches.use_total_cache}")
+            f"Override total mass cache? {not self._config.caches.use_total_cache}")  # noqa: E501
 
-        # If a value for the calculation doesn't exist in the cache, need to calculate it...
+        # If a value for the calculation doesn't exist in the cache,
+        # need to calculate it...
         if masses is None or not self._config.caches.use_total_cache:
 
             logger.debug(f"No masses cached for '{rck}' data set, caching...")
 
-            # Try to read all the particle data from the data set (can error with the earlier
-            # redshift data sets due to box issues??)
+            # Try to read all the particle data from the data set
+            # (can error with the earlierredshift data sets due
+            # to box issues??)
             try:
                 ad = self._dataset_cache.all_data(rck)
             except TypeError as te:
@@ -86,8 +92,13 @@ class MassFunction(sample.Sampler):
                 logger.error(te)
                 return
 
+            logger.info("Reading all halos in data set")
             # Get the halo virial masses from the data
             masses = ad["halos", "particle_mass"]
+
+            logger.info(f"Filtering {len(masses)} entries for negative masses...")
+            # Filter out negative masses (!!!)
+            masses = unyt.unyt_array([m for m in masses if m > 0], masses.units)
 
             # Cache the calculated values, and save the cache to disk
             self._cache[rck, TOTAL_MASS_FUNCTION_KEY, z] = masses
@@ -114,7 +125,7 @@ class MassFunction(sample.Sampler):
         needs_recalculation |= not self.config.caches.use_masses_cache
 
         logger.debug(
-            f"Override masses cache? {not self.config.caches.use_masses_cache}")
+            f"Override masses cache? {not self.config.caches.use_masses_cache}")  # noqa: E501
 
         # If the radius key is missing, need to do a full sample run
         if needs_recalculation:
@@ -160,7 +171,12 @@ class MassFunction(sample.Sampler):
         # Convert the list of masses per sample, into a 1D list
         masses = unyt.unyt_array([], ds.units.Msun / ds.units.h)
 
+        logger.info(f"Masses units are: {masses.units}")
+
         for m in sphere_samples:
+            logger.info(f"M units = {m.units}")
+            # Ensure the units match
+            m = m.to(masses.units)
             masses = unyt.uconcatenate((masses, m))
 
         # Convert mass units to Msun
@@ -168,7 +184,9 @@ class MassFunction(sample.Sampler):
 
         return masses
 
-    def create_histogram(self, masses: unyt.unyt_array) -> Tuple[np.ndarray, np.ndarray]:
+    def create_histogram(self, masses: unyt.unyt_array) -> Tuple[
+            np.ndarray,
+            np.ndarray]:
         bin_min = np.min(masses.v)
         bin_max = np.max(masses.v)
         log_bins = np.logspace(
@@ -176,7 +194,8 @@ class MassFunction(sample.Sampler):
 
         # Calculate the histogram of the masses
         hist, bins = np.histogram(masses, bins=log_bins)
-        # hist, bins = np.histogram(masses, bins=self._config.sampling.num_hist_bins)
+        # hist, bins = np.histogram(masses,
+        #   bins=self._config.sampling.num_hist_bins)
 
         # Filter hist/bins for non-zero masses
         valid_idxs = np.where(hist > 0)

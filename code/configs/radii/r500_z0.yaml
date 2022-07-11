@@ -1,0 +1,10 @@
+%YAML 1.2
+---
+sampling: 
+ num_sp_samples: 1000
+radii: 
+ - 500
+redshifts: 
+ - 0
+caches: !include radii_cache.yaml
+

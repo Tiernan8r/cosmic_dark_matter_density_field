@@ -5,7 +5,7 @@ import yt.extensions.legacy
 
 # halo file 101 corresponds to z=0
 REDSHIFT_NUMBER = 101
-DATAFILE = "/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/rockstar/halos_{0:>3}.0.bin"
+DATAFILE = "/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/rockstar/halos_{0:0>3}.0.bin"  # noqa: E501
 
 # Number of histogram bins to use
 NUM_BINS = 100
@@ -86,6 +86,6 @@ ax.hist(all_overdensities)
 
 fig.suptitle(title)
 ax.set_xlabel("Overdensity value")
-ax.set_ylabel("Overdensity $\delta$")
+ax.set_ylabel("Overdensity $\delta$")  # noqa: W605
 
 fig.savefig(plot_fname)

@@ -3,18 +3,14 @@ import logging
 import logging.config
 import os
 import sys
-from typing import Tuple
 
 # Required to guarantee that the 'src' module is accessible when
 # this file is run directly.
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
-import numpy as np
-
 from src import runner
 from src.calc import mass_function, overdensity, rho_bar, standard_deviation
-from src.const.constants import MASS_FUNCTION_KEY
 from src.plot import plotting
 
 
@@ -56,7 +52,7 @@ class MainRunner(runner.Runner):
         for radius in self._conf.radii:
 
             logger.debug(
-                f"Calculating overdensities and halo mass functions at a radius of '{radius}'")
+                f"Calculating overdensities and halo mass functions at a radius of '{radius}'")  # noqa: E501
 
             # =================================================================
             # OVERDENSITIES:
@@ -71,7 +67,7 @@ class MainRunner(runner.Runner):
             # =================================================================
             logger.debug("Working on standard deviation")
             sd = standard_deviation.StandardDeviation(self._data)
-            std_dev = sd.std_dev(rck, radius)
+            sd.std_dev(rck, radius)
 
             # =================================================================
             # MASS FUNCTION:
@@ -87,7 +83,11 @@ class MainRunner(runner.Runner):
             logger.debug("Generating plots for this data...")
 
             plotter.overdensities(
-                z, radius, deltas, self._data.sim_name, self._conf.sampling.num_od_hist_bins)
+                z,
+                radius,
+                deltas,
+                self._data.sim_name,
+                self._conf.sampling.num_od_hist_bins)
             plotter.mass_function(
                 z, radius, mass_hist, bin_edges, self._data.sim_name)
 

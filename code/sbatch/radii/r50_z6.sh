@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #SBATCH -p all
 #SBATCH --job-name=r50_z6
 #SBATCH -o logs/radii/r50_z6.log
@@ -15,12 +14,11 @@
 #################
 
 NTASKS=1
-NTHREAD=1
-CONFIG_FILE="configs/radii/r50_z6.yml"
+CONFIG_FILE="configs/radii/r50_z6.yaml"
 
 cd ${SLURM_SUBMIT_DIR}
 
 . activate_environment.sh
 
-# srun -n ${NTASKS} -c ${NTHREAD} python src/main.py
 mpirun -np ${NTASKS} python src/main.py "${CONFIG_FILE}"
+

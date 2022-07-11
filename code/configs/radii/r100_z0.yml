@@ -1,7 +1,0 @@
-%YAML 1.2
----
-radii:
-- 100
-redshifts:
-- 0
-caches: !include radii_cache.yaml

@@ -13,18 +13,18 @@ DATA = "dm_gadget/data/"
 
 # Regexes to match against the appropriate file naming convention
 
-groups_regex = re.compile("^fof_(subhalo_)?tab_\d{3}.0.hdf5$")
-rockstar_regex = re.compile("^halos_\d{3}.0.bin$")
-snapshots_regex = re.compile("^snapshot_\d{3}.0.hdf5$")
+groups_regex = re.compile("^fof_(subhalo_)?tab_\d{3}.0.hdf5$")  # noqa: W605
+rockstar_regex = re.compile("^halos_\d{3}.0.bin$")  # noqa: W605
+snapshots_regex = re.compile("^snapshot_\d{3}.0.hdf5$")  # noqa: W605
 
 # Regex to match against the root dir rockstar files are stored in
 rockstar_root_regex = re.compile(".*rockstar/$")
 
 # Regex to match against the naming pattern of the simulation data sets
-sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")
+sim_regex = re.compile("^.*(GVD_C(\d{3})_l(\d+)n(\d+)_SLEGAC).*$")  # noqa: W605, E501
 
 # Regex to find redshifts from rockstar files
-rockstar_ascii_reg = re.compile("^(halos_(\d+).0).ascii$")
+rockstar_ascii_reg = re.compile("^(halos_(\d+).0).ascii$")  # noqa: W605
 rockstar_a_factor = re.compile("^#a = (.*)$")
 
 # Keys used in the helpers cache:

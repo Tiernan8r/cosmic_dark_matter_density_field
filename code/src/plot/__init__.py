@@ -1,1 +1,1 @@
-from src.plot import plotting
+from src.plot import plotting  # noqa: F401

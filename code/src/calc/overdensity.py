@@ -32,14 +32,14 @@ class Overdensity(rho_bar.RhoBar):
         if not needs_recalculation:
             amount_entries = len(deltas)
             logger.debug(
-                f"Cache entries exist: Have {amount_entries}, need {num_sphere_samples}")
+                f"Cache entries exist: Have {amount_entries}, need {num_sphere_samples}")  # noqa: E501
             needs_recalculation = amount_entries < num_sphere_samples
             logger.debug(f"Need more calculations: {needs_recalculation}")
         # Could force recalculation
         needs_recalculation |= not self.config.caches.use_overdensities_cache
 
         logger.debug(
-            f"Override overdensities cache? {not self.config.caches.use_overdensities_cache}")
+            f"Override overdensities cache? {not self.config.caches.use_overdensities_cache}")  # noqa: E501
 
         # Calculate if required...
         if needs_recalculation:
@@ -54,8 +54,9 @@ class Overdensity(rho_bar.RhoBar):
 
     def _overdensities(self, rck, radius):
         """
-        Calculates the overdensities of a sample of spheres of a given radius over
-        the given dataset, if there are existing samples, only calculates the extra
+        Calculates the overdensities of a sample of spheres
+        of a given radius over the given dataset, if there
+        are existing samples, only calculates the extra
         samples required to get the total desired.
         """
         logger = logging.getLogger(
@@ -72,9 +73,10 @@ class Overdensity(rho_bar.RhoBar):
         # Get the units used in the simulation
         dist_units = ds.units.Mpc / ds.units.h
         # Convert the given radius to an unyt unit object
-        R = radius * dist_units
+        R = (radius * dist_units).to("code_length")
 
-        # Calculate the volume of the spheres that we sample on in comoving units
+        # Calculate the volume of the spheres that we sample
+        # on in comoving units
         V = 4/3 * np.pi * (R)**3
 
         # Get existing rhos
@@ -87,6 +89,7 @@ class Overdensity(rho_bar.RhoBar):
 
         for sphere_sample in sphere_samples:
             total_mass = np.sum(sphere_sample)
+            total_mass = total_mass.to("g")
 
             # Get the density
             rho = total_mass / V

@@ -3,8 +3,9 @@ from typing import Dict
 
 import numpy as np
 import src.calc.sample as sample
-from src.const.constants import (MASS_FUNCTION_KEY, OVERDENSITIES_KEY, STD_DEV_KEY, UNITS_KEY,
-                                 UNITS_PS_MASS, UNITS_PS_STD_DEV)
+from src.const.constants import (MASS_FUNCTION_KEY, OVERDENSITIES_KEY,
+                                 STD_DEV_KEY, UNITS_KEY, UNITS_PS_MASS,
+                                 UNITS_PS_STD_DEV)
 
 
 class StandardDeviation(sample.Sampler):
@@ -23,7 +24,7 @@ class StandardDeviation(sample.Sampler):
             masses = self._cache[rck, MASS_FUNCTION_KEY, z, float(radius)].val
             if masses is None:
                 logger.warning(
-                    f"No masses calculated for dataset '{rck}' at a radius of '{radius}'")
+                    f"No masses calculated for dataset '{rck}' at a radius of '{radius}'")  # noqa: E501
                 continue
 
             avg_mass = np.average(masses)
@@ -31,7 +32,7 @@ class StandardDeviation(sample.Sampler):
             std_dev = self._cache[rck, STD_DEV_KEY, z, float(radius)].val
             if std_dev is None:
                 logger.warning(
-                    f"No standard deviation calculated for data set '{rck}' at a radius '{radius}'")
+                    f"No standard deviation calculated for data set '{rck}' at a radius '{radius}'")  # noqa: E501
                 continue
 
             # Ensure that mass units are consistent
@@ -64,7 +65,8 @@ class StandardDeviation(sample.Sampler):
             # if mass_value not in std_dev_map:
             #     std_dev_map[mass_value] = np.array([std_dev])
             # else:
-            #     std_dev_map[mass_value] = np.concatenate((std_dev_map[mass_value], [std_dev]))
+            #     std_dev_map[mass_value] = \
+            # np.concatenate((std_dev_map[mass_value], [std_dev]))
 
         return std_dev_map
 
@@ -79,13 +81,13 @@ class StandardDeviation(sample.Sampler):
         std_dev = self._cache[key].val
         needs_recalculation = std_dev is None
         # Could force recalculation
-        needs_recalculation |= not self.config.caches.use_standard_deviation_cache
+        needs_recalculation |= not self.config.caches.use_standard_deviation_cache  # noqa: E501
         logger.debug(
-            f"Override standard deviation cache? {not self.config.caches.use_standard_deviation_cache}")
+            f"Override standard deviation cache? {not self.config.caches.use_standard_deviation_cache}")  # noqa: E501
 
         if needs_recalculation:
             logger.debug(
-                f"No standard deviation found in cache for '{STD_DEV_KEY}', calculating...")
+                f"No standard deviation found in cache for '{STD_DEV_KEY}', calculating...")  # noqa: E501
 
             # Get the overdensities calculated for this radius
             od_key = (rck, OVERDENSITIES_KEY, z, float(radius))

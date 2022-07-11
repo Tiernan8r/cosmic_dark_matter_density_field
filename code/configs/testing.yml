@@ -9,5 +9,6 @@ radii:
 redshifts:
 - 0
 caches:
-  use_sphere_samples: false
-  use_masses_cache: false
+  use_sphere_samples: true
+  use_masses_cache: true
+  use_total_cache: false

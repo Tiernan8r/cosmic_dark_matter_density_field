@@ -25,19 +25,21 @@ class Plotter:
         return plot_fname.format(*args)
 
     def mass_fn_dir(self, sim_name: str):
-        return self._compile_plot_dir(self._conf.plotting.dirs.mass_function, sim_name)
+        return self._compile_plot_dir(self._conf.plotting.dirs.mass_function,
+                                      sim_name)
 
     def mass_fn_fname(self, sim_name, radius, z):
         return self._compile_plot_fname(self._conf.plotting.dirs.mass_function,
-                                        self._conf.plotting.pattern.mass_function,
+                                        self._conf.plotting.pattern.mass_function,  # noqa: E501
                                         sim_name, radius, z)
 
     def overdensity_dir(self, sim_name):
-        return self._compile_plot_dir(self._conf.plotting.dirs.overdensity, sim_name)
+        return self._compile_plot_dir(self._conf.plotting.dirs.overdensity,
+                                      sim_name)
 
     def overdensity_fname(self, sim_name, radius, z):
         return self._compile_plot_fname(self._conf.plotting.dirs.overdensity,
-                                        self._conf.plotting.pattern.overdensity,
+                                        self._conf.plotting.pattern.overdensity,  # noqa: E501
                                         sim_name, radius, z)
 
     def total_dir(self, sim_name):
@@ -49,22 +51,29 @@ class Plotter:
                                         sim_name, z)
 
     def press_schechter_dir(self, sim_name):
-        return self._compile_plot_dir(self._conf.plotting.dirs.press_schechter, sim_name)
+        return self._compile_plot_dir(self._conf.plotting.dirs.press_schechter,
+                                      sim_name)
 
     def press_schechter_fname(self, sim_name, z):
-        return self._compile_plot_fname(self._conf.plotting.dirs.press_schechter,
-                                        self._conf.plotting.pattern.press_schechter,
+        return self._compile_plot_fname(self._conf.plotting.dirs.press_schechter,  # noqa: E501
+                                        self._conf.plotting.pattern.press_schechter,  # noqa: E501
                                         sim_name, z)
 
     def compared_dir(self, sim_name):
-        return self._compile_plot_dir(self._conf.plotting.dirs.compared, sim_name)
+        return self._compile_plot_dir(self._conf.plotting.dirs.compared,
+                                      sim_name)
 
     def compared_fname(self, sim_name, radius, z):
         return self._compile_plot_fname(self._conf.plotting.dirs.compared,
                                         self._conf.plotting.pattern.compared,
                                         sim_name, radius, z)
 
-    def overdensities(self, z: float, radius: float, deltas: unyt.unyt_array, sim_name: str, num_bins: int):
+    def overdensities(self,
+                      z: float,
+                      radius: float,
+                      deltas: unyt.unyt_array,
+                      sim_name: str,
+                      num_bins: int):
         if not yt.is_root():
             return
 
@@ -79,12 +88,13 @@ class Plotter:
         fig = plt.figure()
         ax = fig.gca()
 
-        ax.hist(deltas, bins=num_bins)
+        od_bins = np.linspace(start=-1, stop=2, num=num_bins)
+        ax.hist(deltas, bins=od_bins)
         ax.set_xlim(left=-1, right=2)
 
         fig.suptitle(title)
         ax.set_xlabel("Overdensity value")
-        ax.set_ylabel("Overdensity $\delta$")
+        ax.set_ylabel("Overdensity $\delta$")  # noqa: W605
 
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
@@ -96,7 +106,12 @@ class Plotter:
         plt.cla()
         plt.clf()
 
-    def mass_function(self, z: float, radius: float, mass_hist: np.ndarray, bin_edges: np.ndarray, sim_name: str):
+    def mass_function(self,
+                      z: float,
+                      radius: float,
+                      mass_hist: np.ndarray,
+                      bin_edges: np.ndarray,
+                      sim_name: str):
         if not yt.is_root():
             return
 
@@ -111,7 +126,11 @@ class Plotter:
         self._mass_function(mass_hist, bin_edges, title, save_dir, plot_name)
         logger.debug(f"Saved mass function figure to '{plot_name}'")
 
-    def total_mass_function(self, z: float, mass_hist, mass_bins, sim_name: str):
+    def total_mass_function(self,
+                            z: float,
+                            mass_hist: np.ndarray,
+                            mass_bins: np.ndarray,
+                            sim_name: str):
         # Set the parameters used for the plotting & plot the mass function
         title = f"Total Mass Function for z={z:.2f}"
         save_dir = self.total_dir(sim_name)
@@ -140,8 +159,8 @@ class Plotter:
         # ax.set_yscale("log")
 
         fig.suptitle(title)
-        ax.set_xlabel("$\log{M_{vir}}$")
-        ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
+        ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605
+        ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")  # noqa: W605, E501
 
         # Ensure the folders exist before attempting to save an image to it...
         if not os.path.isdir(save_dir):
@@ -153,10 +172,16 @@ class Plotter:
             plt.cla()
             plt.clf()
 
-    def press_schechter_comparison(self, z, radius, hist, bins, ps: Dict, sim_name):
+    def press_schechter_comparison(self,
+                                   z: float,
+                                   radius: float,
+                                   hist: np.ndarray,
+                                   bins: np.ndarray,
+                                   ps: Dict,
+                                   sim_name: str):
         fig = plt.figure()
 
-        title = f"Compared Press Schecter Mass Function at z={z:.2f}; r={radius:.0f}"
+        title = f"Compared Press Schecter Mass Function at z={z:.2f}; r={radius:.0f}"  # noqa: E501
         save_dir = self.compared_dir(sim_name)
         plot_name = self.compared_fname(sim_name, radius, z)
 

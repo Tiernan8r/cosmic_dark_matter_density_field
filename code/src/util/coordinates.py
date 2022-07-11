@@ -21,7 +21,7 @@ def rand_coords(amount: int, min: int = 0, max: int = 100):
 
     if amount > num_existing:
         logger.debug(
-            f"Entries in cache exist, but require {amount} values, and only have {num_existing}")
+            f"Entries in cache exist, but require {amount} values, and only have {num_existing}")  # noqa: E501
         extra_coords = _gen_coords(min, max, amount - num_existing)
         if existing_coords is None:
             coords = extra_coords
@@ -34,7 +34,8 @@ def rand_coords(amount: int, min: int = 0, max: int = 100):
         logger.debug(f"Using existing coordinates for key {RANGE_KEY}")
         coords = existing_coords
 
-    # There can be more coords cached than we need, so split the list to that amount
+    # There can be more coords cached than we need, so
+    # split the list to that amount
     return coords[:amount]
 
 
