@@ -6,3 +6,4 @@ git+https://github.com/brittonsmith/yt_legacy@master
 yt-astro-analysis
 autopep8
 unyt
+flake8

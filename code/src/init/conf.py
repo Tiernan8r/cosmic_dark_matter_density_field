@@ -18,7 +18,7 @@ def new(args: List[str]) -> Tuple[types.SimpleNamespace, str]:
         config_file = args[0]
 
     logger.debug(
-        f"Attempting to create Configuration object with config file='{config_file}'")
+        f"Attempting to create Configuration object with config file='{config_file}'")  # noqa: E501
 
     conf = _load(config_file)
 

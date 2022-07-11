@@ -27,20 +27,7 @@ for sto, s in yt.parallel_objects(ss, 102, storage=storage):
 
     units = {"length": (1.0, "Mpc/h")}
 
-    if s < 10:
-
-        f_name = "/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/data/snapdir_00" + \
-            str(s) + "/snapshot_00" + str(s) + ".0.hdf5"
-
-    elif s < 100:
-
-        f_name = "/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/data/snapdir_0" + \
-            str(s) + "/snapshot_0" + str(s) + ".0.hdf5"
-
-    else:
-
-        f_name = "/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/data/snapdir_" + \
-            str(s) + "/snapshot_" + str(s) + ".0.hdf5"
+    f_name = f"/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/data/snapdir_{s:0>3}/snapshot_{s:0>3}.0.hdf5"  # noqa: E501
 
     # load in the simulation
     ds = yt.load(f_name, unit_base=units)
@@ -65,7 +52,8 @@ for sto, s in yt.parallel_objects(ss, 102, storage=storage):
 
     R = r_un.to('code_length')
 
-    # create spheres at random locations from the file and get their overdensities
+    # create spheres at random locations from the file and get their
+    # overdensities
 
     for cc in c:
 
@@ -132,6 +120,6 @@ if yt.is_root():
 
     plt.xlabel("Scale factor $a$")
 
-    plt.ylabel("Overdensity $\delta$")
+    plt.ylabel("Overdensity $\delta$")  # noqa: W605
 
     plt.savefig("delta_vs_a_final_50Mpc.png")

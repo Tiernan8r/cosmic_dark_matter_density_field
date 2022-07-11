@@ -23,7 +23,9 @@ class PressSchechterRunner(runner.Runner):
 
     def tasks(self, rck: str):
         logger = logging.getLogger(
-            __name__ + "." + PressSchechterRunner.__name__ + "." + self.tasks.__name__)
+            __name__ + "." +
+            PressSchechterRunner.__name__ + "." +
+            self.tasks.__name__)
 
         ds = self._ds_cache.load(rck)
         z = ds.current_redshift
@@ -39,7 +41,7 @@ class PressSchechterRunner(runner.Runner):
 
         rho_0 = rb.rho_bar_0(rck)
         if rho_0 is None:
-            logger.warning(f"Could not calculate rho bar 0!")
+            logger.warning("Could not calculate rho bar 0!")
             return
 
         logger.info(f"Simulation average density is: {rho_0}")
@@ -49,14 +51,17 @@ class PressSchechterRunner(runner.Runner):
         # =================================================================
 
         press_schechter = self._cache[rck, PRESS_SCHECHTER_KEY, z].val
-        if press_schechter is None or not self._conf.caches.use_press_schechter_cache:
+
+        needs_recalc = press_schechter is None
+        needs_recalc |= not self._conf.caches.use_press_schechter_cache
+        if needs_recalc:
             logger.debug(
-                f"No press-schechter values cached for '{rck}' data set, caching...")
+                f"No press-schechter values cached for '{rck}' data set, caching...")  # noqa: E501
 
             std_dev_map = std_dev.std_dev_func_mass(rck)
             if std_dev_map is None:
                 logger.warn(
-                    f"No standard deviations mapped for this redshift, stopping...")
+                    "No standard deviations mapped for this redshift, stopping...")  # noqa: E501
                 return
 
             press_schechter = {}
@@ -108,7 +113,7 @@ class PressSchechterRunner(runner.Runner):
 
             # Plot
             plotter.press_schechter_comparison(z, radius, hist, bins,
-                                 press_schechter, sim_name)
+                                               press_schechter, sim_name)
 
 
 def main(args):

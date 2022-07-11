@@ -16,7 +16,10 @@ class Data:
         self._cache = cache
         self._sim_name = sim_name
 
-    def compile(self) -> Tuple[types.SimpleNamespace, dataset.CachedDataSet, caching.Cache, str]:
+    def compile(self) -> Tuple[
+            types.SimpleNamespace,
+            dataset.CachedDataSet,
+            caching.Cache, str]:
         return self._config, self._dataset_cache, self._cache, self._sim_name
 
     @property

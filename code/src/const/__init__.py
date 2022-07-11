@@ -1,1 +1,1 @@
-from src.const import constants
+from src.const import constants  # noqa: F401

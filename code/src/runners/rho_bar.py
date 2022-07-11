@@ -1,5 +1,11 @@
 import logging
+import os
 import sys
+
+# Required to guarantee that the 'src' module is accessible when
+# this file is run directly.
+if os.getcwd() not in sys.path:
+    sys.path.append(os.getcwd())
 
 from src import runner
 from src.calc.rho_bar import RhoBar
@@ -33,7 +39,7 @@ class RhoBarRunner(runner.Runner):
 
             rho_bar_0 = self._cache[key_0].val
             if rho_bar_0 is None:
-                logger.warning(f"No rho_bar_0 found!")
+                logger.warning("No rho_bar_0 found!")
             else:
                 logger.info(f"Rho bar 0 is: {rho_bar_0}")
                 logger.info(
@@ -41,7 +47,7 @@ class RhoBarRunner(runner.Runner):
 
             rho_bar = self._cache[key].val
             if rho_bar is None:
-                logger.warning(f"No rho bar found!")
+                logger.warning("No rho bar found!")
             else:
                 logger.info(f"Rho bar is: {rho_bar}")
                 logger.info(

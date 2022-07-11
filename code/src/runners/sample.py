@@ -1,5 +1,11 @@
 import logging
+import os
 import sys
+
+# Required to guarantee that the 'src' module is accessible when
+# this file is run directly.
+if os.getcwd() not in sys.path:
+    sys.path.append(os.getcwd())
 
 from src import runner
 from src.calc.sample import Sampler

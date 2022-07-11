@@ -1,5 +1,3 @@
-import __future__
-
 import logging
 import os
 import threading
@@ -51,7 +49,7 @@ class CachedDataSet:
                 self._cache[fname] = {}
         if self._load_key not in self._cache[fname]:
             logger.debug(
-                f"No dataset found for file '{fname}' with key '{self._load_key}', reading into cache...")
+                f"No dataset found for file '{fname}' with key '{self._load_key}', reading into cache...")  # noqa: E501
             with self._mutex:
                 ds = yt.load(fname)
                 ds.parameters["format_revision"] = 2
@@ -69,7 +67,7 @@ class CachedDataSet:
 
         if self._all_data_key not in self._cache[fname]:
             logger.debug(
-                f"All data missing in cache for data set '{fname}', reading...")
+                f"All data missing in cache for data set '{fname}', reading...")  # noqa: E501
 
             data_set = self.load(fname)
             with self._mutex:

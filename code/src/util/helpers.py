@@ -4,11 +4,13 @@ import os
 import re
 from typing import Dict, List, Tuple
 
-from src.const.constants import (DATA, DIR_KEY, GROUPS_KEY, REDSHIFTS_KEY, ROCKSTAR,
-                       ROCKSTARS_KEY, SNAPSHOTS_KEY, groups_regex,
-                       rockstar_a_factor, rockstar_ascii_reg, rockstar_regex,
-                       rockstar_root_regex, sim_regex, snapshots_regex)
 from src.cache import caching
+from src.const.constants import (DATA, DIR_KEY, GROUPS_KEY, REDSHIFTS_KEY,
+                                 ROCKSTAR, ROCKSTARS_KEY, SNAPSHOTS_KEY,
+                                 groups_regex, rockstar_a_factor,
+                                 rockstar_ascii_reg, rockstar_regex,
+                                 rockstar_root_regex, sim_regex,
+                                 snapshots_regex)
 
 CACHE = caching.Cache()
 
@@ -17,12 +19,12 @@ def _find_directories(sim_name: str, root) -> Tuple[str, str, str]:
     logger = logging.getLogger(__name__ + "." + _find_directories.__name__)
 
     if not sim_regex.match(sim_name):
-        logger.warn(
-            f"'{sim_name}' did not match the expected pattern, defaulting to '/tmp'")
+        logger.warning(
+            f"'{sim_name}' did not match the expected pattern, defaulting to '/tmp'")  # noqa: E501
         return "/tmp", "/tmp", "/tmp"
 
     logger.debug(
-        f"Compiling paths using the provided '{sim_name}' simulation data set name.")
+        f"Compiling paths using the provided '{sim_name}' simulation data set name.")  # noqa: E501
 
     snapshots_root = root + sim_name + "/" + DATA
     groups_root = snapshots_root
@@ -31,12 +33,15 @@ def _find_directories(sim_name: str, root) -> Tuple[str, str, str]:
     return snapshots_root, groups_root, rockstar_root
 
 
-def _find_data_files(sim_name: str, root: str) -> Tuple[List[str], List[str], List[str]]:
+def _find_data_files(sim_name: str, root: str) -> Tuple[
+        List[str],
+        List[str],
+        List[str]]:
     logger = logging.getLogger(__name__ + "." + _find_data_files.__name__)
 
     def find(dirname: str, file_reg: re.Pattern, root_reg: re.Pattern = None):
         lg = logging.getLogger(logger.name + "." + find.__name__)
-        l = []
+        files = []
 
         for root, dirs, files in os.walk(dirname):
             for file in files:
@@ -45,10 +50,11 @@ def _find_data_files(sim_name: str, root: str) -> Tuple[List[str], List[str], Li
                         if not root_reg.match(root):
                             continue
                     lg.debug(
-                        f"File '{file}' matched the provided regex, allocating to the paths")
-                    l.append(root + file)
+                        f"File '{file}' matched the provided regex, allocating to the paths")  # noqa: E501
+                    pth = os.path.join(root, file)
+                    files.append(pth)
 
-        return l
+        return files
 
     global CACHE
 
@@ -71,7 +77,9 @@ def _find_data_files(sim_name: str, root: str) -> Tuple[List[str], List[str], Li
 
         CACHE[sim_name, DIR_KEY] = halo_dirs
 
-    return halo_dirs[SNAPSHOTS_KEY], halo_dirs[GROUPS_KEY], halo_dirs[ROCKSTARS_KEY]
+    return (halo_dirs[SNAPSHOTS_KEY],
+            halo_dirs[GROUPS_KEY],
+            halo_dirs[ROCKSTARS_KEY])
 
 
 def _determine_redshifts(sim_name: str, root: str) -> Dict[float, str]:
@@ -95,7 +103,8 @@ def _determine_redshifts(sim_name: str, root: str) -> Dict[float, str]:
                     logger.debug(f"'{file}' matches ascii file regex")
 
                     with open(dirname + file) as f:
-                        # Read the second line in the vals file, which says the expansion factor
+                        # Read the second line in the vals file, which says
+                        # the expansion factor
                         a = f.readlines()[1]
                         a_val = float(rockstar_a_factor.match(a).group(1))
                         # convert from comoving to redshift
@@ -111,7 +120,10 @@ def _determine_redshifts(sim_name: str, root: str) -> Dict[float, str]:
     return map
 
 
-def _filter_redshifts(sim_name: str, root: str, desired: List[float], tolerance=0.02) -> Dict[float, str]:
+def _filter_redshifts(sim_name: str,
+                      root: str,
+                      desired: List[float],
+                      tolerance=0.02) -> Dict[float, str]:
     logger = logging.getLogger(__name__ + "." + _filter_redshifts.__name__)
 
     all_redshifts = _determine_redshifts(sim_name, root)
@@ -122,12 +134,18 @@ def _filter_redshifts(sim_name: str, root: str, desired: List[float], tolerance=
         for z in desired:
             if math.isclose(k, z, rel_tol=tolerance) and k not in redshifts:
                 logger.debug(
-                    f"Redshift of '{k}' is close to '{z}', storing path '{all_redshifts[k]}' in dict.")
+                    f"Redshift of '{k}' is close to '{z}', storing path '{all_redshifts[k]}' in dict.")  # noqa: E501
                 redshifts[k] = all_redshifts[k]
     return redshifts
 
 
-def filter_data_files(sim_name: str, root: str, desired: List[float], tolerance=0.02) -> Tuple[List[str], List[str], List[str]]:
+def filter_data_files(sim_name: str,
+                      root: str,
+                      desired: List[float],
+                      tolerance=0.02) -> Tuple[
+        List[str],
+        List[str],
+        List[str]]:
     logger = logging.getLogger(__name__ + "." + filter_data_files.__name__)
 
     redshifts = _filter_redshifts(sim_name, root, desired, tolerance)

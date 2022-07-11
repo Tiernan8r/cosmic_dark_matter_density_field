@@ -1,1 +1,1 @@
-from src.util import coordinates, helpers
+from src.util import coordinates, helpers  # noqa: F401

@@ -1,5 +1,4 @@
 from typing import List
-from src import data
 import yt
 import logging
 from src.init import setup
@@ -29,12 +28,15 @@ class Runner:
             logger.info(f"Working on simulation: {self._data.sim_name}")
 
             # Find halos for data set
+            zs = self._conf.redshifts
             logger.debug(
-                f"Filtering halo files to look for redshifts: {self._conf.redshifts}")
+                f"Filtering halo files to look for redshifts: {zs}")
             _, _, rockstars = helpers.filter_data_files(
-                self._data.sim_name, self._conf.sim_data.root, self._conf.redshifts)
+                self._data.sim_name, self._conf.sim_data.root, zs)
+
+            n_rcks = len(rockstars)
             logger.debug(
-                f"Found {len(rockstars)} rockstar files that match these redshifts")
+                f"Found {n_rcks} rockstar files that match these redshifts")
 
             # Run the calculations over all the rockstar files found
             for rck in rockstars:

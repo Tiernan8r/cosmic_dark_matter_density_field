@@ -5,7 +5,7 @@ import yt.extensions.legacy
 
 # halo file 101 corresponds to z=0
 REDSHIFT_NUMBER = 101
-DATAFILE = "/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/rockstar/halos_{0:>3}.0.bin"
+DATAFILE = "/disk12/legacy/GVD_C700_l1600n2048_SLEGAC/dm_gadget/rockstar/halos_{0:0>3}.0.bin"  # noqa: E501
 
 # Number of histogram bins to use
 NUM_BINS = 100
@@ -50,8 +50,8 @@ ax.set_xscale("log")
 title = f"Total Mass Function for z={z:.2f}"
 fig.suptitle(title)
 
-ax.set_xlabel("$\log{M_{vir}}$")
-ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")
+ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605
+ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")  # noqa: W605
 
 plot_fname = f"total_mass_function_z{z}.png"
 fig.savefig(plot_fname)

@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
 import logging
-import os
-import sys
-
-# Required to guarantee that the 'src' module is accessible when
-# this file is run directly.
-if os.getcwd() not in sys.path:
-    sys.path.append(os.getcwd())
 
 import src.calc.sample as sample
 import unyt
@@ -23,13 +16,13 @@ class RhoBar(sample.Sampler):
         sim_name = sim_regex.match(rck).group(1)
 
         logger.debug(
-            f"Finding rockstar file for a redshift of 0 on simulation '{sim_name}'")
+            f"Finding rockstar file for a redshift of 0 on simulation '{sim_name}'")  # noqa: E501
         _, _, rockstars = helpers.filter_data_files(
             sim_name, self._config.sim_data.root, desired=[0])
 
         if len(rockstars) > 1:
             logger.warning(
-                "Too many rockstar files found for redshift 0, using last one!")
+                "Too many rockstar files found for redshift 0, using last one!")  # noqa: E501
         rck = rockstars[-1]
 
         logger.info(f"Rockstar file is '{rck}'")
@@ -43,12 +36,12 @@ class RhoBar(sample.Sampler):
         # =================================================================
         # CALCULATING RHO BAR 0
         # =================================================================
-        logger.info(f"Working on rho bar 0 value:")
+        logger.info("Working on rho bar 0 value:")
 
         rho_0 = self._cache[rck, RHO_BAR_0_KEY].val
         if rho_0 is None or not self._config.caches.use_rho_bar_cache:
             logger.debug(
-                f"No entries found in cache for '{RHO_BAR_0_KEY}', calculating...")
+                f"No entries found in cache for '{RHO_BAR_0_KEY}', calculating...")  # noqa: E501
             try:
                 ad = self._dataset_cache.all_data(rck)
             except TypeError as te:
@@ -97,21 +90,23 @@ class RhoBar(sample.Sampler):
         rho_bar = self._cache[rck, RHO_BAR_KEY, z].val
         if rho_bar is None or not self._config.caches.use_rho_bar_cache:
             logger.debug(
-                f"No entries found in cache for '{RHO_BAR_KEY}', calculating...")
+                f"No entries found in cache for '{RHO_BAR_KEY}', calculating...")  # noqa: E501
 
             # Try to calculate the rho_bar value
             try:
                 rho_bar = self._calc_rho_bar(rck)
-            # Can error on some of the earlier redshift data sets due to region bounding issues
+            # Can error on some of the earlier redshift data sets
+            # due to region bounding issues
             # (don't know exactly why though...)
             except TypeError as te:
                 logger.error("error getting all dataset region")
                 logger.error(te)
                 raise te
-            # Can also error when the IGM is tagged as being dimensionless rather than 0g...
+            # Can also error when the IGM is tagged as being
+            # dimensionless rather than 0g...
             except unyt.exceptions.IterableUnitCoercionError as iuce:
                 logger.error(
-                    "Error reading regions quantities from database, ignoring...")
+                    "Error reading regions quantities from database, ignoring...")  # noqa: E501
                 logger.error(iuce)
                 raise iuce
 
@@ -133,7 +128,8 @@ class RhoBar(sample.Sampler):
         logger = logging.getLogger(
             __name__ + "." + self._calc_rho_bar.__name__)
 
-        # Load the data set, if it is cached already this operation will be faster...
+        # Load the data set, if it is cached already this
+        # operation will be faster...
         ds = self._dataset_cache.load(rck)
 
         # Get the distance units used in the code
