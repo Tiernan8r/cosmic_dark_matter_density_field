@@ -1,4 +1,6 @@
+import datetime
 import logging
+import time
 
 import unyt
 import yt
@@ -48,6 +50,8 @@ class Sampler(data.Data):
         """
         logger = logging.getLogger(
             __name__ + "." + self._cache_sample.__name__)
+
+        start = time.time()
 
         # Load the rockstar data set
         ds = self._dataset_cache.load(rck)
@@ -117,7 +121,8 @@ class Sampler(data.Data):
                 continue
 
             # filter for negative (!!!) masses
-            filtered = unyt.unyt_array([v for v in masses if v > 0], mass_units)
+            filtered = unyt.unyt_array(
+                [v for v in masses if v > 0], mass_units)
 
             logger.debug(f"Found {len(masses)} halos in this sphere sample")
 
@@ -129,5 +134,8 @@ class Sampler(data.Data):
 
         # Convert mass units to Msun
         # masses = masses.to(ds.units.Msun / ds.units.h)
+
+        end = time.time()
+        logger.info(f"Took {datetime.timedelta(seconds=end - start)}")
 
         return sphere_samples

@@ -85,16 +85,49 @@ class Plotter:
         save_dir = self.overdensity_dir(sim_name)
         plot_name = self.overdensity_fname(sim_name, radius, z)
 
-        fig = plt.figure()
-        ax = fig.gca()
+        fig: plt.Figure = plt.figure()
+        ax: plt.Axes = fig.gca()
 
         od_bins = np.linspace(start=-1, stop=2, num=num_bins)
-        ax.hist(deltas, bins=od_bins)
+        _, _, analytic = ax.hist(deltas, bins=od_bins)
         ax.set_xlim(left=-1, right=2)
 
         fig.suptitle(title)
         ax.set_xlabel("Overdensity value")
         ax.set_ylabel("Overdensity $\delta$")  # noqa: W605
+
+        # =============
+        # Fit Gaussian:
+        # =============
+
+        # A standard gaussian overdensity field is in range [-1, 1]
+        gaussian_range_deltas = [d for d in deltas if d <= 1 and d >= -1]
+        x = [x for x in od_bins if x <= 1 and x >= -1]
+
+        std_dev = np.std(gaussian_range_deltas)
+        mean = np.mean(gaussian_range_deltas)
+
+        # Calculate the gaussian distribution
+        pre_factor = 1 / (std_dev * np.sqrt(2 * np.pi))
+        gauss = pre_factor * np.exp(-0.5 * ((x - mean) / std_dev)**2)
+
+        # Scale the Gaussian to match the analytical scale
+        hist, _ = np.histogram(deltas, bins=x)
+
+        # Multiply the peak of the Gaussian, to match the peak value of the histogram
+        hist_total = np.sum(hist)
+        gauss_total = np.sum(gauss)
+
+        # scale = hist_max / gauss_max
+        scale = hist_total / gauss_total
+        gauss *= scale
+
+        # Plot the gaussian with the overdensity
+        gaussian, = ax.plot(x, gauss)
+
+        # Add legend to plot
+        ax.legend([analytic, gaussian], ["Analytic Overdensities",
+                   "Gaussian Fit"])
 
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
@@ -103,8 +136,7 @@ class Plotter:
 
         logger.debug(f"Saved overdensity plot to '{plot_name}'")
 
-        plt.cla()
-        plt.clf()
+        plt.close(fig)
 
     def mass_function(self,
                       z: float,
@@ -123,7 +155,7 @@ class Plotter:
         save_dir = self.mass_fn_dir(sim_name)
         plot_name = self.mass_fn_fname(sim_name, radius, z)
 
-        self._mass_function(mass_hist, bin_edges, title, save_dir, plot_name)
+        self._mass_function(bin_edges, mass_hist, title, save_dir, plot_name)
         logger.debug(f"Saved mass function figure to '{plot_name}'")
 
     def total_mass_function(self,
@@ -136,7 +168,7 @@ class Plotter:
         save_dir = self.total_dir(sim_name)
         plot_name = self.total_fname(sim_name, z)
 
-        self._mass_function(mass_hist, mass_bins, title, save_dir, plot_name)
+        self._mass_function(mass_bins, mass_hist, title, save_dir, plot_name)
 
     def press_schechter(self, z: float, press_schechter, sim_name: str):
         title = f"Press Schecter Mass Function at z={z:.2f}"
@@ -155,8 +187,8 @@ class Plotter:
         ax = fig.gca()
 
         ax.plot(x, y)
-        # ax.set_xscale("log")
-        # ax.set_yscale("log")
+        ax.set_xscale("log")
+        ax.set_yscale("log")
 
         fig.suptitle(title)
         ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605
