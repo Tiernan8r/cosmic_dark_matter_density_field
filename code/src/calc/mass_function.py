@@ -187,15 +187,14 @@ class MassFunction(sample.Sampler):
     def create_histogram(self, masses: unyt.unyt_array) -> Tuple[
             np.ndarray,
             np.ndarray]:
-        bin_min = np.min(masses.v)
-        bin_max = np.max(masses.v)
-        log_bins = np.logspace(
-            bin_min, bin_max, self._config.sampling.num_hist_bins, base=10)
+        logger = logging.getLogger(__name__ + "."
+                                   + MassFunction.__name__ + "."
+                                   + self.create_histogram.__name__)
 
-        # Calculate the histogram of the masses
-        hist, bins = np.histogram(masses, bins=log_bins)
-        # hist, bins = np.histogram(masses,
-        #   bins=self._config.sampling.num_hist_bins)
+        logger.debug("Creating histogram")
+
+        hist, bins = np.histogram(masses,
+                                  bins=self._config.sampling.num_hist_bins)
 
         # Filter hist/bins for non-zero masses
         valid_idxs = np.where(hist > 0)

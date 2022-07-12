@@ -16,7 +16,7 @@
 
 NTASKS=1
 NTHREAD=1
-CONFIG_FILE="configs/testing.yml"
+CONFIG_FILE="configs/testing.yaml"
 
 cd ${SLURM_SUBMIT_DIR}
 

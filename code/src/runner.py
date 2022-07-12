@@ -32,7 +32,7 @@ class Runner:
             logger.debug(
                 f"Filtering halo files to look for redshifts: {zs}")
             _, _, rockstars = helpers.filter_data_files(
-                self._data.sim_name, self._conf.sim_data.root, zs)
+                self._data.sim_name, self._conf.sim_data.root, zs, tolerance=1e-9)
 
             n_rcks = len(rockstars)
             logger.debug(

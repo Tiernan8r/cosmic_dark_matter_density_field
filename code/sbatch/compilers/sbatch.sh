@@ -113,7 +113,7 @@ compile () {
 	
     NTASKS=$(($NODES * $NTASKS_PER_NODE))
 
-    TEMPLATE="#!/bin/bash\n#SBATCH -p all\n#SBATCH --job-name=${JOB_NAME}\n#SBATCH -o ${LOGS}\n#SBATCH --nodes=${NODES}\n#SBATCH --ntasks-per-node=${NTASKS_PER_NODE}\n#SBATCH --cpus-per-task=${CPUS_PER_TASK}\n#SBATCH --time=${TIMEOUT}\n#SBATCH --mem=${MEMORY}\n# email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)\n#SBATCH --mail-type=ALL\n#SBATCH --mail-user=s2222340@ed.ac.uk\n\n#################\n\nNTASKS=${NTASKS}\nCONFIG_FILE=\"${CONFIG}\"\n\ncd \${SLURM_SUBMIT_DIR}\n\n. activate_environment.sh\n\nmpirun -np \${NTASKS} python ${PYTHON_FILE} \"\${CONFIG_FILE}\"\n"
+    TEMPLATE="#!/bin/bash\n#SBATCH -p all\n#SBATCH --job-name=${JOB_NAME}\n#SBATCH -o ${LOGS}\n#SBATCH --nodes=${NODES}\n#SBATCH --ntasks-per-node=${NTASKS_PER_NODE}\n#SBATCH --cpus-per-task=${CPUS_PER_TASK}\n#SBATCH --time=${TIMEOUT}\n#SBATCH --mem=${MEMORY}\n# email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)\n#SBATCH --mail-type=FAIL\n#SBATCH --mail-user=s2222340@ed.ac.uk\n\n#################\n\nNTASKS=${NTASKS}\nCONFIG_FILE=\"${CONFIG}\"\n\ncd \${SLURM_SUBMIT_DIR}\n\n. activate_environment.sh\n\nmpirun -np \${NTASKS} python ${PYTHON_FILE} \"\${CONFIG_FILE}\"\n"
 
     echo "Compiling result to file: ${FILE_NAME}"
     echo -e "Output is:\n"
