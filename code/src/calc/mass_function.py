@@ -96,9 +96,10 @@ class MassFunction(sample.Sampler):
             # Get the halo virial masses from the data
             masses = ad["halos", "particle_mass"]
 
-            logger.info(f"Filtering {len(masses)} entries for negative masses...")
+            logger.info(
+                f"Filtering {len(masses)} entries for negative masses...")
             # Filter out negative masses (!!!)
-            masses = unyt.unyt_array([m for m in masses if m > 0], masses.units)
+            masses = masses[np.where(masses > 0)]
 
             # Cache the calculated values, and save the cache to disk
             self._cache[rck, TOTAL_MASS_FUNCTION_KEY, z] = masses

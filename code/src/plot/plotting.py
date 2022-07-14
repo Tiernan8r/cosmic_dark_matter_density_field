@@ -127,7 +127,7 @@ class Plotter:
 
         # Add legend to plot
         ax.legend([analytic, gaussian], ["Analytic Overdensities",
-                   "Gaussian Fit"])
+                                         "Gaussian Fit"])
 
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)

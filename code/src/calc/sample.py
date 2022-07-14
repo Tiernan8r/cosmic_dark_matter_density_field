@@ -2,7 +2,7 @@ import datetime
 import logging
 import time
 
-import unyt
+import numpy as np
 import yt
 from src import data
 from src.const.constants import SPHERES_KEY
@@ -34,6 +34,10 @@ class Sampler(data.Data):
         needs_recalculation |= not self._config.caches.use_sphere_samples
         logger.debug(
             f"Override spheres cache? {not self._config.caches.use_sphere_samples}")  # noqa: E501
+
+        # Clear existing if overwriting
+        if not self._config.caches.use_sphere_samples:
+            samples = None
 
         if needs_recalculation:
             samples = self._cache_sample(rck, radius, existing=samples)
@@ -94,6 +98,8 @@ class Sampler(data.Data):
 
         # Iterate over all the randomly sampled coordinates
         for ic in yt.parallel_objects(indexed_coords):
+            it_start = time.time()
+
             i, c = ic[0], ic[1]
 
             logger.debug(
@@ -109,9 +115,6 @@ class Sampler(data.Data):
                 logger.error(te)
                 continue
 
-            # TODO: unhard code?
-            mass_units = ds.units.Msun / ds.units.h
-
             # Try to read the masses of halos in this sphere
             try:
                 masses = sp["halos", "particle_mass"]
@@ -121,19 +124,18 @@ class Sampler(data.Data):
                 continue
 
             # filter for negative (!!!) masses
-            filtered = unyt.unyt_array(
-                [v for v in masses if v > 0], mass_units)
+            filtered = masses[np.where(masses > 0)]
 
             logger.debug(f"Found {len(masses)} halos in this sphere sample")
+
+            it_end = time.time()
+            logger.debug(f"Took {datetime.timedelta(seconds=it_end - it_start)}")
 
             # Add these masses to the list
             sphere_samples.append(filtered)
 
         logger.info(
             f"DONE reading {self._config.sampling.num_sp_samples} sphere samples\n")  # noqa: E501
-
-        # Convert mass units to Msun
-        # masses = masses.to(ds.units.Msun / ds.units.h)
 
         end = time.time()
         logger.info(f"Took {datetime.timedelta(seconds=end - start)}")
