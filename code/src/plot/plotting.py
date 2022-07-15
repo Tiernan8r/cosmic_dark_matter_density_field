@@ -143,7 +143,8 @@ class Plotter:
                       radius: float,
                       mass_hist: np.ndarray,
                       bin_edges: np.ndarray,
-                      sim_name: str):
+                      sim_name: str,
+                      min_mass=10**10):
         if not yt.is_root():
             return
 
@@ -155,22 +156,25 @@ class Plotter:
         save_dir = self.mass_fn_dir(sim_name)
         plot_name = self.mass_fn_fname(sim_name, radius, z)
 
-        self._mass_function(bin_edges, mass_hist, title, save_dir, plot_name)
+        self._mass_function(bin_edges, mass_hist, title,
+                            save_dir, plot_name, x_min=min_mass)
         logger.debug(f"Saved mass function figure to '{plot_name}'")
 
     def total_mass_function(self,
                             z: float,
                             mass_hist: np.ndarray,
                             mass_bins: np.ndarray,
-                            sim_name: str):
+                            sim_name: str,
+                            min_mass: float):
         # Set the parameters used for the plotting & plot the mass function
         title = f"Total Mass Function for z={z:.2f}"
         save_dir = self.total_dir(sim_name)
         plot_name = self.total_fname(sim_name, z)
 
-        self._mass_function(mass_bins, mass_hist, title, save_dir, plot_name)
+        self._mass_function(mass_bins, mass_hist, title,
+                            save_dir, plot_name, x_min=min_mass)
 
-    def press_schechter(self, z: float, press_schechter, sim_name: str):
+    def press_schechter(self, z: float, press_schechter, sim_name: str, min_mass: float):
         title = f"Press Schecter Mass Function at z={z:.2f}"
         save_dir = self.press_schechter_dir(sim_name)
         plot_name = self.press_schechter_fname(sim_name, z)
@@ -178,9 +182,9 @@ class Plotter:
         x = press_schechter.keys()
         y = press_schechter.values()
 
-        self._mass_function(x, y, title, save_dir, plot_name)
+        self._mass_function(x, y, title, save_dir, plot_name, x_min=min_mass)
 
-    def _mass_function(self, x, y, title, save_dir, plot_name, fig=None):
+    def _mass_function(self, x, y, title, save_dir, plot_name, fig=None, x_min=10**10):
         autosave = fig is None
         if autosave:
             fig = plt.figure()
@@ -189,6 +193,9 @@ class Plotter:
         ax.plot(x, y)
         ax.set_xscale("log")
         ax.set_yscale("log")
+
+        x_max = np.max(x)
+        ax.set_xlim(x_min, x_max)
 
         fig.suptitle(title)
         ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605

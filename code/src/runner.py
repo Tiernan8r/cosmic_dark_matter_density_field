@@ -1,6 +1,9 @@
-from typing import List
-import yt
 import logging
+from typing import List
+
+import yt
+
+import src.enum as enum
 from src.init import setup
 from src.util import helpers
 
@@ -12,6 +15,7 @@ class Runner:
         self._conf = self._data.config
         self._cache = self._data.cache
         self._ds_cache = self._data.dataset_cache
+        self._type = enum.DataType.ROCKSTAR
 
     def run(self):
         if not yt.is_root():
@@ -31,18 +35,29 @@ class Runner:
             zs = self._conf.redshifts
             logger.debug(
                 f"Filtering halo files to look for redshifts: {zs}")
-            _, _, rockstars = helpers.filter_data_files(
+            snapshots, groups, rockstars = helpers.filter_data_files(
                 self._data.sim_name, self._conf.sim_data.root, zs, tolerance=1e-9)
 
             n_rcks = len(rockstars)
             logger.debug(
                 f"Found {n_rcks} rockstar files that match these redshifts")
 
+            # Run snapshot calculations...
+            for snap in snapshots:
+                self._type = enum.DataType.SNAPSHOT
+                self.snapshot_tasks(snap)
+
+            # Run group calculations...
+            for group in groups:
+                self._type = enum.DataType.GROUP
+                self.group_tasks(group)
+
             # Run the calculations over all the rockstar files found
             for rck in rockstars:
+                self._type = enum.DataType.ROCKSTAR
 
                 # Run the tasks of this object
-                self.tasks(rck)
+                self.rockstar_tasks(rck)
 
                 # Clear the data set cache between iterations as the
                 # data isn't persistent anyway, and this saves memory
@@ -54,5 +69,11 @@ class Runner:
 
             logger.info("DONE calculations\n")
 
-    def tasks(self, rck: str):
-        raise NotImplementedError()
+    def rockstar_tasks(self, rck: str):
+        pass
+
+    def snapshot_tasks(self, snap: str):
+        pass
+
+    def group_tasks(self, group: str):
+        pass
