@@ -13,10 +13,10 @@ from src.calc.sample import Sampler
 
 class SampleRunner(runner.Runner):
 
-    def tasks(self, rck: str):
+    def rockstar_tasks(self, rck: str):
         logger = logging.getLogger(
-            __name__ + "." + SampleRunner.__name__ + "." + self.tasks.__name__)
-        sampler = Sampler(self._data)
+            __name__ + "." + SampleRunner.__name__ + "." + self.rockstar_tasks.__name__)
+        sampler = Sampler(self._data, type=self._type)
 
         ds = self._ds_cache.load(rck)
         z = ds.current_redshift

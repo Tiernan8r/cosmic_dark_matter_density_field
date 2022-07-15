@@ -16,15 +16,17 @@ from src.plot import plotting
 
 class MainRunner(runner.Runner):
 
-    def tasks(self, rck: str):
-        logger = logging.getLogger(self.tasks.__name__)
+    def rockstar_tasks(self, rck: str):
+        logger = logging.getLogger(self.rockstar_tasks.__name__)
 
         logger.debug(f"Working on rockstar file '{rck}'")
 
         logger.debug("Calculating total halo mass function")
 
-        mass_fn = mass_function.MassFunction(self._data)
-        rb = rho_bar.RhoBar(self._data)
+        mf = mass_function.MassFunction(self._data, type=self._type)
+        rb = rho_bar.RhoBar(self._data, type=self._type)
+        od = overdensity.Overdensity(self._data, type=self._type)
+        sd = standard_deviation.StandardDeviation(self._data, type=self._type)
         plotter = plotting.Plotter(self._data)
 
         # =================================================================
@@ -32,10 +34,11 @@ class MainRunner(runner.Runner):
         # =================================================================
         ds = self._ds_cache.load(rck)
         z = ds.current_redshift
+        min_particle_mass = self._ds_cache.min_mass(rck)
 
-        total_hist, total_bins = mass_fn.total_mass_function(rck)
+        total_hist, total_bins = mf.total_mass_function(rck)
         plotter.total_mass_function(
-            z, total_hist, total_bins, self._data.sim_name)
+            z, total_hist, total_bins, self._data.sim_name, min_particle_mass)
 
         # =================================================================
         # RHO BAR
@@ -59,21 +62,18 @@ class MainRunner(runner.Runner):
             # =================================================================
             logger.info("Working on overdensities:")
 
-            od = overdensity.Overdensity(self._data)
             deltas = od.calc_overdensities(rck, radius)
 
             # =================================================================
             # STANDARD DEVIATION
             # =================================================================
             logger.debug("Working on standard deviation")
-            sd = standard_deviation.StandardDeviation(self._data)
             sd.std_dev(rck, radius)
 
             # =================================================================
             # MASS FUNCTION:
             # =================================================================
             logger.info("Working on mass function:")
-            mf = mass_function.MassFunction(self._data)
             mass_hist, bin_edges = mf.mass_function(rck, radius)
 
             # Truncate the lists to the desired number of values
@@ -89,7 +89,7 @@ class MainRunner(runner.Runner):
                 self._data.sim_name,
                 self._conf.sampling.num_od_hist_bins)
             plotter.mass_function(
-                z, radius, mass_hist, bin_edges, self._data.sim_name)
+                z, radius, mass_hist, bin_edges, self._data.sim_name, min_particle_mass)
 
 
 def main(args):

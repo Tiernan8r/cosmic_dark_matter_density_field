@@ -94,7 +94,7 @@ class MassFunction(sample.Sampler):
 
             logger.info("Reading all halos in data set")
             # Get the halo virial masses from the data
-            masses = ad["halos", "particle_mass"]
+            masses = ad[self._type.index]
 
             logger.info(
                 f"Filtering {len(masses)} entries for negative masses...")
@@ -175,7 +175,6 @@ class MassFunction(sample.Sampler):
         logger.info(f"Masses units are: {masses.units}")
 
         for m in sphere_samples:
-            logger.info(f"M units = {m.units}")
             # Ensure the units match
             m = m.to(masses.units)
             masses = unyt.uconcatenate((masses, m))

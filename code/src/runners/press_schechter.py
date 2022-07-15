@@ -21,19 +21,20 @@ DELTA_CRIT = 1.686
 
 class PressSchechterRunner(runner.Runner):
 
-    def tasks(self, rck: str):
+    def rockstar_tasks(self, rck: str):
         logger = logging.getLogger(
             __name__ + "." +
             PressSchechterRunner.__name__ + "." +
-            self.tasks.__name__)
+            self.rockstar_tasks.__name__)
 
         ds = self._ds_cache.load(rck)
         z = ds.current_redshift
         logger.info(f"Redshift is: {z}")
 
-        rb = rho_bar.RhoBar(self._data)
-        std_dev = standard_deviation.StandardDeviation(self._data)
-        mf = mass_function.MassFunction(self._data)
+        rb = rho_bar.RhoBar(self._data, type=self._type)
+        std_dev = standard_deviation.StandardDeviation(
+            self._data, type=self._type)
+        mf = mass_function.MassFunction(self._data, type=self._type)
 
         # =============================================================
         # RHO BAR 0
@@ -91,9 +92,10 @@ class PressSchechterRunner(runner.Runner):
         # PLOTTING
         # =================================================================
         sim_name = self._data.sim_name
+        min_mass = self._ds_cache.min_mass(rck)
 
         plotter = plotting.Plotter(self._data)
-        plotter.press_schechter(z, press_schechter, sim_name)
+        plotter.press_schechter(z, press_schechter, sim_name, min_mass)
 
         # =============================================================
         # COMPARISON OF PS MASS FUNCTION WITH SIMULATION

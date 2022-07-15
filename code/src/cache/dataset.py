@@ -78,3 +78,9 @@ class CachedDataSet:
     def sphere(self, fname, centre, radius):
         ds = self.load(fname)
         return ds.sphere(centre, radius)
+
+    def min_mass(self, fname, mass_units="Msun/h"):
+        ds = self.load(fname)
+        particle_mass = ds.parameters["particle_mass"] * ds.units.code_mass
+
+        return particle_mass.to(mass_units)

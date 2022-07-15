@@ -7,12 +7,14 @@ import yt
 from src import data
 from src.const.constants import SPHERES_KEY
 from src.util import coordinates
+import src.enum as enum
 
 
 class Sampler(data.Data):
 
-    def __init__(self, d: data.Data):
+    def __init__(self, d: data.Data, type=enum.DataType.ROCKSTAR):
         super().__init__(*d.compile())
+        self._type = type
 
     def sample(self, rck, radius, z) -> list:
 
@@ -117,7 +119,7 @@ class Sampler(data.Data):
 
             # Try to read the masses of halos in this sphere
             try:
-                masses = sp["halos", "particle_mass"]
+                masses = sp[self._type.index]
             except TypeError as te:
                 logger.error("error reading sphere halo masses")
                 logger.error(te)

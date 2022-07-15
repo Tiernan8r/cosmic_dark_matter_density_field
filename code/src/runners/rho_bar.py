@@ -14,11 +14,11 @@ from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY
 
 class RhoBarRunner(runner.Runner):
 
-    def tasks(self, rck: str):
+    def rockstar_tasks(self, rck: str):
         logger = logging.getLogger(
-            __name__ + "." + RhoBarRunner.__name__ + "." + self.tasks.__name__)
+            __name__ + "." + RhoBarRunner.__name__ + "." + self.rockstar_tasks.__name__)
 
-        rb = RhoBar(self._data)
+        rb = RhoBar(self._data, type=self._type)
 
         if not self._conf.caches.use_rho_bar_cache:
             try:
