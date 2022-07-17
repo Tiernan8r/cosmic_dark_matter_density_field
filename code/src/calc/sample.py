@@ -4,10 +4,9 @@ import time
 
 import numpy as np
 import yt
-from src import data
+from src import data, enum
 from src.const.constants import SPHERES_KEY
 from src.util import coordinates
-import src.enum as enum
 
 
 class Sampler(data.Data):
@@ -16,14 +15,18 @@ class Sampler(data.Data):
         super().__init__(*d.compile())
         self._type = type
 
-    def sample(self, rck, radius, z) -> list:
+    @property
+    def type(self) -> enum.DataType:
+        return self._type
+
+    def sample(self, hf, radius, z) -> list:
 
         logger = logging.getLogger(
             __name__ + "." + Sampler.__name__ + "." + self.sample.__name__)
 
-        key = (rck, SPHERES_KEY, z, float(radius))
-        num_sphere_samples = self._config.sampling.num_sp_samples
-        samples = self._cache[key].val
+        key = (hf, self.type.value, SPHERES_KEY, z, float(radius))
+        num_sphere_samples = self.config.sampling.num_sp_samples
+        samples = self.cache[key].val
         needs_recalculation = samples is None
         # run calculation if not enough values cached
         if not needs_recalculation:
@@ -33,23 +36,23 @@ class Sampler(data.Data):
             needs_recalculation = amount_entries < num_sphere_samples
             logger.debug(f"Need more calculations: {needs_recalculation}")
         # Could force recalculation
-        needs_recalculation |= not self._config.caches.use_sphere_samples
+        needs_recalculation |= not self.config.caches.use_sphere_samples
         logger.debug(
-            f"Override spheres cache? {not self._config.caches.use_sphere_samples}")  # noqa: E501
+            f"Override spheres cache? {not self.config.caches.use_sphere_samples}")  # noqa: E501
 
         # Clear existing if overwriting
-        if not self._config.caches.use_sphere_samples:
+        if not self.config.caches.use_sphere_samples:
             samples = None
 
         if needs_recalculation:
-            samples = self._cache_sample(rck, radius, existing=samples)
+            samples = self._cache_sample(hf, radius, existing=samples)
 
-            self._cache[key] = samples
+            self.cache[key] = samples
 
         # Limit the sphere samples to be the number required if too many
         return samples[:num_sphere_samples]
 
-    def _cache_sample(self, rck, radius, existing: list = None) -> list:
+    def _cache_sample(self, hf, radius, existing: list = None) -> list:
         """
         Randomly samples the data set with spheres of the given radius to find
         halos within that sample
@@ -59,8 +62,8 @@ class Sampler(data.Data):
 
         start = time.time()
 
-        # Load the rockstar data set
-        ds = self._dataset_cache.load(rck)
+        # Load the halo data set
+        ds = self.dataset_cache.load(hf)
 
         # Get the distance units used by the simulation
         dist_units = ds.units.Mpc / ds.units.h
@@ -85,7 +88,7 @@ class Sampler(data.Data):
 
         # Get the desired number of random coords for this sampling
         coords = coordinates.rand_coords(
-            self._config.sampling.num_sp_samples, min=coord_min, max=coord_max)
+            self.config.sampling.num_sp_samples, min=coord_min, max=coord_max)
         coords = (coords * dist_units).to("code_length")
 
         # Truncate the number of values to calculate, if some already exist...
@@ -94,7 +97,7 @@ class Sampler(data.Data):
             coords = coords[len(existing):]
             sphere_samples = existing
             logger.debug(
-                f"Have {len(existing)} existing samples, need {self._config.sampling.num_sp_samples - len(existing)} more...")  # noqa: E501
+                f"Have {len(existing)} existing samples, need {self.config.sampling.num_sp_samples - len(existing)} more...")  # noqa: E501
 
         indexed_coords = [(i, coords[i]) for i in range(len(coords))]
 
@@ -109,7 +112,7 @@ class Sampler(data.Data):
 
             # Try to sample a sphere of the given radius at this coord
             try:
-                sp = self._dataset_cache.sphere(rck, c, R)
+                sp = self.dataset_cache.sphere(hf, c, R)
             # Can error on higher redshift data sets due to sampling regions
             # erroring in yt
             except TypeError as te:
@@ -137,7 +140,7 @@ class Sampler(data.Data):
             sphere_samples.append(filtered)
 
         logger.info(
-            f"DONE reading {self._config.sampling.num_sp_samples} sphere samples\n")  # noqa: E501
+            f"DONE reading {self.config.sampling.num_sp_samples} sphere samples\n")  # noqa: E501
 
         end = time.time()
         logger.info(f"Took {datetime.timedelta(seconds=end - start)}")

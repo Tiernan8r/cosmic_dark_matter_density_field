@@ -14,7 +14,7 @@ class Cache:
 
     def reset(self):
         logger = logging.getLogger(__name__ + "." + self.reset.__name__)
-        logger.debug("Reseting cache...")
+        logger.debug("Resetting cache...")
 
         self._cache = {}
 

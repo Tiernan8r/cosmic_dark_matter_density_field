@@ -10,7 +10,7 @@ from src.const.constants import MASS_FUNCTION_KEY, TOTAL_MASS_FUNCTION_KEY
 
 class MassFunction(sample.Sampler):
 
-    def total_mass_function(self, rck):
+    def total_mass_function(self, hf):
         # Only need to run this once per file, so run only on root
         if not yt.is_root():
             return
@@ -20,9 +20,9 @@ class MassFunction(sample.Sampler):
 
         logger.debug("Calculating total mass function...")
 
-        # Load in the rockstar data set, potentially from
+        # Load in the halo data set, potentially from
         # a cache to optimise it
-        ds = self._dataset_cache.load(rck)
+        ds = self.dataset_cache.load(hf)
 
         # Get the redshift from the data set
         z = ds.current_redshift
@@ -30,7 +30,7 @@ class MassFunction(sample.Sampler):
         # Cache the masses if they are not already
 
         # Get the cached values
-        masses = self.cache_total_mass_function(rck)
+        masses = self.cache_total_mass_function(hf)
         if masses is None:
             logger.debug("Skipping plotting this total mass function...")
             return
@@ -55,7 +55,7 @@ class MassFunction(sample.Sampler):
 
         return hist, bins
 
-    def cache_total_mass_function(self, rck: str):
+    def cache_total_mass_function(self, hf: str):
         """
         Runs the calculations of halo masses for the
         entire data set and caches the results
@@ -66,27 +66,27 @@ class MassFunction(sample.Sampler):
 
         logger.debug("Calculating total mass function...")
 
-        # Load in the rockstar data set, potentially
+        # Load in the halo data set, potentially
         # from a cache to optimise it
-        ds = self._dataset_cache.load(rck)
+        ds = self.dataset_cache.load(hf)
         z = ds.current_redshift
 
         # If key is in cache, doesn't neet recalculation
-        masses = self._cache[rck, TOTAL_MASS_FUNCTION_KEY, z].val
+        masses = self.cache[hf, self.type.value, TOTAL_MASS_FUNCTION_KEY, z].val
         logger.debug(
-            f"Override total mass cache? {not self._config.caches.use_total_cache}")  # noqa: E501
+            f"Override total mass cache? {not self.config.caches.use_total_cache}")  # noqa: E501
 
         # If a value for the calculation doesn't exist in the cache,
         # need to calculate it...
-        if masses is None or not self._config.caches.use_total_cache:
+        if masses is None or not self.config.caches.use_total_cache:
 
-            logger.debug(f"No masses cached for '{rck}' data set, caching...")
+            logger.debug(f"No masses cached for '{hf}' data set, caching...")
 
             # Try to read all the particle data from the data set
             # (can error with the earlierredshift data sets due
             # to box issues??)
             try:
-                ad = self._dataset_cache.all_data(rck)
+                ad = self.dataset_cache.all_data(hf)
             except TypeError as te:
                 logger.error("error reading all_data(), ignoring...")
                 logger.error(te)
@@ -94,7 +94,7 @@ class MassFunction(sample.Sampler):
 
             logger.info("Reading all halos in data set")
             # Get the halo virial masses from the data
-            masses = ad[self._type.index]
+            masses = ad[self.type.index]
 
             logger.info(
                 f"Filtering {len(masses)} entries for negative masses...")
@@ -102,26 +102,26 @@ class MassFunction(sample.Sampler):
             masses = masses[np.where(masses > 0)]
 
             # Cache the calculated values, and save the cache to disk
-            self._cache[rck, TOTAL_MASS_FUNCTION_KEY, z] = masses
+            self.cache[hf, self.type.value, TOTAL_MASS_FUNCTION_KEY, z] = masses
 
         else:
             logger.debug("Using cached masses in plots...")
 
         return masses
 
-    def mass_function(self, rck, radius):
+    def mass_function(self, hf, radius):
         logger = logging.getLogger(
             __name__ + "." + self.mass_function.__name__)
 
-        ds = self.dataset_cache.load(rck)
+        ds = self.dataset_cache.load(hf)
         z = ds.current_redshift
 
         # Get the number of samples needed
         num_sphere_samples = self.config.sampling.num_sp_samples
 
         # If cache entries exist, may not need to recalculate
-        key = (rck, MASS_FUNCTION_KEY, z, float(radius))
-        masses = self._cache[key].val
+        key = (hf, self.type.value, MASS_FUNCTION_KEY, z, float(radius))
+        masses = self.cache[key].val
         needs_recalculation = masses is None
         needs_recalculation |= not self.config.caches.use_masses_cache
 
@@ -134,7 +134,7 @@ class MassFunction(sample.Sampler):
                 f"Calculating cache values for '{MASS_FUNCTION_KEY}'...")
 
             # Run the full sample, and save the result to the cache
-            masses = self.sample_masses(rck, radius)
+            masses = self.sample_masses(hf, radius)
             self.cache[key] = masses
 
         # The key can exist, but there may not be enough samples...
@@ -153,7 +153,7 @@ class MassFunction(sample.Sampler):
 
         return mass_hist, mass_bin_edges
 
-    def sample_masses(self, rck, radius):
+    def sample_masses(self, hf, radius):
         """
         Randomly samples the data set with spheres of the given radius to find
         halos within that sample
@@ -161,13 +161,13 @@ class MassFunction(sample.Sampler):
         logger = logging.getLogger(
             __name__ + "." + self.sample_masses.__name__)
 
-        # Load the rockstar data set
-        ds = self._dataset_cache.load(rck)
+        # Load the halo data set
+        ds = self.dataset_cache.load(hf)
 
         z = ds.current_redshift
         logger.debug(f"Redshift z={z}")
 
-        sphere_samples = self.sample(rck, radius, z)
+        sphere_samples = self.sample(hf, radius, z)
 
         # Convert the list of masses per sample, into a 1D list
         masses = unyt.unyt_array([], ds.units.Msun / ds.units.h)
@@ -194,7 +194,7 @@ class MassFunction(sample.Sampler):
         logger.debug("Creating histogram")
 
         hist, bins = np.histogram(masses,
-                                  bins=self._config.sampling.num_hist_bins)
+                                  bins=self.config.sampling.num_hist_bins)
 
         # Filter hist/bins for non-zero masses
         valid_idxs = np.where(hist > 0)

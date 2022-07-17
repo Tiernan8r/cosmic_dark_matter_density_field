@@ -81,6 +81,9 @@ class CachedDataSet:
 
     def min_mass(self, fname, mass_units="Msun/h"):
         ds = self.load(fname)
-        particle_mass = ds.parameters["particle_mass"] * ds.units.code_mass
+
+        init_pmass = ds.parameters.get("particle_mass", 1)
+
+        particle_mass = init_pmass * ds.units.code_mass
 
         return particle_mass.to(mass_units)

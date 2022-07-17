@@ -13,19 +13,19 @@ from src.calc.sample import Sampler
 
 class SampleRunner(runner.Runner):
 
-    def rockstar_tasks(self, rck: str):
+    def tasks(self, hf: str):
         logger = logging.getLogger(
-            __name__ + "." + SampleRunner.__name__ + "." + self.rockstar_tasks.__name__)
+            __name__ + "." + SampleRunner.__name__ + "." + self.tasks.__name__)
         sampler = Sampler(self._data, type=self._type)
 
-        ds = self._ds_cache.load(rck)
+        ds = self._ds_cache.load(hf)
         z = ds.current_redshift
 
         logger.info(f"Redshift is: {z}")
 
         for radius in self._conf.radii:
             logger.info(f"Generating samples at r={radius} & z={z}")
-            sampler.sample(rck, radius, z)
+            sampler.sample(hf, radius, z)
 
 
 def main(args):
