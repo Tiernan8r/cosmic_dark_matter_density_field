@@ -14,24 +14,24 @@ from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY
 
 class RhoBarRunner(runner.Runner):
 
-    def rockstar_tasks(self, rck: str):
+    def tasks(self, hf: str):
         logger = logging.getLogger(
-            __name__ + "." + RhoBarRunner.__name__ + "." + self.rockstar_tasks.__name__)
+            __name__ + "." + RhoBarRunner.__name__ + "." + self.tasks.__name__)
 
         rb = RhoBar(self._data, type=self._type)
 
         if not self._conf.caches.use_rho_bar_cache:
             try:
-                rb.rho_bar_0(rck)
-                rb.rho_bar(rck)
+                rb.rho_bar_0(hf)
+                rb.rho_bar(hf)
             except TypeError as te:
                 logger.warning(te)
 
-            ds = self._ds_cache.load(rck)
+            ds = self._ds_cache.load(hf)
             z = ds.current_redshift
 
-            key_0 = (rck, RHO_BAR_0_KEY)
-            key = (rck, RHO_BAR_KEY, z)
+            key_0 = (hf, RHO_BAR_0_KEY)
+            key = (hf, RHO_BAR_KEY, z)
 
             mass_units = ds.units.Msun / ds.units.h
             dist_units = ds.units.Mpc / ds.units.h

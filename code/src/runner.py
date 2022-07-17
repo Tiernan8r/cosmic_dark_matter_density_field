@@ -3,9 +3,9 @@ from typing import List
 
 import yt
 
-import src.enum as enum
+from src import enum
 from src.init import setup
-from src.util import helpers
+from src.util import halo_finder
 
 
 class Runner:
@@ -35,45 +35,31 @@ class Runner:
             zs = self._conf.redshifts
             logger.debug(
                 f"Filtering halo files to look for redshifts: {zs}")
-            snapshots, groups, rockstars = helpers.filter_data_files(
-                self._data.sim_name, self._conf.sim_data.root, zs, tolerance=1e-9)
 
-            n_rcks = len(rockstars)
-            logger.debug(
-                f"Found {n_rcks} rockstar files that match these redshifts")
+            for tp in enum.DataType:
+                self._type = tp
 
-            # Run snapshot calculations...
-            for snap in snapshots:
-                self._type = enum.DataType.SNAPSHOT
-                self.snapshot_tasks(snap)
+                halos_finder = halo_finder.HalosFinder(
+                    halo_type=tp, root=self._conf.sim_data.root, sim_name=sim_name)
+                halo_files = halos_finder.filter_data_files(zs)
 
-            # Run group calculations...
-            for group in groups:
-                self._type = enum.DataType.GROUP
-                self.group_tasks(group)
+                n_hfs = len(halo_files)
+                logger.debug(
+                    f"Found {n_hfs} halo files that match these redshifts")
 
-            # Run the calculations over all the rockstar files found
-            for rck in rockstars:
-                self._type = enum.DataType.ROCKSTAR
+                # Run halo file calculations...
+                for hf in halo_files:
+                    self.tasks(hf)
 
-                # Run the tasks of this object
-                self.rockstar_tasks(rck)
-
-                # Clear the data set cache between iterations as the
-                # data isn't persistent anyway, and this saves memory
-                logger.debug("Clearing dataset cache for new iteration")
-                self._ds_cache.clear()
+                    # Clear the data set cache between iterations as the
+                    # data isn't persistent anyway, and this saves memory
+                    logger.debug("Clearing dataset cache for new iteration")
+                    self._ds_cache.clear()
 
             # Reset the cache between simulations to save memory
             self._cache.reset()
 
             logger.info("DONE calculations\n")
 
-    def rockstar_tasks(self, rck: str):
-        pass
-
-    def snapshot_tasks(self, snap: str):
-        pass
-
-    def group_tasks(self, group: str):
+    def tasks(self, hf: str):
         pass

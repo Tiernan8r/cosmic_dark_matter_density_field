@@ -1,11 +1,15 @@
 import enum
+import re
+
+from src.const.constants import (DATA, ROCKSTAR, groups_regex, rockstar_regex,
+                                 rockstar_root_regex, snapshots_regex)
 
 
 class DataType(enum.Enum):
 
-    GROUP = enum.auto()
-    ROCKSTAR = enum.auto()
-    SNAPSHOT = enum.auto()
+    GROUP = "groups"
+    ROCKSTAR = "rockstar"
+    SNAPSHOT = "snapshots"
 
     def _index(self):
         if self is DataType.GROUP:
@@ -21,3 +25,25 @@ class DataType(enum.Enum):
     @property
     def index(self):
         return self._index()
+
+    def get_regex(self) -> re.Pattern:
+        if self is DataType.GROUP:
+            return groups_regex
+        elif self is DataType.ROCKSTAR:
+            return rockstar_regex
+        elif self is DataType.SNAPSHOT:
+            return snapshots_regex
+
+        return None
+
+    def get_root_regex(self) -> re.Pattern:
+        if self is DataType.ROCKSTAR:
+            return rockstar_root_regex
+
+        return None
+
+    def data(self) -> str:
+        if self is DataType.ROCKSTAR:
+            return ROCKSTAR
+
+        return DATA

@@ -21,13 +21,13 @@ DELTA_CRIT = 1.686
 
 class PressSchechterRunner(runner.Runner):
 
-    def rockstar_tasks(self, rck: str):
+    def tasks(self, hf: str):
         logger = logging.getLogger(
             __name__ + "." +
             PressSchechterRunner.__name__ + "." +
-            self.rockstar_tasks.__name__)
+            self.tasks.__name__)
 
-        ds = self._ds_cache.load(rck)
+        ds = self._ds_cache.load(hf)
         z = ds.current_redshift
         logger.info(f"Redshift is: {z}")
 
@@ -40,10 +40,11 @@ class PressSchechterRunner(runner.Runner):
         # RHO BAR 0
         # =============================================================
 
-        rho_0 = rb.rho_bar_0(rck)
+        rho_0 = rb.rho_bar_0(hf)
         if rho_0 is None:
             logger.warning("Could not calculate rho bar 0!")
             return
+        rho_0 = rho_0.to("Msun/h / (Mpc/h)**3")
 
         logger.info(f"Simulation average density is: {rho_0}")
 
@@ -51,39 +52,30 @@ class PressSchechterRunner(runner.Runner):
         # PRESS SCHECHTER MASS FUNCTION
         # =================================================================
 
-        press_schechter = self._cache[rck, PRESS_SCHECHTER_KEY, z].val
+        press_schechter = self._cache[hf,
+                                      self._type.value, PRESS_SCHECHTER_KEY, z].val
 
         needs_recalc = press_schechter is None
         needs_recalc |= not self._conf.caches.use_press_schechter_cache
         if needs_recalc:
             logger.debug(
-                f"No press-schechter values cached for '{rck}' data set, caching...")  # noqa: E501
+                f"No press-schechter values cached for '{hf}' data set, caching...")  # noqa: E501
 
-            std_dev_map = std_dev.std_dev_func_mass(rck)
-            if std_dev_map is None:
-                logger.warn(
-                    "No standard deviations mapped for this redshift, stopping...")  # noqa: E501
-                return
+            all_mass = mf.cache_total_mass_function(hf)
+            all_mass = all_mass.to("Msun / h")
+            std_dev = np.std(all_mass)
 
-            press_schechter = {}
+            frac = np.abs(np.log(std_dev) / np.log(all_mass))
 
-            masses = np.array(sorted(std_dev_map.keys()))
-            std_devs = np.array([std_dev_map[k] for k in masses])
+            press_schechter = np.sqrt(2 / np.pi) * (rho_0 / all_mass**2) * DELTA_CRIT / \
+                std_dev * frac * np.exp(-DELTA_CRIT / (2 * std_dev**2))
 
-            frac = np.abs(np.log(std_devs) / np.log(masses))
-
-            ps = np.sqrt(2 / np.pi) * (rho_0 / masses**2) * DELTA_CRIT / \
-                std_devs * frac * np.exp(-DELTA_CRIT / (2 * std_devs**2))
-
-            if isinstance(ps, unyt.unyt_array):
+            if isinstance(press_schechter, unyt.unyt_array):
                 logger.debug(
-                    f"Press-Schechter mass function units are: {ps.units}")
+                    f"Press-Schechter mass function units are: {press_schechter.units}")
 
-            # Match up the entries into the dictionary
-            for i in range(len(masses)):
-                press_schechter[masses[i]] = ps[i]
-
-            self._cache[rck, PRESS_SCHECHTER_KEY, z] = press_schechter
+            self._cache[hf, self._type.value,
+                        PRESS_SCHECHTER_KEY, z] = press_schechter
 
         else:
             logger.debug("Using cached press schechter values...")
@@ -92,10 +84,12 @@ class PressSchechterRunner(runner.Runner):
         # PLOTTING
         # =================================================================
         sim_name = self._data.sim_name
-        min_mass = self._ds_cache.min_mass(rck)
+        min_mass = self._ds_cache.min_mass(hf)
 
-        plotter = plotting.Plotter(self._data)
-        plotter.press_schechter(z, press_schechter, sim_name, min_mass)
+        ps_hist, ps_bins = mf.create_histogram(press_schechter)
+
+        plotter = plotting.Plotter(self._data, self._type)
+        plotter.press_schechter(z, ps_hist, ps_bins, sim_name, min_mass)
 
         # =============================================================
         # COMPARISON OF PS MASS FUNCTION WITH SIMULATION
@@ -104,7 +98,7 @@ class PressSchechterRunner(runner.Runner):
         for radius in self._conf.radii:
 
             # Get the mass samples
-            ms = mf.sample_masses(rck, radius)
+            ms = mf.sample_masses(hf, radius)
 
             # Get the histogram and scale it
             hist, bins = mf.create_histogram(ms)
@@ -115,7 +109,7 @@ class PressSchechterRunner(runner.Runner):
 
             # Plot
             plotter.press_schechter_comparison(z, radius, hist, bins,
-                                               press_schechter, sim_name)
+                                               ps_hist, ps_bins, sim_name)
 
 
 def main(args):

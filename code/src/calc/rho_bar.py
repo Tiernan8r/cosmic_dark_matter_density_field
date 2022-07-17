@@ -4,30 +4,31 @@ import logging
 import src.calc.sample as sample
 import unyt
 from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY, sim_regex
-from src.util import helpers
+from src.util import halo_finder
 
 
 class RhoBar(sample.Sampler):
 
-    def rho_bar_0(self, rck):
+    def rho_bar_0(self, hf):
 
         logger = logging.getLogger(__name__ + "." + self.rho_bar_0.__name__)
 
-        sim_name = sim_regex.match(rck).group(1)
+        sim_name = sim_regex.match(hf).group(1)
 
         logger.debug(
-            f"Finding rockstar file for a redshift of 0 on simulation '{sim_name}'")  # noqa: E501
-        _, _, rockstars = helpers.filter_data_files(
-            sim_name, self._config.sim_data.root, desired=[0])
+            f"Finding {self._type.value} file for a redshift of 0 on simulation '{sim_name}'")  # noqa: E501
+        halos_finder = halo_finder.HalosFinder(
+            halo_type=self.type, root=self.config.sim_data.root, sim_name=sim_name)
+        halo_files = halos_finder.filter_data_files(desired=[0])
 
-        if len(rockstars) > 1:
+        if len(halo_files) > 1:
             logger.warning(
-                "Too many rockstar files found for redshift 0, using last one!")  # noqa: E501
-        rck = rockstars[-1]
+                "Too many halo files found for redshift 0, using last one!")  # noqa: E501
+        hf = halo_files[-1]
 
-        logger.info(f"Rockstar file is '{rck}'")
+        logger.info(f"Halo file is '{hf}'")
 
-        ds = self._dataset_cache.load(rck)
+        ds = self.dataset_cache.load(hf)
 
         # mass_units = ds.units.Msun / ds.units.h
         # dist_units = ds.units.Mpc / ds.units.h
@@ -38,12 +39,12 @@ class RhoBar(sample.Sampler):
         # =================================================================
         logger.info("Working on rho bar 0 value:")
 
-        rho_0 = self._cache[rck, RHO_BAR_0_KEY].val
-        if rho_0 is None or not self._config.caches.use_rho_bar_cache:
+        rho_0 = self.cache[hf, self.type.value, RHO_BAR_0_KEY].val
+        if rho_0 is None or not self.config.caches.use_rho_bar_cache:
             logger.debug(
                 f"No entries found in cache for '{RHO_BAR_0_KEY}', calculating...")  # noqa: E501
             try:
-                ad = self._dataset_cache.all_data(rck)
+                ad = self.dataset_cache.all_data(hf)
             except TypeError as te:
                 logger.error("Error reading all_data()")
                 logger.error(te)
@@ -66,7 +67,7 @@ class RhoBar(sample.Sampler):
             rho_0 = (simulation_total_mass /
                      simulation_volume)
 
-            self._cache[rck, RHO_BAR_0_KEY] = rho_0
+            self.cache[hf, self.type.value, RHO_BAR_0_KEY] = rho_0
 
         else:
             logger.debug("Using cached 'rho_bar_0' value...")
@@ -75,7 +76,7 @@ class RhoBar(sample.Sampler):
 
         return rho_0
 
-    def rho_bar(self, rck):
+    def rho_bar(self, hf):
         logger = logging.getLogger(__name__ + "." + self.rho_bar.__name__)
 
         # =================================================================
@@ -83,18 +84,18 @@ class RhoBar(sample.Sampler):
         # =================================================================
         logger.info("Working on rho_bar value:")
 
-        ds = self._dataset_cache.load(rck)
+        ds = self.dataset_cache.load(hf)
         z = ds.current_redshift
 
         # Calculate the density of the entire region if is not cached...
-        rho_bar = self._cache[rck, RHO_BAR_KEY, z].val
-        if rho_bar is None or not self._config.caches.use_rho_bar_cache:
+        rho_bar = self.cache[hf, self.type.value, RHO_BAR_KEY, z].val
+        if rho_bar is None or not self.config.caches.use_rho_bar_cache:
             logger.debug(
                 f"No entries found in cache for '{RHO_BAR_KEY}', calculating...")  # noqa: E501
 
             # Try to calculate the rho_bar value
             try:
-                rho_bar = self._calc_rho_bar(rck)
+                rho_bar = self._calc_rho_bar(hf)
             # Can error on some of the earlier redshift data sets
             # due to region bounding issues
             # (don't know exactly why though...)
@@ -111,7 +112,7 @@ class RhoBar(sample.Sampler):
                 raise iuce
 
             # Cache the result
-            self._cache[rck, RHO_BAR_KEY, z] = rho_bar
+            self.cache[hf, self.type.value, RHO_BAR_KEY, z] = rho_bar
 
         else:
             logger.debug("Using cached 'rho_bar' value...")
@@ -121,7 +122,7 @@ class RhoBar(sample.Sampler):
 
         return rho_bar
 
-    def _calc_rho_bar(self, rck):
+    def _calc_rho_bar(self, hf):
         """
         Calculates the overdensity of the entire data set
         """
@@ -130,7 +131,7 @@ class RhoBar(sample.Sampler):
 
         # Load the data set, if it is cached already this
         # operation will be faster...
-        ds = self._dataset_cache.load(rck)
+        ds = self.dataset_cache.load(hf)
 
         # Get the distance units used in the code
         # dist_units = ds.units.Mpc / ds.units.h
@@ -149,7 +150,7 @@ class RhoBar(sample.Sampler):
 
         # Get the entire dataset region, can be cached for performance
         # optimisation
-        ad = self._dataset_cache.all_data(rck)
+        ad = self.dataset_cache.all_data(hf)
 
         # Get the average density over the region
         total_mass = ad.quantities.total_mass()[1]
@@ -158,6 +159,6 @@ class RhoBar(sample.Sampler):
         rho_bar = total_mass / volume
 
         logger.debug(
-            f"Calculated a rho_bar of '{rho_bar}' for dataset '{rck}'")
+            f"Calculated a rho_bar of '{rho_bar}' for dataset '{hf}'")
 
         return rho_bar

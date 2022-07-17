@@ -16,10 +16,10 @@ from src.plot import plotting
 
 class MainRunner(runner.Runner):
 
-    def rockstar_tasks(self, rck: str):
-        logger = logging.getLogger(self.rockstar_tasks.__name__)
+    def tasks(self, hf: str):
+        logger = logging.getLogger(self.tasks.__name__)
 
-        logger.debug(f"Working on rockstar file '{rck}'")
+        logger.debug(f"Working on halo file '{hf}'")
 
         logger.debug("Calculating total halo mass function")
 
@@ -27,16 +27,16 @@ class MainRunner(runner.Runner):
         rb = rho_bar.RhoBar(self._data, type=self._type)
         od = overdensity.Overdensity(self._data, type=self._type)
         sd = standard_deviation.StandardDeviation(self._data, type=self._type)
-        plotter = plotting.Plotter(self._data)
+        plotter = plotting.Plotter(self._data, self._type)
 
         # =================================================================
         # TOTAL MASS FUNCTION
         # =================================================================
-        ds = self._ds_cache.load(rck)
+        ds = self._ds_cache.load(hf)
         z = ds.current_redshift
-        min_particle_mass = self._ds_cache.min_mass(rck)
+        min_particle_mass = self._ds_cache.min_mass(hf)
 
-        total_hist, total_bins = mf.total_mass_function(rck)
+        total_hist, total_bins = mf.total_mass_function(hf)
         plotter.total_mass_function(
             z, total_hist, total_bins, self._data.sim_name, min_particle_mass)
 
@@ -44,7 +44,7 @@ class MainRunner(runner.Runner):
         # RHO BAR
         # =================================================================
         try:
-            rb.rho_bar(rck)
+            rb.rho_bar(hf)
         except Exception as e:
             logger.error(e)
 
@@ -62,19 +62,19 @@ class MainRunner(runner.Runner):
             # =================================================================
             logger.info("Working on overdensities:")
 
-            deltas = od.calc_overdensities(rck, radius)
+            deltas = od.calc_overdensities(hf, radius)
 
             # =================================================================
             # STANDARD DEVIATION
             # =================================================================
             logger.debug("Working on standard deviation")
-            sd.std_dev(rck, radius)
+            sd.std_dev(hf, radius)
 
             # =================================================================
             # MASS FUNCTION:
             # =================================================================
             logger.info("Working on mass function:")
-            mass_hist, bin_edges = mf.mass_function(rck, radius)
+            mass_hist, bin_edges = mf.mass_function(hf, radius)
 
             # Truncate the lists to the desired number of values
             # if there are too many
