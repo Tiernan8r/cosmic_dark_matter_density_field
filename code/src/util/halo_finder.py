@@ -115,7 +115,7 @@ class HalosFinder(caching.Cache):
 
         for k in all_redshifts.keys():
             for z in desired:
-                if math.isclose(k, z, rel_tol=tolerance) and k not in redshifts:
+                if math.isclose(k, z, abs_tol=tolerance) and k not in redshifts:
                     logger.debug(
                         f"Redshift of '{k}' is close to '{z}', storing path '{all_redshifts[k]}' in dict.")  # noqa: E501
                     redshifts[k] = all_redshifts[k]

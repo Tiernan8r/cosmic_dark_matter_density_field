@@ -1,9 +1,9 @@
-#! /usr/bin/bash
+#!/usr/bin/bash
 
 # Default values:
 
 # VALUES:
-FILE_NAME=""
+FILENAME=""
 # FLAGS:
 # SAMPLING="!include defaults/sampling.yaml"
 # RADII="!include defaults/radii.yaml"
@@ -91,7 +91,7 @@ parse_cli () {
     	done
 
     if [[ ${#values} -ge 1 ]]; then
-        FILE_NAME=${values[0]}
+        FILENAME=${values[0]}
     else
         echo "Missing required filename!"
         exit 1
@@ -126,9 +126,12 @@ compile () {
         TEMPLATE+="plotting: ${PLOTTING}\n"
     fi
 
-    echo "Compiling result to file: ${FILE_NAME}"
+    dir=$(dirname "${FILENAME}")
+    mkdir -p "${dir}"
+
+    echo "Compiling result to file: ${FILENAME}"
     echo -e "Output is:\n"
-    echo -e ${TEMPLATE} | tee ${FILE_NAME}
+    echo -e ${TEMPLATE} | tee ${FILENAME}
 }
 
 
@@ -136,7 +139,7 @@ if [[ ${#@} -gt 0 ]]; then
     parse_cli "${@}"
 fi
 
-if [[ -z "${FILE_NAME}" ]]; then
+if [[ -z "${FILENAME}" ]]; then
     echo "Filename unset!"
     exit 1
 fi

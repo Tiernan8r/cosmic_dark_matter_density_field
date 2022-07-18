@@ -199,6 +199,11 @@ class Plotter:
                             save_dir, plot_name, x_min=min_mass)
 
     def _mass_function(self, x, y, title, save_dir, plot_name, fig=None, x_min=10**10):
+        if len(x) == 0 or len(y) == 0:
+            logger = logging.getLogger(__name__ + "." + self._mass_function.__name__)
+            logger.warning("Attempting to plot empty data!")
+            return
+
         autosave = fig is None
         if autosave:
             fig = plt.figure()

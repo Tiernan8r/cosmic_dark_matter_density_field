@@ -33,7 +33,7 @@ class MassFunction(sample.Sampler):
         masses = self.cache_total_mass_function(hf)
         if masses is None:
             logger.debug("Skipping plotting this total mass function...")
-            return
+            return None, None
 
         if len(masses) > 0:
             logger.info(f"Mass units are: {masses.units}")
@@ -94,7 +94,12 @@ class MassFunction(sample.Sampler):
 
             logger.info("Reading all halos in data set")
             # Get the halo virial masses from the data
-            masses = ad[self.type.index]
+            try:
+                masses = ad[self.type.index]
+            except yt.utilities.exceptions.YTFieldNotFound as ytfnf:
+                logger.error(f"error reading masses from dataset!")
+                logger.error(ytfnf)
+                return
 
             logger.info(
                 f"Filtering {len(masses)} entries for negative masses...")

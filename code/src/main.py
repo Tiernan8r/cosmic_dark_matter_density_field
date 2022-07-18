@@ -36,9 +36,13 @@ class MainRunner(runner.Runner):
         z = ds.current_redshift
         min_particle_mass = self._ds_cache.min_mass(hf)
 
-        total_hist, total_bins = mf.total_mass_function(hf)
-        plotter.total_mass_function(
-            z, total_hist, total_bins, self._data.sim_name, min_particle_mass)
+        try:
+            total_hist, total_bins = mf.total_mass_function(hf)
+            if total_hist is not None and total_bins is not None:
+                plotter.total_mass_function(
+                    z, total_hist, total_bins, self._data.sim_name, min_particle_mass)
+        except Exception as e:
+            logger.error(e)
 
         # =================================================================
         # RHO BAR
@@ -62,34 +66,44 @@ class MainRunner(runner.Runner):
             # =================================================================
             logger.info("Working on overdensities:")
 
-            deltas = od.calc_overdensities(hf, radius)
+            try:
+                deltas = od.calc_overdensities(hf, radius)
+
+                # Truncate the lists to the desired number of values
+                # if there are too many
+                deltas = deltas[:num_sphere_samples]
+
+                logger.debug("Generating plots for this data...")
+
+                plotter.overdensities(
+                    z,
+                    radius,
+                    deltas,
+                    self._data.sim_name,
+                    self._conf.sampling.num_od_hist_bins)
+            except Exception as e:
+                logger.error(e)
 
             # =================================================================
             # STANDARD DEVIATION
             # =================================================================
-            logger.debug("Working on standard deviation")
-            sd.std_dev(hf, radius)
+            try:
+                logger.debug("Working on standard deviation")
+                sd.std_dev(hf, radius)
+            except Exception as e:
+                logger.error(e)
 
             # =================================================================
             # MASS FUNCTION:
             # =================================================================
-            logger.info("Working on mass function:")
-            mass_hist, bin_edges = mf.mass_function(hf, radius)
+            try:
+                logger.info("Working on mass function:")
+                mass_hist, bin_edges = mf.mass_function(hf, radius)
 
-            # Truncate the lists to the desired number of values
-            # if there are too many
-            deltas = deltas[:num_sphere_samples]
-
-            logger.debug("Generating plots for this data...")
-
-            plotter.overdensities(
-                z,
-                radius,
-                deltas,
-                self._data.sim_name,
-                self._conf.sampling.num_od_hist_bins)
-            plotter.mass_function(
-                z, radius, mass_hist, bin_edges, self._data.sim_name, min_particle_mass)
+                plotter.mass_function(
+                    z, radius, mass_hist, bin_edges, self._data.sim_name, min_particle_mass)
+            except Exception as e:
+                logger.error(e)
 
 
 def main(args):

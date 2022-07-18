@@ -87,6 +87,9 @@ class Overdensity(rho_bar.RhoBar):
         logger.info(f"Given rho_bar = {rb}")
         logger.info(f"Volume is: {V}")
 
+        total_mass = 0 * ds.units.code_mass
+        rho = unyt.unyt_quantity(0)
+
         for sphere_sample in sphere_samples:
             total_mass = np.sum(sphere_sample)
             total_mass = total_mass.to("g")

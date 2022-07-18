@@ -127,6 +127,10 @@ class Sampler(data.Data):
                 logger.error("error reading sphere halo masses")
                 logger.error(te)
                 continue
+            except yt.utilities.exceptions.YTFieldNotFound as ytfnf:
+                logger.error("Could not access masses field")
+                logger.error(ytfnf)
+                continue
 
             # filter for negative (!!!) masses
             filtered = masses[np.where(masses > 0)]
