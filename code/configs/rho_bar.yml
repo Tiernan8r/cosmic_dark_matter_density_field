@@ -1,0 +1,10 @@
+%YAML 1.2
+---
+redshifts:
+- 0
+- 1
+- 2
+- 6
+- 10
+caches:
+  use_rho_bar_cache: true

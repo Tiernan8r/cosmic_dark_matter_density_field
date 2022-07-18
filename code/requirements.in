@@ -1,0 +1,9 @@
+pip-tools
+numpy
+matplotlib
+git+https://github.com/brittonsmith/yt@gadget4
+git+https://github.com/brittonsmith/yt_legacy@master
+yt-astro-analysis
+autopep8
+unyt
+flake8

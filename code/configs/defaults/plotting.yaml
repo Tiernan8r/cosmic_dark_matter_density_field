@@ -1,0 +1,15 @@
+dirs:
+  root: ../plots/
+  mass_function: "{}/{}/mass_function/"
+  overdensity: "{}/{}/deltas/"
+  press_schechter: "{}/{}/press_schechter/"
+  total: "{}/{}/total_mass_function/"
+  compared: "{}/{}/compared/"
+  std_dev: "{}/{}/std_dev/"
+pattern:
+  mass_function: mass_function_r{:.2f}_z{:.2f}.png
+  overdensity: overdensity_r{:.2f}_z{:.2f}.png
+  press_schechter: press_schechter_z{:.2f}.png
+  total: total_mass_function_z{:.2f}.png
+  compared: comparison_ps_mass_function_r{:.2f}_z{:.2f}.png
+  std_dev: standard_deviations_z{:.2f}.png

@@ -1,0 +1,8 @@
+%YAML 1.2
+---
+sampling: !include defaults/sampling.yaml
+radii: !include defaults/radii.yaml
+redshifts: !include defaults/redshifts.yaml
+sim_data: !include defaults/sim_data.yaml
+caches: !include defaults/caches.yaml
+plotting: !include defaults/plotting.yaml
