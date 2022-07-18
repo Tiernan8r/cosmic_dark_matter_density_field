@@ -1,10 +1,11 @@
-#! /usr/bin/bash
+#!/usr/bin/bash
 
 # FILE ASSUMES IT IS RUN FROM code/
 echo "Working from dir: ${PWD}"
 
 RADII=$(cat ./sbatch/compilers/radii.txt)
 REDSHIFTS=$(cat ./sbatch/compilers/redshifts.txt)
+SIMULATIONS=$(cat ./sbatch/compilers/datasets.txt)
 
 nodes=1
 ntasks_per_node=1
@@ -14,22 +15,24 @@ mem="16G"
 
 for R in ${RADII[@]}; do
     for Z in ${REDSHIFTS[@]}; do
-        radii_name="r${R}_z${Z}"
-        job_name="sp_${radii_name}"
+        for S in ${SIMULATIONS[@]}; do
+            radii_name="r${R}_z${Z}-${S}"
+            job_name="sp_${radii_name}"
 
-        # ============
-        # SBATCH
-        # ============
+            # ============
+            # SBATCH
+            # ============
 
-        out_name="./sbatch/spheres/${job_name}.sh"
+            out_name="./sbatch/spheres/${job_name}.sh"
 
-        echo "JOB NAME: ${job_name}"
-        echo "====================="
+            echo "JOB NAME: ${job_name}"
+            echo "====================="
 
-        logs="logs/spheres/${job_name}.log"
-        config_file="configs/radii/${radii_name}.yaml"
-        python="src/runners/sample.py"
+            logs="logs/spheres/${job_name}.log"
+            config_file="configs/radii/${radii_name}.yaml"
+            python="src/runners/sample.py"
 
-        ./sbatch/compilers/sbatch.sh -l "${logs}" -n "${nodes}" --ntasks-per-node "${ntasks_per_node}" --cpus-per-task "${cpus_per_task}" -t "${timeout}" -m "${mem}" -c "${config_file}" -p "${python}" "${job_name}" "${out_name}"
+            ./sbatch/compilers/sbatch.sh -l "${logs}" -n "${nodes}" --ntasks-per-node "${ntasks_per_node}" --cpus-per-task "${cpus_per_task}" -t "${timeout}" -m "${mem}" -c "${config_file}" -p "${python}" "${job_name}" "${out_name}"
+        done
     done
 done

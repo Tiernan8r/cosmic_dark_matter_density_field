@@ -41,7 +41,7 @@ class Runner:
 
                 halos_finder = halo_finder.HalosFinder(
                     halo_type=tp, root=self._conf.sim_data.root, sim_name=sim_name)
-                halo_files = halos_finder.filter_data_files(zs)
+                halo_files = halos_finder.filter_data_files(zs, tolerance=1e-1)
 
                 n_hfs = len(halo_files)
                 logger.debug(
