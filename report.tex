@@ -1,0 +1,233 @@
+\documentclass[12pt]{report}
+
+\usepackage{graphics}
+\usepackage{fullpage,epsf,graphicx, amstext,url} 
+
+%enable hyperlinks 
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=violet,
+    filecolor=green,      
+    urlcolor=blue,
+}
+
+% To get references:
+\usepackage[nottoc,numbib]{tocbibind} % To get bibliography into table of contents
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{references.bib}
+
+\begin{document}
+
+\thispagestyle{empty}
+
+%
+%	This is a basic LaTeX Template for the TP/MP MSc Dissertation report
+
+\parindent=0pt          %  Switch off indent of paragraphs 
+\parskip=5pt            %  Put 5pt between each paragraph  
+
+%	This section generates a title page
+%       Edit only the sections indicated to put in the project title, and submission date
+
+\vspace*{0.1\textheight}
+
+\begin{center}
+        \huge{\bfseries The Cosmic Dark Matter Density Field}\\
+\end{center}
+
+\bigskip
+
+\begin{center}
+        \large{Tiernan Stapleton}\\
+        \small{\textbf{Supervisor:} Prof. Sadegh Khochfar}\\
+        \bigskip
+        \large{August 19, 2022}  % Submission Date
+\end{center}
+
+\vspace*{0.3\textheight}
+
+\begin{center}
+        \includegraphics[width=35mm]{crest.pdf}
+\end{center}
+
+\medskip
+
+\begin{center}
+
+\large{
+  MSc in Theoretical Physics\\[0.8ex]
+  The University of Edinburgh\\[0.8ex]
+  2022
+}
+
+\end{center}
+
+\newpage
+
+
+\pagenumbering{roman}
+
+\begin{abstract}
+
+\end{abstract}
+
+\pagenumbering{roman}
+
+\begin{center}
+\textbf{Declaration}
+\end{center}
+
+\newpage
+
+\begin{center}
+\textbf{Personal Statement}
+\end{center}
+
+\emph{You \textbf{\emph{must}} include a Personal Statement in your
+  dissertation. This should describe what you did during the project,
+  and when you did it. Give an account of problems you faced and how
+  you attempted to overcome them. The examples below are based on
+  personal statements from MSc and MPhys projects in previous years,
+  with (mostly-obvious) changes to make them anonymous. }
+
+\subsubsection*{Example~1: an analytical project}
+
+The project began with an introduction to the spinor-helicity
+formalism in four dimensions, with my main source material being
+H. Elvang's “Scattering Amplitudes in Gauge Theory and Gravity” [1]. I
+read the first chapter, and acquainted myself with the formalism,
+and how it worked in a practical sense.
+
+Once I felt more comfortable with it, we moved onto the
+six-dimensional spinor-helicity formalism paper, where I spent some
+time gaining as strong an understanding of how the formalism worked,
+and proving identities.
+
+The next stage was to learn about the generalised unitarity procedure,
+with the end goal being to use it to calculate coefficients for some
+one loop integral, likely involving massive particles. Learning how
+this worked took some time, and proved to be some of the most
+difficult material for me to understand.
+
+It wasn't until later that we began to consider applying what I had
+learned to a Kaluza-Klein reduction, which ended up being the main
+focus of the project. It mixed well with the general theme of
+“extra-dimensional theory” the project began with, and allowed me to
+apply all that I'd learned and prepared for so far.  The vast majority
+of my remaining time was spent calculating coefficients for the scalar
+box contribution to the gluon-gluon to two-Kaluza-Klein-particle
+amplitude, overcoming a number of problems and errors, to finally have
+human-readable, and presentable results.
+
+During the course of the project, I met with my supervisor every week,
+in order to discuss my progress and the direction I would head
+next. Toward the end, the frequency of our meetings increased
+somewhat, as I began to finish my calculations.
+
+I started writing this dissertation in mid-July, and I spent the first
+three weeks of August working on it full-time.
+
+Overall, I feel that the project was a success, and I found it to be
+extremely enjoyable throughout.
+
+
+\subsubsection*{Example~2: a computational project}
+
+I spent the first 2 weeks of the project reading the material
+surrounding my project - mainly [1] and [2]. I also began to plan out
+how I would implement the algorithms in C++, in doing this I gained an
+understanding of what the main goals of the first half of my project
+would be and how they could be achieved. I identified which Monte
+Carlo observables would be useful to measure in these simulations.
+
+For the next 3 weeks I implemented the standard Atlantic City
+algorithm and debugged my code whilst developing analysis tools in
+python. I compared the results from my simulations to the results from
+[3] (for the Random Osculator) and [4] for the EvenMoreRandom
+Osculator. Having obtained positive results for the Random Osculator I
+started reading up on Heaviside Articulation. I examined how to
+integrate a Heaviside Articulator into the simulation in order to
+produce the most efficient simulation - the solution I decided on was
+to use a package called HeaviArt[5].
+
+Following this I began to integrate the Heaviside Articulator into my
+code and test it against the regular algorithm. In addition to this I
+ran longer simulations to verify my findings without Articulation.
+
+In mid July I finished implementing Heaviside Articulation into my
+code and began looking into how to quantify any improvement in speed
+gained by this algorithm. As July progressed I started looking into
+how to integrate the EvenMoreRandom Osculator into my code - this was
+the most complicated part of the project, as discussed in the body of
+this report. Despite much effort on my part, I couldn't get the
+results produced by the new algorithm to agree with the old
+ones. Following further study of the literature, and long discussions
+with Jack O'Bean, it turned out that the original form of Heaviside
+Articulation didn't applied to the EvenMoreRandom Osculator. With the
+help of Jack and my supervisor, I then developed the new version
+described in this report. I also did analytical calculations of the
+Four-Point Green-and-White- Function to two orders higher than had
+been published previously in the literature.
+
+For the final parts of the summer I worked mainly on perfecting the
+algorithm for the Random Osculator and implementing the EvenMoreRandom
+Osculators algorithm with the improved Heaviside Articulation. The
+final results were encouraging, but more work is clearly needed. To
+this end, I have been awarded a studentship by the British University
+of Lifelong Learning to extend this work during my PhD Studies at
+the non-existent Scottish Highlands Institute of Technology in
+Inveroxter.
+
+I started writing this dissertation in mid-July, and I spent the first
+three weeks of August working on it full-time.
+
+\newpage
+
+\begin{center}
+%\vspace*{2in}
+% an acknowledgements section is completely optional but if you decide
+% not to include it you should still include an empty {titlepage}
+% environment as this initialises things like section and page numbering.
+\textbf{Acknowledgements}
+\end{center}
+
+\emph{Put your acknowledgements here. Thanking your supervisor for his/her help is standard practice, but it's not compulsory\ldots}
+
+\tableofcontents
+\listoftables
+\listoffigures
+
+\pagenumbering{arabic}
+
+\chapter{Introduction}
+
+Test \cite{croton_damn_2013}
+
+\chapter{Background}
+
+\chapter{Results and Analysis}
+
+\section{Some results}
+
+\subsection{More results}
+
+\section{Discussion}
+
+\chapter{Conclusions}
+
+\chapter{References and Bibliography}
+\printbibliography[heading=none]
+
+\appendix
+% the appendix command just changes heading styles for appendices.
+\chapter{Appendix}
+
+Some people include in their thesis a lot of detail, particularly lots
+of tables containing raw results, figures of intermediate results, or
+computer code which no-one will ever read. You should be careful that
+anything like this you include should contain some element of
+uniqueness which justifies its inclusion.
+
+
+\end{document}
