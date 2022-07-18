@@ -5,3 +5,6 @@ __pycache__/
 *.npy
 *.pickle
 *.pickle.bkp
+code/configs/radii/*
+code/sbatch/radii/*
+code/sbatch/spheres/*
