@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import unyt
+from src import units as u
 from src.calc import rho_bar
 from src.const.constants import OVERDENSITIES_KEY
 
@@ -71,9 +72,8 @@ class Overdensity(rho_bar.RhoBar):
         sphere_samples = self.sample(hf, radius, z)
 
         # Get the units used in the simulation
-        dist_units = ds.units.Mpc / ds.units.h
         # Convert the given radius to an unyt unit object
-        R = (radius * dist_units).to("code_length")
+        R = ds.quan(radius, u.length(ds))
 
         # Calculate the volume of the spheres that we sample
         # on in comoving units
@@ -87,12 +87,12 @@ class Overdensity(rho_bar.RhoBar):
         logger.info(f"Given rho_bar = {rb}")
         logger.info(f"Volume is: {V}")
 
-        total_mass = 0 * ds.units.code_mass
+        total_mass = ds.quan(0, u.mass(ds))
         rho = unyt.unyt_quantity(0)
 
         for sphere_sample in sphere_samples:
             total_mass = np.sum(sphere_sample)
-            total_mass = total_mass.to("g")
+            total_mass = total_mass.to(u.mass(ds))
 
             # Get the density
             rho = total_mass / V

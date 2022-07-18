@@ -15,7 +15,7 @@ for rs in redshifts:
 
     z = ds.current_redshift
 
-    v = (ds.domain_width).to(ds.units.Mpc / ds.units.h)
+    v = (ds.domain_width).to(ds.length_unit)
 
     map[z] = v
 

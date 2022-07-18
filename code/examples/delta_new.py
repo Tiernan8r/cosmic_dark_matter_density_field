@@ -48,9 +48,10 @@ for sto, s in yt.parallel_objects(ss, 102, storage=storage):
 
     # give units to the sphere radius
 
-    r_un = r * ds.units.Mpc / ds.units.h
+    l_units = ds.length_unit
+    r_un = r * l_unit
 
-    R = r_un.to('code_length')
+    R = r_un.to("code_length")
 
     # create spheres at random locations from the file and get their
     # overdensities

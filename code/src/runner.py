@@ -39,9 +39,16 @@ class Runner:
             for tp in enum.DataType:
                 self._type = tp
 
+                logger.info(f"Working on {tp} datasets:")
+
+                type_name = tp.value
+                if not self._conf.datatypes.__getattribute__(type_name):
+                    logger.info("Skipping...")
+                    continue
+
                 halos_finder = halo_finder.HalosFinder(
                     halo_type=tp, root=self._conf.sim_data.root, sim_name=sim_name)
-                halo_files = halos_finder.filter_data_files(zs, tolerance=1e-1)
+                halo_files = halos_finder.filter_data_files(zs, tolerance=self._conf.sampling.tolerance)
 
                 n_hfs = len(halo_files)
                 logger.debug(

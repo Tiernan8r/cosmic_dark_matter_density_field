@@ -3,6 +3,7 @@ import logging
 
 import src.calc.sample as sample
 import unyt
+from src import units as u
 from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY, sim_regex
 from src.util import halo_finder
 
@@ -30,10 +31,6 @@ class RhoBar(sample.Sampler):
 
         ds = self.dataset_cache.load(hf)
 
-        # mass_units = ds.units.Msun / ds.units.h
-        # dist_units = ds.units.Mpc / ds.units.h
-        # density_units = mass_units / dist_units**3
-
         # =================================================================
         # CALCULATING RHO BAR 0
         # =================================================================
@@ -50,22 +47,17 @@ class RhoBar(sample.Sampler):
                 logger.error(te)
                 return
 
-            # simulation_total_mass = ad.quantities.total_mass()[
-            #     1].to(mass_units)
             simulation_total_mass = ad.quantities.total_mass()[
-                1]
+                1].to(u.mass(ds))
             logger.info(f"Simulation total mass is: {simulation_total_mass}")
 
-            # simulation_size = ds.domain_width[0].to(dist_units)
-            simulation_size = ds.domain_width[0]
+            simulation_size = ds.domain_width[0].to(u.length(ds))
             logger.info(f"Simulation total size is: {simulation_size}")
 
             simulation_volume = simulation_size ** 3
 
-            # rho_0 = (simulation_total_mass /
-            #          simulation_volume).to(density_units)
             rho_0 = (simulation_total_mass /
-                     simulation_volume)
+                     simulation_volume).to(u.density(ds))
 
             self.cache[hf, self.type.value, RHO_BAR_0_KEY] = rho_0
 
@@ -134,8 +126,6 @@ class RhoBar(sample.Sampler):
         ds = self.dataset_cache.load(hf)
 
         # Get the distance units used in the code
-        # dist_units = ds.units.Mpc / ds.units.h
-
         z = ds.current_redshift
 
         # Calculate the scale factor
@@ -144,16 +134,16 @@ class RhoBar(sample.Sampler):
         logger.debug(f"Redshift z={z}")
 
         # Get the size of one side of the box
-        # sim_size = (ds.domain_width[0]).to(dist_units)
-        sim_size = (ds.domain_width[0])
+        sim_size = (ds.domain_width[0]).to(u.length(ds))
         logger.debug(f"Simulation size = {sim_size}")
+        logger.debug(f"Scale factor is: {a}")
 
         # Get the entire dataset region, can be cached for performance
         # optimisation
         ad = self.dataset_cache.all_data(hf)
 
         # Get the average density over the region
-        total_mass = ad.quantities.total_mass()[1]
+        total_mass = ad.quantities.total_mass()[1].to(u.mass(ds))
         volume = (sim_size * a)**3
 
         rho_bar = total_mass / volume

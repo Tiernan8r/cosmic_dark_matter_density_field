@@ -20,10 +20,10 @@ ds = yt.load(fname)
 
 ad = ds.all_data()
 
-sim_size = ds.domain_width[0].to(ds.units.Mpc / ds.units.h)
+sim_size = ds.domain_width[0].to(ds.length_unit)
 total_volume = sim_size ** 3
 
-total_mass = ad.quantities.total_mass()[1].to(ds.units.Msun / ds.units.h)
+total_mass = ad.quantities.total_mass()[1].to(ds.mass_unit)
 
 rho_bar = total_mass / total_volume
 
@@ -42,7 +42,7 @@ coords = (max - min) * np.random.rand(NUM_SPHERE_SAMPLES, 3) + min
 
 all_overdensities = []
 
-radius_units = ds.units.Mpc
+radius_units = ds.length_unit
 r = RADIUS * radius_units
 
 # Volume of the sphere
@@ -51,7 +51,7 @@ volume = 4 / 3 * np.pi * r**3
 for c in coords:
     sp = ds.sphere(c, RADIUS)
 
-    mass = sp.quantities.total_mass()[1].to(ds.units.Msun / ds.units.h)
+    mass = sp.quantities.total_mass()[1].to(ds.mass_unit)
     density = mass / volume
 
     od = (density - rho_bar) / rho_bar

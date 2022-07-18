@@ -22,6 +22,42 @@ class DataType(enum.Enum):
 
         return "", ""
 
+    def coord_index_x(self):
+        if self is DataType.GROUP:
+            return "Group", "GroupPos_0"
+        elif self is DataType.ROCKSTAR:
+            return "halos", "particle_position_x"
+        elif self is DataType.SNAPSHOT:
+            return "all", "x"
+
+        return "", ""
+
+    def coord_index_y(self):
+        if self is DataType.GROUP:
+            return "Group", "GroupPos_1"
+        elif self is DataType.ROCKSTAR:
+            return "halos", "particle_position_y"
+        elif self is DataType.SNAPSHOT:
+            return "all", "y"
+
+        return "", ""
+
+    def coord_index_z(self):
+        if self is DataType.GROUP:
+            return "Group", "GroupPos_2"
+        elif self is DataType.ROCKSTAR:
+            return "halos", "particle_position_z"
+        elif self is DataType.SNAPSHOT:
+            return "all", "z"
+
+        return "", ""
+
+    def virial_radii(self):
+        if self is DataType.ROCKSTAR:
+            return "halos", "virial_radius"
+
+        return "", ""
+
     @property
     def index(self):
         return self._index()

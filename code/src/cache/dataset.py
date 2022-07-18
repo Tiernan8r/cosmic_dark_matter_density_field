@@ -3,8 +3,10 @@ import os
 import threading
 
 import numpy as np
+import unyt
 import yt
 import yt.extensions.legacy
+from src import units as u
 
 _existing_instance = None
 
@@ -84,6 +86,6 @@ class CachedDataSet:
 
         init_pmass = ds.parameters.get("particle_mass", 1)
 
-        particle_mass = init_pmass * ds.units.code_mass
+        particle_mass = ds.quan(init_pmass, u.mass(ds))
 
         return particle_mass.to(mass_units)

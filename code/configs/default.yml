@@ -6,3 +6,4 @@ redshifts: !include defaults/redshifts.yaml
 sim_data: !include defaults/sim_data.yaml
 caches: !include defaults/caches.yaml
 plotting: !include defaults/plotting.yaml
+datatypes: !include defaults/datatypes.yaml
