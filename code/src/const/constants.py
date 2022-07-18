@@ -31,6 +31,7 @@ GROUPS_KEY = "groups"
 ROCKSTARS_KEY = "rockstars"
 
 COORDINATES_CACHE_NAME = "coordinates"
+COORDINATES_CACHE_TOP5_NAME = "top5_halos"
 
 # Keys used in the cache
 TOTAL_MASS_FUNCTION_KEY = "all_masses"

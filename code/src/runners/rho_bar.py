@@ -8,6 +8,7 @@ if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
 from src import runner
+from src import units as u
 from src.calc.rho_bar import RhoBar
 from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY
 
@@ -33,17 +34,13 @@ class RhoBarRunner(runner.Runner):
             key_0 = (hf, RHO_BAR_0_KEY)
             key = (hf, RHO_BAR_KEY, z)
 
-            mass_units = ds.units.Msun / ds.units.h
-            dist_units = ds.units.Mpc / ds.units.h
-            standard_units = mass_units / dist_units**3
-
             rho_bar_0 = self._cache[key_0].val
             if rho_bar_0 is None:
                 logger.warning("No rho_bar_0 found!")
             else:
                 logger.info(f"Rho bar 0 is: {rho_bar_0}")
                 logger.info(
-                    f"Rho bar 0 is: {rho_bar_0.to(standard_units)}")
+                    f"Rho bar 0 is: {rho_bar_0.to(u.density(ds))}")
 
             rho_bar = self._cache[key].val
             if rho_bar is None:
@@ -51,7 +48,7 @@ class RhoBarRunner(runner.Runner):
             else:
                 logger.info(f"Rho bar is: {rho_bar}")
                 logger.info(
-                    f"Rho bar is: {rho_bar.to(standard_units)}")
+                    f"Rho bar is: {rho_bar.to(u.density(ds))}")
 
             logger.info("\n")
 

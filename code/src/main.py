@@ -10,6 +10,7 @@ if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
 from src import runner
+from src import units as u
 from src.calc import mass_function, overdensity, rho_bar, standard_deviation
 from src.plot import plotting
 
@@ -34,7 +35,7 @@ class MainRunner(runner.Runner):
         # =================================================================
         ds = self._ds_cache.load(hf)
         z = ds.current_redshift
-        min_particle_mass = self._ds_cache.min_mass(hf)
+        min_particle_mass = self._ds_cache.min_mass(hf, mass_units=u.mass(ds))
 
         try:
             total_hist, total_bins = mf.total_mass_function(hf)

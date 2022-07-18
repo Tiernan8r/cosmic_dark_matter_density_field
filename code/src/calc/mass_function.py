@@ -5,6 +5,7 @@ import numpy as np
 import src.calc.sample as sample
 import unyt
 import yt
+from src import units as u
 from src.const.constants import MASS_FUNCTION_KEY, TOTAL_MASS_FUNCTION_KEY
 
 
@@ -44,7 +45,7 @@ class MassFunction(sample.Sampler):
         a = 1 / (1+z)
 
         # Calculate the area of the box (is a cube)
-        sim_size = ds.domain_width[0].to(ds.units.Mpc / ds.units.h)
+        sim_size = ds.domain_width[0].to(u.length(ds))
         V = (a * sim_size)**3
 
         logger.info(f"Volume units are: {V.units}")
@@ -175,7 +176,7 @@ class MassFunction(sample.Sampler):
         sphere_samples = self.sample(hf, radius, z)
 
         # Convert the list of masses per sample, into a 1D list
-        masses = unyt.unyt_array([], ds.units.Msun / ds.units.h)
+        masses = ds.arr([], u.mass(ds))
 
         logger.info(f"Masses units are: {masses.units}")
 
@@ -185,7 +186,7 @@ class MassFunction(sample.Sampler):
             masses = unyt.uconcatenate((masses, m))
 
         # Convert mass units to Msun
-        masses = masses.to(ds.units.Msun / ds.units.h)
+        masses = masses.to(u.mass(ds))
 
         return masses
 
