@@ -28,7 +28,7 @@ class DataType(enum.Enum):
         elif self is DataType.ROCKSTAR:
             return "halos", "particle_position_x"
         elif self is DataType.SNAPSHOT:
-            return "all", "x"
+            return "all", "Coordinates"
 
         return "", ""
 
@@ -38,7 +38,7 @@ class DataType(enum.Enum):
         elif self is DataType.ROCKSTAR:
             return "halos", "particle_position_y"
         elif self is DataType.SNAPSHOT:
-            return "all", "y"
+            return "all", "Coordinates"
 
         return "", ""
 
@@ -48,7 +48,7 @@ class DataType(enum.Enum):
         elif self is DataType.ROCKSTAR:
             return "halos", "particle_position_z"
         elif self is DataType.SNAPSHOT:
-            return "all", "z"
+            return "all", "Coordinates"
 
         return "", ""
 

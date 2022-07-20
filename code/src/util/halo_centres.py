@@ -16,9 +16,31 @@ from src.const.constants import COORDINATES_CACHE_TOP5_NAME
 
 CACHE = caching.Cache()
 
+COORDS_KEY = "coords"
+MASS_KEY = "mass"
+VIRIAL_RADIUS_KEY = "virial_radius"
+
 
 def get_halo_coords(halo_type: enum.DataType, root: str, sim_name: str, ds_cache):
-    logger = logging.getLogger(__name__ + "." + get_halo_coords.__name__)
+    data = _top_5_halo_data(halo_type, root, sim_name, ds_cache)
+
+    return [data[i][COORDS_KEY] for i in data.keys()]
+
+
+def get_halo_massess(halo_type: enum.DataType, root: str, sim_name: str, ds_cache):
+    data = _top_5_halo_data(halo_type, root, sim_name, ds_cache)
+
+    return [data[i][MASS_KEY] for i in data.keys()]
+
+
+def get_halo_virial_radii(halo_type: enum.DataType, root: str, sim_name: str, ds_cache):
+    data = _top_5_halo_data(halo_type, root, sim_name, ds_cache)
+
+    return [data[i][VIRIAL_RADIUS_KEY] for i in data.keys()]
+
+
+def _top_5_halo_data(halo_type: enum.DataType, root: str, sim_name: str, ds_cache):
+    logger = logging.getLogger(__name__ + "." + _top_5_halo_data.__name__)
 
     data = CACHE[sim_name, COORDINATES_CACHE_TOP5_NAME].val
     if data is None:
@@ -59,9 +81,9 @@ def get_halo_coords(halo_type: enum.DataType, root: str, sim_name: str, ds_cache
         data = {}
         for i in range(len(top5_idxs)):
             data[i] = {
-                "coords": (x[i], y[i], z[i]),
-                "mass": top5_masses[i],
-                "virial_radius": v_radius[i]
+                COORDS_KEY: (x[i], y[i], z[i]),
+                MASS_KEY: top5_masses[i],
+                VIRIAL_RADIUS_KEY: v_radius[i]
             }
             logger.info(data[i])
 

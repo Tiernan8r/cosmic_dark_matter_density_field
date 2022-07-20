@@ -1,1 +1,1 @@
-from src.util import coordinates, halo_finder  # noqa: F401
+from src.util import coordinates, halo_finder, halo_centres  # noqa: F401

@@ -73,7 +73,7 @@ class Overdensity(rho_bar.RhoBar):
 
         # Get the units used in the simulation
         # Convert the given radius to an unyt unit object
-        R = ds.quan(radius, u.length(ds))
+        R = ds.quan(radius, u.length_cm(ds))
 
         # Calculate the volume of the spheres that we sample
         # on in comoving units

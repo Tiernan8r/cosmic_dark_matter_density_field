@@ -54,7 +54,9 @@ class RhoBar(sample.Sampler):
             simulation_size = ds.domain_width[0].to(u.length(ds))
             logger.info(f"Simulation total size is: {simulation_size}")
 
-            simulation_volume = simulation_size ** 3
+            z = ds.current_redshift
+            a = 1 / (1 + z)
+            simulation_volume = (simulation_size * a) ** 3
 
             rho_0 = (simulation_total_mass /
                      simulation_volume).to(u.density(ds))

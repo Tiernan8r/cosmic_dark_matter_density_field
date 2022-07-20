@@ -69,7 +69,7 @@ class Sampler(data.Data):
 
         # Get the distance units used by the simulation
         # Convert the radius to the distance units
-        R = ds.quan(radius, u.length(ds)).to("code_length")
+        R = ds.quan(radius, u.length_cm(ds)).to("code_length")
 
         z = ds.current_redshift
 
@@ -90,7 +90,7 @@ class Sampler(data.Data):
         # Get the desired number of random coords for this sampling
         coords = coordinates.rand_coords(
             self.config.sampling.num_sp_samples, min=coord_min, max=coord_max)
-        coords = ds.arr(coords, u.length(ds)).to("code_length")
+        coords = ds.arr(coords, u.length_cm(ds)).to("code_length")
 
         # Truncate the number of values to calculate, if some already exist...
         sphere_samples = []
