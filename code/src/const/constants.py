@@ -4,7 +4,7 @@ import re
 LOG_FILENAME = "logging.yml"
 
 # Configuration parameters:
-CONFIGURATION_FILE = "configs/default.yml"
+CONFIGURATION_FILE = "configs/default.yaml"
 
 # Subpath for rockstar files
 ROCKSTAR = "dm_gadget/rockstar/"
@@ -46,3 +46,4 @@ UNITS_KEY = "units"
 UNITS_PS_MASS = "ps_mass"
 UNITS_PS_STD_DEV = "ps_std_dev"
 SPHERES_KEY = "spheres"
+SAMPLES_KEY = "num_samples"

@@ -6,7 +6,7 @@ RADII=$(cat ./sbatch/compilers/radii.txt)
 REDSHIFTS=$(cat ./sbatch/compilers/redshifts.txt)
 SIMULATIONS=$(cat ./sbatch/compilers/datasets.txt)
 
-num_sp_samples=1000
+num_sp_samples=10000
 
 for R in ${RADII[@]}; do
     for Z in ${REDSHIFTS[@]}; do

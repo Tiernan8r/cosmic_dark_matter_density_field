@@ -12,7 +12,7 @@ NTASKS_PER_NODE=1
 CPUS_PER_TASK=1
 TIMEOUT="24:00:00"
 MEMORY="1G"
-CONFIG="configs/default.yml"
+CONFIG="configs/default.yaml"
 PYTHON_FILE="src/main.py"
 
 usage () {

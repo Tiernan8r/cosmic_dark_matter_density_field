@@ -100,7 +100,7 @@ class Plotter:
         ax: plt.Axes = fig.gca()
 
         od_bins = np.linspace(start=-1, stop=2, num=num_bins)
-        _, _, analytic = ax.hist(deltas, bins=od_bins)
+        _, _, analytic = ax.hist(deltas, bins=od_bins, density=True)
         ax.set_xlim(left=-1, right=2)
 
         fig.suptitle(title)
@@ -123,7 +123,7 @@ class Plotter:
         gauss = pre_factor * np.exp(-0.5 * ((x - mean) / std_dev)**2)
 
         # Scale the Gaussian to match the analytical scale
-        hist, _ = np.histogram(deltas, bins=x)
+        hist, _ = np.histogram(deltas, bins=x, density=True)
 
         # Multiply the peak of the Gaussian, to match the peak value of the histogram
         hist_total = np.sum(hist)

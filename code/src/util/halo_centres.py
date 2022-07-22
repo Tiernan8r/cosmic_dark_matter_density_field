@@ -48,7 +48,7 @@ def _top_5_halo_data(halo_type: enum.DataType, root: str, sim_name: str, ds_cach
 
         halo_finder = hf.HalosFinder(halo_type, root, sim_name)
 
-        halo_fname = halo_finder.filter_data_files([0], tolerance=1e-9)
+        halo_fname = halo_finder.filter_data_files([0])
         if len(halo_fname < 1) or len(halo_fname >= 2):
             logger.warning("Too many halo files found!")
             return

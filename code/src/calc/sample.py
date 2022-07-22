@@ -7,7 +7,7 @@ import unyt
 import yt
 from src import data, enum
 from src import units as u
-from src.const.constants import SPHERES_KEY
+from src.const.constants import SAMPLES_KEY, SPHERES_KEY
 from src.util import coordinates
 
 
@@ -100,7 +100,9 @@ class Sampler(data.Data):
             logger.debug(
                 f"Have {len(existing)} existing samples, need {self.config.sampling.num_sp_samples - len(existing)} more...")  # noqa: E501
 
-        indexed_coords = [(i, coords[i]) for i in range(len(coords))]
+        num_coords = len(coords)
+        indexed_coords = [(i, coords[i]) for i in range(num_coords)]
+        num_errors = 0
 
         # Iterate over all the randomly sampled coordinates
         for ic in yt.parallel_objects(indexed_coords):
@@ -119,6 +121,7 @@ class Sampler(data.Data):
             except TypeError as te:
                 logger.error("error creating sphere sample")
                 logger.error(te)
+                num_errors += 1
                 continue
 
             # Try to read the masses of halos in this sphere
@@ -127,10 +130,12 @@ class Sampler(data.Data):
             except TypeError as te:
                 logger.error("error reading sphere halo masses")
                 logger.error(te)
+                num_errors += 1
                 continue
             except yt.utilities.exceptions.YTFieldNotFound as ytfnf:
                 logger.error("Could not access masses field")
                 logger.error(ytfnf)
+                num_errors += 1
                 continue
 
             # filter for negative (!!!) masses
@@ -139,10 +144,15 @@ class Sampler(data.Data):
             logger.debug(f"Found {len(masses)} halos in this sphere sample")
 
             it_end = time.time()
-            logger.debug(f"Took {datetime.timedelta(seconds=it_end - it_start)}")
+            logger.debug(
+                f"Took {datetime.timedelta(seconds=it_end - it_start)}")
 
             # Add these masses to the list
             sphere_samples.append(filtered)
+
+        # If all sampling errored, return an exception...
+        if num_errors == num_coords:
+            raise ValueError("Couldn't get any non erroring samples!")
 
         logger.info(
             f"DONE reading {self.config.sampling.num_sp_samples} sphere samples\n")  # noqa: E501
@@ -151,3 +161,11 @@ class Sampler(data.Data):
         logger.info(f"Took {datetime.timedelta(seconds=end - start)}")
 
         return sphere_samples
+
+    def save_num_samples(self, hf: str, radius: float, z: float, num: int):
+        key = (hf, self.type.value, SPHERES_KEY, z, float(radius), SAMPLES_KEY)
+        self.cache[key] = num
+
+    def get_num_samples(self, hf: str, radius: float, z: float) -> int:
+        key = (hf, self.type.value, SPHERES_KEY, z, float(radius), SAMPLES_KEY)
+        return self.cache[key].val

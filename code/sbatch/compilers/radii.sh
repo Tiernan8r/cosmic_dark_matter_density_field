@@ -10,7 +10,7 @@ nodes=1
 ntasks_per_node=1
 cpus_per_task=8
 timeout="72:00:00"
-mem="32G"
+mem="16G"
 
 for R in ${RADII[@]}; do
     for Z in ${REDSHIFTS[@]}; do

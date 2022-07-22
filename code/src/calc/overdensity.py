@@ -1,4 +1,5 @@
 import logging
+import math
 
 import numpy as np
 import unyt
@@ -45,9 +46,33 @@ class Overdensity(rho_bar.RhoBar):
         # Calculate if required...
         if needs_recalculation:
             # Do the full sampling and save the cache to disk
-            deltas = self._overdensities(hf, radius)
+
+            # Increase the sampling size per iteration until the std dev
+            # converges
+            prev_std_dev, std_dev = 0, -1
+            upper_lim_num_sp_samples = self._config.sampling.num_sp_samples
+
+            self._config.sampling.num_sp_samples = self._config.sampling.sample_iteration
+            logger.info(
+                f"Initial num sp samples = {self._config.sampling.num_sp_samples}")
+            while not math.isclose(std_dev, prev_std_dev, abs_tol=1e-2) \
+                    or self._config.sampling.num_sp_samples <= upper_lim_num_sp_samples:
+                logger.debug(f"Old Std dev: {prev_std_dev}")
+                prev_std_dev = std_dev
+                deltas = self._overdensities(hf, radius)
+                std_dev = np.std(deltas)
+                logger.debug(f"New std dev: {std_dev}")
+                self._config.sampling.num_sp_samples += self._config.sampling.sample_iteration
+                logger.debug(
+                    f"Increasing num sphere samples to: {self._config.sampling.num_sp_samples}")
+
+            logger.info(
+                f"Took {self._config.sampling.num_sp_samples} sphere samples to converge!")
+
             # Cache the new values
             self.cache[key] = deltas
+            # Keep a record of the number of samples used...
+            self.save_num_samples(hf, radius, z, self._config.sampling.num_sp_samples)
         else:
             logger.debug("Using cached overdensities...")
 
@@ -77,7 +102,7 @@ class Overdensity(rho_bar.RhoBar):
 
         # Calculate the volume of the spheres that we sample
         # on in comoving units
-        V = 4/3 * np.pi * (R)**3
+        V = 4/3 * np.pi * R**3
 
         # Get existing rhos
         rb = self.rho_bar(hf)
@@ -85,7 +110,7 @@ class Overdensity(rho_bar.RhoBar):
         deltas = []
 
         logger.info(f"Given rho_bar = {rb}")
-        logger.info(f"Volume is: {V}")
+        logger.info(f"Volume of sphere is: {V}")
 
         total_mass = ds.quan(0, u.mass(ds))
         rho = unyt.unyt_quantity(0)

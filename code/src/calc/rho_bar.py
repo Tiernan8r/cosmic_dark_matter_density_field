@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
+import functools
 import logging
 
-import src.calc.sample as sample
+import numpy as np
 import unyt
 from src import units as u
+from src.calc import sample
 from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY, sim_regex
 from src.util import halo_finder
 
 
 class RhoBar(sample.Sampler):
 
+    @functools.lru_cache(maxsize=1)
     def rho_bar_0(self, hf):
 
         logger = logging.getLogger(__name__ + "." + self.rho_bar_0.__name__)
@@ -47,11 +50,17 @@ class RhoBar(sample.Sampler):
                 logger.error(te)
                 return
 
-            simulation_total_mass = ad.quantities.total_mass()[
-                1].to(u.mass(ds))
+            # simulation_total_mass = ad.quantities.total_mass()[
+            #     1].to(u.mass(ds))
+            # simulation_total_mass = ad.quantities.total_mass()[1]
+            all_mass = ad[self.type.index]
+            pos_idxs = np.where(all_mass >= 0)
+            simulation_total_mass = np.sum(all_mass[pos_idxs])
+
             logger.info(f"Simulation total mass is: {simulation_total_mass}")
 
-            simulation_size = ds.domain_width[0].to(u.length(ds))
+            # simulation_size = ds.domain_width[0].to(u.length(ds))
+            simulation_size = ds.domain_width[0]
             logger.info(f"Simulation total size is: {simulation_size}")
 
             z = ds.current_redshift
@@ -70,6 +79,7 @@ class RhoBar(sample.Sampler):
 
         return rho_0
 
+    @functools.lru_cache(maxsize=1)
     def rho_bar(self, hf):
         logger = logging.getLogger(__name__ + "." + self.rho_bar.__name__)
 
@@ -136,7 +146,8 @@ class RhoBar(sample.Sampler):
         logger.debug(f"Redshift z={z}")
 
         # Get the size of one side of the box
-        sim_size = (ds.domain_width[0]).to(u.length(ds))
+        # sim_size = (ds.domain_width[0]).to(u.length(ds))
+        sim_size = ds.domain_width[0]
         logger.debug(f"Simulation size = {sim_size}")
         logger.debug(f"Scale factor is: {a}")
 
@@ -145,7 +156,12 @@ class RhoBar(sample.Sampler):
         ad = self.dataset_cache.all_data(hf)
 
         # Get the average density over the region
-        total_mass = ad.quantities.total_mass()[1].to(u.mass(ds))
+        # total_mass = ad.quantities.total_mass()[1].to(u.mass(ds))
+        # total_mass = ad.quantities.total_mass()[1]
+        all_mass = ad[self.type.index]
+        pos_idxs = np.where(all_mass >= 0)
+        total_mass = np.sum(all_mass[pos_idxs])
+
         volume = (sim_size * a)**3
 
         rho_bar = total_mass / volume

@@ -104,30 +104,42 @@ class HalosFinder(caching.Cache):
         return map
 
     def _filter_redshifts(self,
-                          desired: List[float],
-                          tolerance: float) -> Dict[float, str]:
+                          desired: List[float]) -> Dict[float, str]:
         logger = logging.getLogger(
             __name__ + "." + self._filter_redshifts.__name__)
 
+        # map of redshift to halo file name
         all_redshifts = self._determine_redshifts()
 
         redshifts = {}
+        matchs = {}
 
         for k in all_redshifts.keys():
             for z in desired:
-                if math.isclose(k, z, abs_tol=tolerance) and k not in redshifts:
-                    logger.debug(
-                        f"Redshift of '{k}' is close to '{z}', storing path '{all_redshifts[k]}' in dict.")  # noqa: E501
-                    redshifts[k] = all_redshifts[k]
+
+                if z not in matchs:
+                    matchs[z] = k
+                    logger.debug(f"No match yet for '{z}' initialising match as '{k}'")
+
+                current_diff = abs(matchs[z] - z)
+                new_diff = abs(k - z)
+
+                if new_diff < current_diff:
+                    matchs[z] = k
+                    logger.debug(f"Redshift of '{k}' is closer to '{z}' storing in dict...")
+
+        for k, v in matchs.items():
+            redshifts[v] = all_redshifts[v]
+            logger.debug(f"Final match of '{k}' = '{v}'")
+
         return redshifts
 
     def filter_data_files(self,
-                          desired: List[float],
-                          tolerance=1e-3) -> List[str]:
+                          desired: List[float]) -> List[str]:
         logger = logging.getLogger(
             __name__ + "." + self.filter_data_files.__name__)
 
-        redshifts = self._filter_redshifts(desired, tolerance)
+        redshifts = self._filter_redshifts(desired)
         halo_dirs = self._find_data_files()
 
         logger.debug(f"Filtering data files around redshifts '{desired}'")

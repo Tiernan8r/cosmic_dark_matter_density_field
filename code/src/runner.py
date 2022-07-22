@@ -48,7 +48,7 @@ class Runner:
 
                 halos_finder = halo_finder.HalosFinder(
                     halo_type=tp, root=self._conf.sim_data.root, sim_name=sim_name)
-                halo_files = halos_finder.filter_data_files(zs, tolerance=self._conf.sampling.tolerance)
+                halo_files = halos_finder.filter_data_files(zs)
 
                 n_hfs = len(halo_files)
                 logger.debug(
@@ -63,8 +63,8 @@ class Runner:
                     logger.debug("Clearing dataset cache for new iteration")
                     self._ds_cache.clear()
 
-            # Reset the cache between simulations to save memory
-            self._cache.reset()
+                # Reset the cache between simulations to save memory
+                self._cache.reset()
 
             logger.info("DONE calculations\n")
 

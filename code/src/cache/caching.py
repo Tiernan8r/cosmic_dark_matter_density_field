@@ -61,6 +61,7 @@ class CacheEntry:
         self._dir = dir
         self._keys = keys
         self._path, self._fname = self._compile_path()
+        self._cached_val = None
 
     def _compile_path(self):
         nkeys = len(self._keys)
@@ -78,6 +79,9 @@ class CacheEntry:
         return os.path.split(full_path)
 
     def _load(self):
+        if self._cached_val is not None:
+            return self._cached_val
+
         logger = logging.getLogger(
             __name__ + "." +
             self.__class__.__name__ + "." +
@@ -88,14 +92,15 @@ class CacheEntry:
             logger.debug(f"Opening existing cache at '{pth}'")
 
             with open(pth, "rb") as f:
-                return pickle.load(f)
+                self._cached_val = pickle.load(f)
         else:
             logger.debug(
                 f"Cache doesn't exist for '{pth}'!")
 
-            return None
+        return self._cached_val
 
     def _save(self, val):
+        self._cached_val = val
         logger = logging.getLogger(
             __name__ + "." +
             self.__class__.__name__ + "." +
@@ -109,6 +114,7 @@ class CacheEntry:
                 os.makedirs(self._path)
         except FileExistsError as fee:
             logger.error(fee)
+
         with open(pth, "wb") as f:
             pickle.dump(val, f)
 
