@@ -72,13 +72,18 @@ class MainRunner(runner.Runner):
             # Use the number of samples required to converge in new calculation
             # if we don't want to override the old values
             num = mf.get_num_samples(hf, radius, z)
+            logger.debug(
+                f"Overdensity calculation scheduled? {self._conf.tasks.overdensity}")
             if num is not None and not self._conf.tasks.overdensity:
+                logger.debug(
+                    f"Setting sample size from convergence cache to {num} instead of {num_sphere_samples}")
                 self._conf.sampling.num_sp_samples = num
                 num_sphere_samples = num
 
             logger.debug(
                 f"Calculating overdensities and halo mass functions at a radius of '{radius}'")  # noqa: E501
-            logger.debug(f"Initially sampling with {num_sphere_samples} sphere samples")
+            logger.debug(
+                f"Initially sampling with {num_sphere_samples} sphere samples")
 
             # =================================================================
             # OVERDENSITIES:
@@ -125,6 +130,8 @@ class MainRunner(runner.Runner):
                 logger.info("Working on mass function:")
                 try:
                     mass_hist, bin_edges = mf.mass_function(hf, radius)
+                    min_particle_mass = self._ds_cache.min_mass(
+                        hf, mass_units=u.mass(ds))
 
                     plotter.mass_function(
                         z, radius, mass_hist, bin_edges, self._data.sim_name, min_particle_mass)

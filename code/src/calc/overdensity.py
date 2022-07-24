@@ -55,12 +55,12 @@ class Overdensity(rho_bar.RhoBar):
             self._config.sampling.num_sp_samples = self._config.sampling.sample_iteration
             logger.info(
                 f"Initial num sp samples = {self._config.sampling.num_sp_samples}")
-            while not math.isclose(std_dev, prev_std_dev, abs_tol=1e-2) \
+            while not math.isclose(std_dev, prev_std_dev, abs_tol=self.config.sampling.overdensity_std_dev_tol) \
                     or self._config.sampling.num_sp_samples <= upper_lim_num_sp_samples:
-                logger.debug(f"Old Std dev: {prev_std_dev}")
                 prev_std_dev = std_dev
                 deltas = self._overdensities(hf, radius)
                 std_dev = np.std(deltas)
+                logger.debug(f"Old Std dev: {prev_std_dev}")
                 logger.debug(f"New std dev: {std_dev}")
                 self._config.sampling.num_sp_samples += self._config.sampling.sample_iteration
                 logger.debug(
@@ -72,7 +72,8 @@ class Overdensity(rho_bar.RhoBar):
             # Cache the new values
             self.cache[key] = deltas
             # Keep a record of the number of samples used...
-            self.save_num_samples(hf, radius, z, self._config.sampling.num_sp_samples)
+            self.save_num_samples(
+                hf, radius, z, self._config.sampling.num_sp_samples)
         else:
             logger.debug("Using cached overdensities...")
 

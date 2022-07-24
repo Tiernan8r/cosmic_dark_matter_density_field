@@ -3,9 +3,9 @@ import os
 import threading
 
 import numpy as np
-import unyt
 import yt
 import yt.extensions.legacy
+from astropy.io import ascii
 from src import units as u
 
 _existing_instance = None
@@ -45,6 +45,22 @@ class CachedDataSet:
 
     def load(self, fname):
         logger = logging.getLogger(__name__ + "." + self.load.__name__)
+
+        base_name = os.path.basename(fname)
+        file, ext = os.path.splitext(base_name)
+
+        if ext is ".ascii":
+            tmp_path = "/tmp"
+            if os.path.exists("/scratch"):
+                "/scratch"
+
+            logger.debug(f"Reading ascii file: {fname}")
+            data = ascii.read(fname)
+            old_fname = fname
+
+            fname = os.path.join(tmp_path, base_name + ".fits")
+            logger.debug(f"Converting to FITS data file at: {fname}")
+            data.write(fname, format="fits", overwrite=True)
 
         if fname not in self._cache:
             with self._mutex:
