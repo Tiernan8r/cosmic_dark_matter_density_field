@@ -1,7 +1,8 @@
 import enum
 import re
 
-from src.const.constants import (DATA, ROCKSTAR, groups_regex, rockstar_regex,
+from src.const.constants import (DATA, HALOS_H5, ROCKSTAR, groups_regex,
+                                 halos_h5_regex, rockstar_regex,
                                  rockstar_root_regex, snapshots_regex)
 
 
@@ -10,6 +11,7 @@ class DataType(enum.Enum):
     GROUP = "groups"
     ROCKSTAR = "rockstar"
     SNAPSHOT = "snapshots"
+    H5 = "halos_h5"
 
     def _index(self):
         if self is DataType.GROUP:
@@ -19,6 +21,8 @@ class DataType(enum.Enum):
         elif self is DataType.SNAPSHOT:
             # or ("PartType1", "Masses") or ("nbody", "Masses") ??
             return "all", "Masses"
+        elif self is DataType.H5:
+            return "halos", "Mvir"
 
         return "", ""
 
@@ -29,6 +33,8 @@ class DataType(enum.Enum):
             return "halos", "particle_position_x"
         elif self is DataType.SNAPSHOT:
             return "all", "Coordinates"
+        elif self is DataType.H5:
+            return "halos", "particle_position_x"
 
         return "", ""
 
@@ -39,6 +45,8 @@ class DataType(enum.Enum):
             return "halos", "particle_position_y"
         elif self is DataType.SNAPSHOT:
             return "all", "Coordinates"
+        elif self is DataType.H5:
+            return "halos", "particle_position_y"
 
         return "", ""
 
@@ -49,12 +57,16 @@ class DataType(enum.Enum):
             return "halos", "particle_position_z"
         elif self is DataType.SNAPSHOT:
             return "all", "Coordinates"
+        elif self is DataType.H5:
+            return "halos", "particle_position_z"
 
         return "", ""
 
     def virial_radii(self):
         if self is DataType.ROCKSTAR:
             return "halos", "virial_radius"
+        elif self is DataType.H5:
+            return "halos", "Rvir"
 
         return "", ""
 
@@ -69,6 +81,8 @@ class DataType(enum.Enum):
             return rockstar_regex
         elif self is DataType.SNAPSHOT:
             return snapshots_regex
+        elif self is DataType.H5:
+            return halos_h5_regex
 
         return None
 
@@ -81,5 +95,7 @@ class DataType(enum.Enum):
     def data(self) -> str:
         if self is DataType.ROCKSTAR:
             return ROCKSTAR
+        elif self is DataType.H5:
+            return HALOS_H5
 
         return DATA

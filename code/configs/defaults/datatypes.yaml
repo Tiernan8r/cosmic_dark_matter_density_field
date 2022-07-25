@@ -1,3 +1,4 @@
-groups: true
-rockstar: true
+groups: false
+halos_h5: true
+rockstar: false
 snapshots: false

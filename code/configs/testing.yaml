@@ -18,5 +18,6 @@ caches:
   use_sphere_samples: true
 datatypes:
   groups: false
-  rockstar: true
+  halos_h5: true
+  rockstar: false
   snapshots: false

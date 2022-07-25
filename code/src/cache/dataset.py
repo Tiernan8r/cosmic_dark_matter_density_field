@@ -49,7 +49,7 @@ class CachedDataSet:
         base_name = os.path.basename(fname)
         file, ext = os.path.splitext(base_name)
 
-        if ext is ".ascii":
+        if ext == ".ascii":
             tmp_path = "/tmp"
             if os.path.exists("/scratch"):
                 "/scratch"
