@@ -7,6 +7,7 @@ import sys
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
+import yt
 from src import runner
 from src.calc.sample import Sampler
 
@@ -23,7 +24,7 @@ class SampleRunner(runner.Runner):
 
         logger.info(f"Redshift is: {z}")
 
-        for radius in self._conf.radii:
+        for radius in yt.parallel_objects(self._conf.radii):
             logger.info(f"Generating samples at r={radius} & z={z}")
             sampler.sample(hf, radius, z)
 

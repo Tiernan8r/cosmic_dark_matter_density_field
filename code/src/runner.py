@@ -18,13 +18,14 @@ class Runner:
         self._type = enum.DataType.ROCKSTAR
 
     def run(self):
+        yt.enable_parallelism()
         if not yt.is_root():
             return
 
         logger = logging.getLogger(self.run.__name__)
 
         # Iterate over the simulations
-        for sim_name in self._conf.sim_data.simulation_names:
+        for sim_name in yt.parallel_objects(self._conf.sim_data.simulation_names):
 
             # Save the current sim name into the data object
             self._data.sim_name = sim_name
@@ -36,7 +37,7 @@ class Runner:
             logger.debug(
                 f"Filtering halo files to look for redshifts: {zs}")
 
-            for tp in enum.DataType:
+            for tp in yt.parallel_objects(enum.DataType):
                 self._type = tp
 
                 logger.info(f"Working on {tp} datasets:")
@@ -55,7 +56,7 @@ class Runner:
                     f"Found {n_hfs} halo files that match these redshifts")
 
                 # Run halo file calculations...
-                for hf in halo_files:
+                for hf in yt.parallel_objects(halo_files):
                     self.tasks(hf)
 
                     # Clear the data set cache between iterations as the

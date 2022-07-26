@@ -10,6 +10,7 @@ if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
 import numpy as np
+import yt
 from src import runner
 from src import units as u
 from src.calc import (mass_function, press_schechter, rho_bar,
@@ -50,7 +51,7 @@ class PressSchechterRunner(runner.Runner):
 
         logger.info(f"Simulation average density is: {rho_0}")
 
-        for radius in self._conf.radii:
+        for radius in yt.parallel_objects(self._conf.radii):
             # =================================================================
             # PRESS SCHECHTER MASS FUNCTION
             # =================================================================

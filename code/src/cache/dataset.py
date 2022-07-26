@@ -2,11 +2,11 @@ import logging
 import os
 import threading
 
-import numpy as np
 import yt
 import yt.extensions.legacy
 from astropy.io import ascii
 from src import units as u
+from src.cache.faux_rockstar import FauxRockstar
 
 _existing_instance = None
 
@@ -23,21 +23,11 @@ class CachedDataSet:
 
     _load_key = "dataset"
     _all_data_key = "all_data"
-    _sphere_key = "sphere"
-
-    _save_path = "../data/data_set_cache.npy"
 
     def __init__(self):
         self._mutex = threading.Lock()
         with self._mutex:
-            self._cache = self._load_cache()
-
-    def _load_cache(self):
-        if os.path.exists(self._save_path):
-            with open(self._save_path, "rb") as f:
-                return np.load(f, allow_pickle=True)
-        else:
-            return {}
+            self._cache = {}
 
     def clear(self):
         with self._mutex:
@@ -46,31 +36,24 @@ class CachedDataSet:
     def load(self, fname):
         logger = logging.getLogger(__name__ + "." + self.load.__name__)
 
-        base_name = os.path.basename(fname)
-        file, ext = os.path.splitext(base_name)
-
-        if ext == ".ascii":
-            tmp_path = "/tmp"
-            if os.path.exists("/scratch"):
-                "/scratch"
-
-            logger.debug(f"Reading ascii file: {fname}")
-            data = ascii.read(fname)
-            old_fname = fname
-
-            fname = os.path.join(tmp_path, base_name + ".fits")
-            logger.debug(f"Converting to FITS data file at: {fname}")
-            data.write(fname, format="fits", overwrite=True)
+        dirname = os.path.dirname(fname)
+        basename = os.path.basename(fname)
+        _, ext = os.path.splitext(basename)
 
         if fname not in self._cache:
             with self._mutex:
                 self._cache[fname] = {}
+
         if self._load_key not in self._cache[fname]:
             logger.debug(
                 f"No dataset found for file '{fname}' with key '{self._load_key}', reading into cache...")  # noqa: E501
+
             with self._mutex:
                 ds = yt.load(fname)
-                ds.parameters["format_revision"] = 2
+
+                if "rockstar" in dirname:
+                    ds.parameters["format_revision"] = 2
+                    ds = FauxRockstar(ds, fname)
 
                 self._cache[fname][self._load_key] = ds
 

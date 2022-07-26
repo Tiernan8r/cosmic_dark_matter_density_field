@@ -7,6 +7,7 @@ import sys
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
+import yt
 from src import runner
 from src.calc.standard_deviation import StandardDeviation
 from src.plot import plotting
@@ -27,7 +28,7 @@ class StdDevRunner(runner.Runner):
 
         logger.debug(f"Creating std devs for radii '{self._conf.radii}'")
 
-        for radius in self._conf.radii:
+        for radius in yt.parallel_objects(self._conf.radii):
             sdev = std_dev.std_dev(hf, radius)
 
             std_devs.append(sdev)

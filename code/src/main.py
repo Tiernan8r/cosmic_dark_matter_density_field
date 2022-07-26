@@ -9,6 +9,8 @@ import sys
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
+import yt
+
 from src import runner
 from src import units as u
 from src.calc import mass_function, overdensity, rho_bar, standard_deviation
@@ -66,8 +68,13 @@ class MainRunner(runner.Runner):
         # Get the number of samples needed
         num_sphere_samples = self._conf.sampling.num_sp_samples
 
+        radii = self._conf.radii
+        self._conf.min_radius = min(radii)
+        self._conf.max_radius = max(radii)
+        logger.debug(f"Maximum radius is: {self._conf.max_radius}")
+
         # Iterate over the radii to sample for
-        for radius in self._conf.radii:
+        for radius in yt.parallel_objects(radii):
 
             # Use the number of samples required to converge in new calculation
             # if we don't want to override the old values
@@ -147,5 +154,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    # Drop the program name from the sys.args
-    main(sys.argv[1:])
+    if yt.is_root():
+        # Drop the program name from the sys.args
+        main(sys.argv[1:])

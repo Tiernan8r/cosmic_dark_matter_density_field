@@ -13,8 +13,23 @@ timeout="72:00:00"
 mem="16G"
 
 for R in ${RADII[@]}; do
+    # Skip commented out entries
+    if [[ $R == \#* ]]; then
+        continue
+    fi
+
     for Z in ${REDSHIFTS[@]}; do
+        # Skip commented out entries
+        if [[ $Z == \#* ]]; then
+            continue
+        fi
+
         for S in ${SIMULATIONS[@]}; do
+            # Skip commented out entries
+            if [[ $S == \#* ]]; then
+                continue
+            fi
+
             job_name="r${R}_z${Z}-${S}"
 
             # ============

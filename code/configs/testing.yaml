@@ -4,20 +4,27 @@ sampling:
   num_hist_bins: 100
   num_od_hist_bins: 100
   num_sp_samples: 1000
+  overdensity_std_dev_tol: !!float 1e-1
 radii:
 - 123
 redshifts:
 - 0
 caches:
-  use_masses_cache: false
+  use_masses_cache: true
   use_overdensities_cache: false
-  use_rho_bar_cache: false
-  use_standard_deviation_cache: false
+  use_rho_bar_cache: true
+  use_standard_deviation_cache: true
   use_total_cache: true
   use_press_schechter_cache: true
   use_sphere_samples: true
 datatypes:
   groups: false
-  halos_h5: true
-  rockstar: false
+  halos_h5: false
+  rockstar: true
   snapshots: false
+tasks:
+  mass_function: true
+  overdensity: true
+  rho_bar: false
+  std_dev: false
+  total_mass_function: false

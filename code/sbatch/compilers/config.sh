@@ -10,12 +10,14 @@ FILENAME=""
 # REDSHIFTS="!include defaults/redshifts.yaml"
 # SIM_DATA="!include defaults/sim_data.yaml"
 # CACHES="!include defaults/caches.yaml"
+# DATATYPES="!include defaults/datatypes.yaml"
 # PLOTTING="!include defaults/plotting.yaml"
+CACHES=""
+DATATYPES=""
 SAMPLING=""
 RADII=""
 REDSHIFTS=""
 SIM_DATA=""
-CACHES=""
 PLOTTING=""
 
 usage () {
@@ -32,6 +34,8 @@ usage () {
     echo "                  Defaults to ${REDSHIFTS}"
     echo "-d/--sim-data:    The simulation data parameters."
     echo "                  Defaults to ${SIM_DATA}"
+    echo "-t/--datatypes:   The simulation data types to run on."
+    echo "                  Defaults to ${DATATYPES}"
     echo "-c/--caches:      The cache parameters."
     echo "                  Defaults to ${CACHES}"
     echo "-p/--plotting:    The plotting parameters."
@@ -72,6 +76,11 @@ parse_cli () {
                 -c|--cache)
                     CACHES="${2}"
                     echo -e "Using cache parameters: ${CACHES}\n"
+                    shift 2
+                    ;;
+                -t|--datatypes)
+                    DATATYPES="${2}"
+                    echo -e "Using datatypes parameters: ${DATATYPES}\n"
                     shift 2
                     ;;
                 -p|--plotting)
@@ -120,6 +129,10 @@ compile () {
 
     if [[ ! -z ${CACHES} ]]; then
         TEMPLATE+="caches: ${CACHES}\n"
+    fi
+
+    if [[ ! -z ${DATATYPES} ]]; then
+        TEMPLATE+="datatypes: ${DATATYPES}\n"
     fi
 
     if [[ ! -z ${PLOTTING} ]]; then

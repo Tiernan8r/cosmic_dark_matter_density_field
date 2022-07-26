@@ -84,8 +84,9 @@ class Sampler(data.Data):
 
         # Bound the coordinate sampling, so that the spheres only overlap with
         # volumes within the simulation region
-        coord_min = radius
-        coord_max = sim_size.value - radius
+        max_radius = self.config.max_radius
+        coord_min = max_radius
+        coord_max = sim_size.value - max_radius
 
         # Get the desired number of random coords for this sampling
         coords = coordinates.rand_coords(

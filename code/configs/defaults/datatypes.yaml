@@ -1,4 +1,4 @@
-groups: false
+groups: true
 halos_h5: true
-rockstar: false
-snapshots: false
+rockstar: true
+snapshots: true
