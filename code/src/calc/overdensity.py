@@ -103,14 +103,15 @@ class Overdensity(rho_bar.RhoBar):
 
         # Calculate the volume of the spheres that we sample
         # on in comoving units
-        V = 4/3 * np.pi * R**3
+        V = (4/3 * np.pi * R**3).to(u.volume_cm(ds))
 
         # Get existing rhos
-        rb = self.rho_bar(hf)
+        rb = self.rho_bar(hf).to(u.density_cm(ds))
 
         deltas = []
 
         logger.info(f"Given rho_bar = {rb}")
+        logger.info(f"Radius units are: {R.units}")
         logger.info(f"Volume of sphere is: {V}")
 
         total_mass = ds.quan(0, u.mass(ds))
@@ -135,7 +136,7 @@ class Overdensity(rho_bar.RhoBar):
         logger.info(f"Rho units are: {rho.units}")
 
         # Return the units array of overdensities
-        unyt_deltas = unyt.unyt_array(deltas)
+        unyt_deltas = unyt.unyt_array(deltas, delta.units)
 
         logger.info(f"Deltas units are: {unyt_deltas.units}")
 

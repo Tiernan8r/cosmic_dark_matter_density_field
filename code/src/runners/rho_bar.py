@@ -32,7 +32,7 @@ class RhoBarRunner(runner.Runner):
             z = ds.current_redshift
 
             key_0 = (hf, RHO_BAR_0_KEY)
-            key = (hf, RHO_BAR_KEY, z)
+            key = (hf, self._type.value, RHO_BAR_KEY, z)
 
             rho_bar_0 = self._cache[key_0].val
             if rho_bar_0 is None:
@@ -40,7 +40,7 @@ class RhoBarRunner(runner.Runner):
             else:
                 logger.info(f"Rho bar 0 is: {rho_bar_0}")
                 logger.info(
-                    f"Rho bar 0 is: {rho_bar_0.to(u.density(ds))}")
+                    f"Rho bar 0 in standard units is: {rho_bar_0.to(u.density(ds))}")
 
             rho_bar = self._cache[key].val
             if rho_bar is None:
@@ -48,7 +48,7 @@ class RhoBarRunner(runner.Runner):
             else:
                 logger.info(f"Rho bar is: {rho_bar}")
                 logger.info(
-                    f"Rho bar is: {rho_bar.to(u.density(ds))}")
+                    f"Rho bar in standard units is: {rho_bar.to(u.density(ds))}")
 
             logger.info("\n")
 

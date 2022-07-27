@@ -139,8 +139,9 @@ class Sampler(data.Data):
                 num_errors += 1
                 continue
 
-            # filter for negative (!!!) masses
-            filtered = masses[np.where(masses > 0)]
+            if self.type is enum.DataType.ROCKSTAR:
+                # filter for negative (!!!) masses
+                masses = masses[np.where(masses > 0)]
 
             logger.debug(f"Found {len(masses)} halos in this sphere sample")
 
@@ -149,7 +150,7 @@ class Sampler(data.Data):
                 f"Took {datetime.timedelta(seconds=it_end - it_start)}")
 
             # Add these masses to the list
-            sphere_samples.append(filtered)
+            sphere_samples.append(masses)
 
         # If all sampling errored, return an exception...
         if num_errors == num_coords:

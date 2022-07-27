@@ -49,7 +49,15 @@ class CachedDataSet:
                 f"No dataset found for file '{fname}' with key '{self._load_key}', reading into cache...")  # noqa: E501
 
             with self._mutex:
-                ds = yt.load(fname)
+                args = []
+                kwargs = {}
+
+                if "snapdir" in dirname:
+                    kwargs = {
+                        "unit_base": u.unit_base()
+                    }
+
+                ds = yt.load(fname, *args, **kwargs)
 
                 if "rockstar" in dirname:
                     ds.parameters["format_revision"] = 2

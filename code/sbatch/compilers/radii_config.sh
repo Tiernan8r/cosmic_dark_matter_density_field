@@ -2,25 +2,22 @@
 
 # FILE ASSUMES IT IS RUN FROM code/
 
-RADII=$(cat ./sbatch/compilers/radii.txt)
-REDSHIFTS=$(cat ./sbatch/compilers/redshifts.txt)
-SIMULATIONS=$(cat ./sbatch/compilers/datasets.txt)
-
-for R in ${RADII[@]}; do
+COMMENT_REGEX="#([[:space:]])?.*"
+while read R; do
     # Skip commented out entries
-    if [[ $R == \#* ]]; then
+    if [[ "${R}" =~ $COMMENT_REGEX ]]; then
         continue
     fi
 
-    for Z in ${REDSHIFTS[@]}; do
+    while read Z; do
         # Skip commented out entries
-        if [[ $Z == \#* ]]; then
+        if [[ "${Z}" =~ $COMMENT_REGEX ]]; then
             continue
         fi
 
-        for S in ${SIMULATIONS[@]}; do
+        while read S; do
             # Skip commented out entries
-            if [[ $S == \#* ]]; then
+            if [[ "${S}" =~ $COMMENT_REGEX ]]; then
                 continue
             fi
 
@@ -39,7 +36,8 @@ for R in ${RADII[@]}; do
             root="/disk12/legacy/"
             sim_data="\n  root: ${root}\n  simulation_names:\n    - ${S}"
 
-            ./sbatch/compilers/config.sh -r "${r}" -z "${z}" -c "${cache}" -d "${sim_data}" "${config_file}" "${out_name}"
-        done
-    done
-done
+            ./sbatch/compilers/config.sh -r "${r}" -z "${z}" -c "${cache}" -d "${sim_data}" -t "${datatypes}" "${config_file}" "${out_name}"
+
+        done <./sbatch/compilers/datasets.txt
+    done <./sbatch/compilers/redshifts.txt
+done <./sbatch/compilers/radii.txt

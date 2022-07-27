@@ -42,6 +42,7 @@ class Runner:
 
                 logger.info(f"Working on {tp} datasets:")
 
+                # Skip dataset type calculation if not set to run in the config
                 type_name = tp.value
                 if not self._conf.datatypes.__getattribute__(type_name):
                     logger.info("Skipping...")
