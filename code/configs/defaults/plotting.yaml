@@ -6,6 +6,7 @@ dirs:
   total: "{}/{}/total_mass_function/"
   compared: "{}/{}/compared/"
   std_dev: "{}/{}/std_dev/"
+  gaussian_fit: "{}/{}/gaussian_fit/"
 pattern:
   mass_function: mass_function_r{:.2f}_z{:.2f}.png
   overdensity: overdensity_r{:.2f}_z{:.2f}.png
@@ -13,3 +14,4 @@ pattern:
   total: total_mass_function_z{:.2f}.png
   compared: comparison_ps_mass_function_r{:.2f}_z{:.2f}.png
   std_dev: standard_deviations_z{:.2f}.png
+  gaussian_fit: overdensity_gaussian_fit_r{:.2f}_z{:.2f}.png

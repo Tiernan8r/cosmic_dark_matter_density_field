@@ -1,1 +1,1 @@
-from src.plot import plotting  # noqa: F401
+from src.plot import plotting, fits # noqa: F401

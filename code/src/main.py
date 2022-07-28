@@ -14,7 +14,7 @@ import yt
 from src import runner
 from src import units as u
 from src.calc import mass_function, overdensity, rho_bar, standard_deviation
-from src.plot import plotting
+from src.plot import fits
 
 
 class MainRunner(runner.Runner):
@@ -30,7 +30,7 @@ class MainRunner(runner.Runner):
         rb = rho_bar.RhoBar(self._data, type=self._type)
         od = overdensity.Overdensity(self._data, type=self._type)
         sd = standard_deviation.StandardDeviation(self._data, type=self._type)
-        plotter = plotting.Plotter(self._data, self._type)
+        plotter = fits.Fits(self._data, self._type)
 
         ds = self._ds_cache.load(hf)
         z = ds.current_redshift
@@ -107,12 +107,35 @@ class MainRunner(runner.Runner):
 
                     logger.debug("Generating plots for this data...")
 
+                    # Standalone overdensity plot
                     plotter.overdensities(
                         z,
                         radius,
                         deltas,
                         self._data.sim_name,
                         self._conf.sampling.num_od_hist_bins)
+
+                    # Fitted with Gaussian:
+                    fig = plotter.new_figure()
+                    fig = plotter.overdensities(
+                        z,
+                        radius,
+                        deltas,
+                        self._data.sim_name,
+                        self._conf.sampling.num_od_hist_bins,
+                        fig=fig)
+                    fig = plotter.gaussian_fit(
+                        z,
+                        radius,
+                        deltas,
+                        self._data.sim_name,
+                        self._conf.sampling.num_od_hist_bins,
+                        fig=fig)
+
+                    gaussian_fit_fname = plotter.gaussian_fit_fname(
+                        self._data.sim_name, radius, z)
+                    fig.savefig(gaussian_fit_fname)
+
                 except Exception as e:
                     logger.error(e)
             else:

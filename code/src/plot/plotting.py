@@ -16,6 +16,12 @@ class Plotter:
         self._conf = d.config
         self._type = type.value
 
+    def new_figure(self):
+        plt.cla()
+        plt.clf()
+
+        return plt.figure()
+
     def _compile_plot_dir(self, subdir, *args):
         dirname = os.path.join(self._conf.plotting.dirs.root, subdir)
 
@@ -84,9 +90,14 @@ class Plotter:
                       radius: float,
                       deltas: unyt.unyt_array,
                       sim_name: str,
-                      num_bins: int):
+                      num_bins: int,
+                      fig: plt.Figure = None):
         if not yt.is_root():
             return
+
+        autosave = fig is None
+        if autosave:
+            fig: plt.Figure = plt.figure()
 
         logger = logging.getLogger(
             __name__ + "." + self.overdensities.__name__)
@@ -96,58 +107,25 @@ class Plotter:
         save_dir = self.overdensity_dir(sim_name)
         plot_name = self.overdensity_fname(sim_name, radius, z)
 
-        fig: plt.Figure = plt.figure()
         ax: plt.Axes = fig.gca()
 
         od_bins = np.linspace(start=-1, stop=2, num=num_bins)
-        _, _, analytic = ax.hist(deltas, bins=od_bins, density=True)
+        _, _, analytic = ax.hist(deltas, bins=od_bins, density=True, label="Analytic Overdensities")
         ax.set_xlim(left=-1, right=2)
 
         fig.suptitle(title)
-        ax.set_xlabel("Overdensity value")
-        ax.set_ylabel("Overdensity $\delta$")  # noqa: W605
-
-        # =============
-        # Fit Gaussian:
-        # =============
-
-        # A standard gaussian overdensity field is in range [-1, 1]
-        gaussian_range_deltas = [d for d in deltas if d <= 1 and d >= -1]
-        x = [x for x in od_bins if x <= 1 and x >= -1]
-
-        std_dev = np.std(gaussian_range_deltas)
-        mean = np.mean(gaussian_range_deltas)
-
-        # Calculate the gaussian distribution
-        pre_factor = 1 / (std_dev * np.sqrt(2 * np.pi))
-        gauss = pre_factor * np.exp(-0.5 * ((x - mean) / std_dev)**2)
-
-        # Scale the Gaussian to match the analytical scale
-        hist, _ = np.histogram(deltas, bins=x, density=True)
-
-        # Multiply the peak of the Gaussian, to match the peak value of the histogram
-        hist_total = np.sum(hist)
-        gauss_total = np.sum(gauss)
-
-        # scale = hist_max / gauss_max
-        scale = hist_total / gauss_total
-        gauss *= scale
-
-        # Plot the gaussian with the overdensity
-        gaussian, = ax.plot(x, gauss)
-
-        # Add legend to plot
-        ax.legend([analytic, gaussian], ["Analytic Overdensities",
-                                         "Gaussian Fit"])
+        ax.set_xlabel("Overdensity $\delta$")
+        ax.set_ylabel("Frequency")  # noqa: W605
 
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
 
-        fig.savefig(plot_name)
+        if autosave:
+            fig.savefig(plot_name)
 
-        logger.debug(f"Saved overdensity plot to '{plot_name}'")
+            logger.debug(f"Saved overdensity plot to '{plot_name}'")
 
-        plt.close(fig)
+        return fig
 
     def mass_function(self,
                       z: float,
@@ -230,8 +208,7 @@ class Plotter:
         if autosave:
             fig.savefig(plot_name)
 
-            plt.cla()
-            plt.clf()
+        return fig
 
     def press_schechter_comparison(self,
                                    z: float,

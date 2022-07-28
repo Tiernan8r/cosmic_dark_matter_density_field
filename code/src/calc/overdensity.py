@@ -49,31 +49,42 @@ class Overdensity(rho_bar.RhoBar):
 
             # Increase the sampling size per iteration until the std dev
             # converges
-            prev_std_dev, std_dev = 0, -1
-            upper_lim_num_sp_samples = self._config.sampling.num_sp_samples
-
-            self._config.sampling.num_sp_samples = self._config.sampling.sample_iteration
-            logger.info(
-                f"Initial num sp samples = {self._config.sampling.num_sp_samples}")
-            while not math.isclose(std_dev, prev_std_dev, abs_tol=self.config.sampling.overdensity_std_dev_tol) \
-                    or self._config.sampling.num_sp_samples <= upper_lim_num_sp_samples:
-                prev_std_dev = std_dev
-                deltas = self._overdensities(hf, radius)
-                std_dev = np.std(deltas)
-                logger.debug(f"Old Std dev: {prev_std_dev}")
-                logger.debug(f"New std dev: {std_dev}")
-                self._config.sampling.num_sp_samples += self._config.sampling.sample_iteration
+            if self.config.sampling.converge_std_dev:
+                std_dev_tol = self.config.sampling.overdensity_std_dev_tol
                 logger.debug(
-                    f"Increasing num sphere samples to: {self._config.sampling.num_sp_samples}")
+                    f"Running iterations until the standard deviation converges to within {std_dev_tol}")
 
-            logger.info(
-                f"Took {self._config.sampling.num_sp_samples} sphere samples to converge!")
+                prev_std_dev, std_dev = 0, -1
+                upper_lim_num_sp_samples = self.config.sampling.num_sp_samples
+
+                self.config.sampling.num_sp_samples = self.config.sampling.sample_iteration
+                logger.info(
+                    f"Initial number of sphere samples = {self.config.sampling.num_sp_samples}")
+
+                while not math.isclose(std_dev, prev_std_dev, abs_tol=std_dev_tol) \
+                        or self.config.sampling.num_sp_samples <= upper_lim_num_sp_samples:
+                    prev_std_dev = std_dev
+                    deltas = self._overdensities(hf, radius)
+                    std_dev = np.std(deltas)
+                    logger.debug(f"Old Std dev: {prev_std_dev}")
+                    logger.debug(f"New std dev: {std_dev}")
+                    self.config.sampling.num_sp_samples += self.config.sampling.sample_iteration
+                    logger.debug(
+                        f"Increasing number of sphere samples to: {self.config.sampling.num_sp_samples}")
+
+                logger.info(
+                    f"Took {self.config.sampling.num_sp_samples} sphere samples to converge!")
+            else:
+                num_samples = self.config.sampling.num_sp_samples
+                logger.debug(
+                    f"Running overdensity calculation for {num_samples} iterations...")
+                deltas = self._overdensities(hf, radius)
 
             # Cache the new values
             self.cache[key] = deltas
             # Keep a record of the number of samples used...
             self.save_num_samples(
-                hf, radius, z, self._config.sampling.num_sp_samples)
+                hf, radius, z, self.config.sampling.num_sp_samples)
         else:
             logger.debug("Using cached overdensities...")
 
