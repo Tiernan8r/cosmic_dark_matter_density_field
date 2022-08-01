@@ -95,6 +95,10 @@ class StandardDeviation(sample.Sampler):
             od_key = (hf, self.type.value, OVERDENSITIES_KEY, z, float(radius))
             overdensities = self.cache[od_key].val
 
+            if overdensities is None:
+                logger.warning(f"No overdensity values found for radius = {radius}!!")
+                return std_dev
+
             std_dev = np.std(overdensities)
             self.cache[key] = std_dev
 

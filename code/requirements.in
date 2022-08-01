@@ -8,3 +8,4 @@ autopep8
 unyt
 flake8
 astropy
+scipy

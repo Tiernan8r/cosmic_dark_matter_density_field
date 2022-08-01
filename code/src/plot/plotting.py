@@ -97,7 +97,7 @@ class Plotter:
 
         autosave = fig is None
         if autosave:
-            fig: plt.Figure = plt.figure()
+            fig: plt.Figure = self.new_figure()
 
         logger = logging.getLogger(
             __name__ + "." + self.overdensities.__name__)
@@ -110,7 +110,7 @@ class Plotter:
         ax: plt.Axes = fig.gca()
 
         od_bins = np.linspace(start=-1, stop=2, num=num_bins)
-        _, _, analytic = ax.hist(deltas, bins=od_bins, density=True, label="Analytic Overdensities")
+        _, _, analytic = ax.hist(deltas, bins=od_bins, label="Analytic Overdensities")
         ax.set_xlim(left=-1, right=2)
 
         fig.suptitle(title)
@@ -185,7 +185,7 @@ class Plotter:
 
         autosave = fig is None
         if autosave:
-            fig = plt.figure()
+            fig = self.new_figure()
         ax = fig.gca()
 
         ax.plot(x, y)
@@ -218,7 +218,7 @@ class Plotter:
                                    ps_hist: np.ndarray,
                                    ps_bins: np.ndarray,
                                    sim_name: str):
-        fig = plt.figure()
+        fig = self.new_figure()
 
         title = f"Compared Press Schecter Mass Function at z={z:.2f}; r={radius:.0f}"  # noqa: E501
         save_dir = self.compared_dir(sim_name)
@@ -251,7 +251,7 @@ class Plotter:
         save_dir = self.std_dev_dir(sim_name)
         plot_name = self.std_dev_fname(sim_name, z)
 
-        fig = plt.figure()
+        fig = self.new_figure()
         ax = fig.gca()
 
         ax.plot(x, y)

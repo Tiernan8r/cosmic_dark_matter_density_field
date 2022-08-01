@@ -1,8 +1,9 @@
-import os
 import logging
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.optimize
 import unyt
 import yt
 from src.plot import plotting
@@ -42,38 +43,34 @@ class Fits(plotting.Plotter):
             fig: plt.Figure = plt.figure()
         ax: plt.Axes = fig.gca()
 
-        od_bins = np.linspace(start=-1, stop=2, num=num_bins)
-        _, _, analytic = ax.hist(deltas, bins=od_bins, density=True)
-        ax.set_xlim(left=-1, right=2)
-
         # =============
         # Fit Gaussian:
         # =============
 
-        # A standard gaussian overdensity field is in range [-1, 1]
-        gaussian_range_deltas = [d for d in deltas if d <= 1 and d >= -1]
-        x = [x for x in od_bins if x <= 1 and x >= -1]
+        od_bins = np.linspace(start=-1, stop=2, num=num_bins)
 
-        std_dev = np.std(gaussian_range_deltas)
-        mean = np.mean(gaussian_range_deltas)
+        hist, bin_edges = np.histogram(deltas, bins=od_bins)
+        bin_centres = (bin_edges[:-1] + bin_edges[1:])/2
 
-        # Calculate the gaussian distribution
-        pre_factor = 1 / (std_dev * np.sqrt(2 * np.pi))
-        gauss = pre_factor * np.exp(-0.5 * ((x - mean) / std_dev)**2)
+        # Define model function to be used to fit to the data above:
+        def gauss(x, *p):
+            A, mu, sigma = p
+            return A*np.exp(-(x-mu)**2/(2.*sigma**2))
 
-        # Scale the Gaussian to match the analytical scale
-        hist, _ = np.histogram(deltas, bins=x, density=True)
+        # p0 is the initial guess for the fitting coefficients (A, mu and sigma above)
+        p0 = [1., 0., 1.]
 
-        # Multiply the peak of the Gaussian, to match the peak value of the histogram
-        hist_total = np.sum(hist)
-        gauss_total = np.sum(gauss)
+        coeff, var_matrix = scipy.optimize.curve_fit(
+            gauss, bin_centres, hist, p0=p0)
 
-        # scale = hist_max / gauss_max
-        scale = hist_total / gauss_total
-        gauss *= scale
+        # Get the fitted curve
+        hist_fit = gauss(bin_centres, *coeff)
 
-        # Plot the gaussian with the overdensity
-        gaussian, = ax.plot(x, gauss, label="Gaussian Fit")
+        ax.plot(bin_centres, hist_fit, label='Fitted data')
+
+        # Finally, lets get the fitting parameters, i.e. the mean and standard deviation:
+        logger.info(f"Fitted mean = {coeff[1]}")
+        logger.info(f"Fitted standard deviation = {coeff[2]}")
 
         fig.suptitle(title)
         ax.legend()
@@ -84,7 +81,7 @@ class Fits(plotting.Plotter):
         if autosave:
             fig.savefig(plot_name)
 
-            logger.debug(f"Saved overdensity plot to '{plot_name}'")
+            logger.debug(f"Saved Gaussian overdensity plot to '{plot_name}'")
 
         # Add legend to plot
         # ax.legend([analytic, gaussian], ["Analytic Overdensities",

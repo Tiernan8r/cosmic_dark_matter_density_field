@@ -36,6 +36,7 @@ numpy==1.22.4
     #   h5py
     #   matplotlib
     #   pyerfa
+    #   scipy
     #   unyt
 packaging==21.3
     # via
@@ -63,6 +64,8 @@ python-dateutil==2.8.2
     # via matplotlib
 pyyaml==6.0
     # via astropy
+scipy==1.8.1
+    # via -r requirements.in
 six==1.16.0
     # via python-dateutil
 sympy==1.10.1

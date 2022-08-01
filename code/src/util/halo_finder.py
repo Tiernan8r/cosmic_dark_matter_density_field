@@ -119,14 +119,16 @@ class HalosFinder(caching.Cache):
 
                 if z not in matchs:
                     matchs[z] = k
-                    logger.debug(f"No match yet for '{z}' initialising match as '{k}'")
+                    logger.debug(
+                        f"No match yet for '{z}' initialising match as '{k}'")
 
                 current_diff = abs(matchs[z] - z)
                 new_diff = abs(k - z)
 
                 if new_diff < current_diff:
                     matchs[z] = k
-                    logger.debug(f"Redshift of '{k}' is closer to '{z}' storing in dict...")
+                    logger.debug(
+                        f"Redshift of '{k}' is closer to '{z}' storing in dict...")
 
         for k, v in matchs.items():
             redshifts[v] = all_redshifts[v]
@@ -146,9 +148,13 @@ class HalosFinder(caching.Cache):
 
         file_idxs = redshifts.values()
 
-        def filter(vals): return [
-            v for v in vals if any([i in v for i in file_idxs])]
+        halo_fnames = [os.path.basename(f) for f in halo_dirs]
 
-        filtered_dirs = filter(halo_dirs)
+        filtered_dirs = []
+        for idx in file_idxs:
+            for i in range(len(halo_fnames)):
+                fname = halo_fnames[i]
+                if idx in fname:
+                    filtered_dirs.append(halo_dirs[i])
 
         return filtered_dirs
