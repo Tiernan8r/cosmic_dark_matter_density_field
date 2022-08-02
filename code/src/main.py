@@ -107,6 +107,7 @@ class MainRunner(runner.Runner):
 
                     logger.debug("Generating plots for this data...")
 
+                    logger.debug("Plotting overdensity...")
                     # Standalone overdensity plot
                     plotter.overdensities(
                         z,
@@ -115,6 +116,7 @@ class MainRunner(runner.Runner):
                         self._data.sim_name,
                         self._conf.sampling.num_od_hist_bins)
 
+                    logger.debug("Plotting fitted Gaussian to overdensity...")
                     # Fitted with Gaussian:
                     fig = plotter.new_figure()
                     fig = plotter.overdensities(
@@ -135,6 +137,51 @@ class MainRunner(runner.Runner):
                     gaussian_fit_fname = plotter.gaussian_fit_fname(
                         self._data.sim_name, radius, z)
                     fig.savefig(gaussian_fit_fname)
+
+                    logger.debug("Plotting skewed Gaussian to overdensity...")
+                    # Fitted with Skewed Gaussian:
+                    fig = plotter.new_figure()
+                    fig = plotter.overdensities(
+                        z,
+                        radius,
+                        deltas,
+                        self._data.sim_name,
+                        self._conf.sampling.num_od_hist_bins,
+                        fig=fig)
+                    fig = plotter.skewed_gaussian_fit(
+                        z,
+                        radius,
+                        deltas,
+                        self._data.sim_name,
+                        self._conf.sampling.num_od_hist_bins,
+                        fig=fig)
+
+                    skewed_gaussian_fit_fname = plotter.skewed_gaussian_fit_fname(
+                        self._data.sim_name, radius, z)
+                    fig.savefig(skewed_gaussian_fit_fname)
+
+                    logger.debug("Plotting N-Gaussian to overdensity...")
+                    # Fitted with N Gaussian:
+                    fig = plotter.new_figure()
+                    fig = plotter.overdensities(
+                        z,
+                        radius,
+                        deltas,
+                        self._data.sim_name,
+                        self._conf.sampling.num_od_hist_bins,
+                        fig=fig)
+                    fig = plotter.n_gaussian_fit(
+                        z,
+                        radius,
+                        deltas,
+                        self._data.sim_name,
+                        self._conf.sampling.num_od_hist_bins,
+                        fig=fig,
+                        num_fits=self._conf.plotting.fitting.num_n_gaussian_fits)
+
+                    n_gaussian_fit_fname = plotter.n_gaussian_fit_fname(
+                        self._data.sim_name, radius, z)
+                    fig.savefig(n_gaussian_fit_fname)
 
                 except Exception as e:
                     logger.error(e)

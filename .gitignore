@@ -9,3 +9,4 @@ code/configs/radii/*
 code/sbatch/radii/*
 code/sbatch/spheres/*
 *.swp
+plots/testing/

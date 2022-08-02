@@ -47,7 +47,20 @@ class Sampler(data.Data):
             samples = None
 
         if needs_recalculation:
-            samples = self._cache_sample(hf, radius, existing=samples)
+            num_samples = len(samples) if samples is not None else 0
+
+            # Calculate the sphere samples in batches to allow us to hotsave results for long calculations...
+            max_num_samples_needed = self.config.sampling.num_sp_samples
+            iteration_count = self.config.sampling.sphere_sample_iteration
+            self.config.sampling.num_sp_samples = num_samples + iteration_count
+            while num_samples < max_num_samples_needed:
+                samples = self._cache_sample(hf, radius, existing=samples)
+                self.config.sampling.num_sp_samples += iteration_count
+                num_samples = len(samples)
+
+                if self.config.sampling.sphere_sample_hotsave:
+                    logger.info(f"Hotsaving sphere samples at {num_samples} samples")
+                    self.cache[key] = samples
 
             self.cache[key] = samples
 

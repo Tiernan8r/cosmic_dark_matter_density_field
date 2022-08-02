@@ -24,7 +24,11 @@ class SampleRunner(runner.Runner):
 
         logger.info(f"Redshift is: {z}")
 
-        for radius in yt.parallel_objects(self._conf.radii):
+        radii = self._conf.radii
+        self._conf.min_radius = min(radii)
+        self._conf.max_radius = max(radii)
+
+        for radius in yt.parallel_objects(radii):
             logger.info(f"Generating samples at r={radius} & z={z}")
             sampler.sample(hf, radius, z)
 

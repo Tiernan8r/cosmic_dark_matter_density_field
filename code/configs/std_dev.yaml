@@ -3,7 +3,15 @@
 datatypes: !include defaults/radii_datatypes.yaml
 radii: 
 - 10
-
+- 20
+- 30
+- 40
+- 50
+- 60
+- 70
+- 80
+- 90
+- 100
 redshifts: 
 - 0.0
 - 0.25
@@ -17,10 +25,5 @@ redshifts:
 - 15
 - 20
 - 99
-
-sim_data: 
- root: /disk12/legacy/
- simulation_names:
- - GVD_C700_l1600n2048_SLEGAC
-
-
+caches:
+  use_standard_deviation_cache: false

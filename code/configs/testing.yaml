@@ -1,10 +1,11 @@
 %YAML 1.2
 ---
 sampling:
-  num_hist_bins: 100
-  num_od_hist_bins: 100
+  overdensity_std_dev_tol: !!float 1e-2
+  converge_std_dev: false
+  sphere_sample_iteration: 500
+  sphere_sample_hotsave: false
   num_sp_samples: 1000
-  overdensity_std_dev_tol: !!float 1e-1
 radii:
 - 123
 redshifts:
@@ -20,11 +21,14 @@ caches:
 datatypes:
   groups: false
   halos_h5: false
-  rockstar: true
-  snapshots: false
+  rockstar: false
+  snapshots: true
 tasks:
-  mass_function: true
+  mass_function: false
   overdensity: true
   rho_bar: false
   std_dev: false
   total_mass_function: false
+plotting:
+    dirs:
+      root: ../plots/testing/

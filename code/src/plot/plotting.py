@@ -76,14 +76,14 @@ class Plotter:
                                         self._conf.plotting.pattern.compared,
                                         sim_name, self._type, radius, z)
 
-    def std_dev_dir(self, sim_name):
+    def std_dev_dir(self, sim_name, as_func="radius"):
         return self._compile_plot_dir(self._conf.plotting.dirs.std_dev,
-                                      sim_name, self._type)
+                                      sim_name, self._type, as_func)
 
-    def std_dev_fname(self, sim_name, z):
+    def std_dev_fname(self, sim_name, val, as_func="radius", prefix="z"):
         return self._compile_plot_fname(self._conf.plotting.dirs.std_dev,
                                         self._conf.plotting.pattern.std_dev,
-                                        sim_name, self._type, z)
+                                        sim_name, self._type, as_func, prefix, val)
 
     def overdensities(self,
                       z: float,
@@ -110,7 +110,8 @@ class Plotter:
         ax: plt.Axes = fig.gca()
 
         od_bins = np.linspace(start=-1, stop=2, num=num_bins)
-        _, _, analytic = ax.hist(deltas, bins=od_bins, label="Analytic Overdensities")
+        _, _, analytic = ax.hist(deltas, bins=od_bins,
+                                 label="Analytic Overdensities")
         ax.set_xlim(left=-1, right=2)
 
         fig.suptitle(title)
@@ -235,21 +236,20 @@ class Plotter:
         logger.debug(
             f"Saved press-schechter comparison mass function figure to '{plot_name}'")
 
-    def std_dev(self,
-                z: float,
-                x: np.ndarray,
-                y: np.ndarray,
-                sim_name: str):
+    def _std_dev(self,
+                 x: np.ndarray,
+                 y: np.ndarray,
+                 title: str,
+                 save_dir: str,
+                 plot_fname: str,
+                 xlabel: str,
+                 ylabel: str,
+                 logscale=False):
         if not yt.is_root():
             return
 
         logger = logging.getLogger(
             __name__ + "." + self.mass_function.__name__)
-        logger.debug(f"Plotting mass function at z={z:.2f}...")
-
-        title = f"Standard Deviation as a function of sampling radius for {sim_name}; z={z:.2f}"
-        save_dir = self.std_dev_dir(sim_name)
-        plot_name = self.std_dev_fname(sim_name, z)
 
         fig = self.new_figure()
         ax = fig.gca()
@@ -257,16 +257,44 @@ class Plotter:
         ax.plot(x, y)
 
         fig.suptitle(title)
-        ax.set_xlabel("R $(Mpc / h)$")  # noqa: W605
-        ax.set_ylabel("$\sigma$")  # noqa: W605, E501
+        ax.set_xlabel(xlabel)  # noqa: W605
+        ax.set_ylabel(ylabel)  # noqa: W605, E501
+
+        if logscale:
+            ax.set_xscale("log")
 
         # Ensure the folders exist before attempting to save an image to it...
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
 
-        fig.savefig(plot_name)
+        fig.savefig(plot_fname)
 
         plt.cla()
         plt.clf()
 
-        logger.debug(f"Saved mass function figure to '{plot_name}'")
+        logger.debug(f"Saved mass function figure to '{plot_fname}'")
+
+    def std_dev_func_R(self,
+                       z: float,
+                       Rs: np.ndarray,
+                       sigmas: np.ndarray,
+                       sim_name: str,
+                       logscale=True):
+        title = f"Standard Deviation as a function of sampling radius for {sim_name}; z={z:.2f}"
+        save_dir = self.std_dev_dir(sim_name)
+        plot_name = self.std_dev_fname(sim_name, z)
+
+        self._std_dev(Rs, sigmas, title, save_dir,
+                      plot_name, xlabel="R $(Mpc / h)$", ylabel="$\sigma^2$",logscale=logscale)
+
+    def std_dev_func_z(self,
+                       R: float,
+                       redshifts: np.ndarray,
+                       sigmas: np.ndarray,
+                       sim_name: str):
+        title = f"Standard Deviation as a function of redshift for {sim_name}; R={R:.2f} Mpc/h"
+        save_dir = self.std_dev_dir(sim_name, as_func="redshift")
+        plot_name = self.std_dev_fname(sim_name, R, as_func="redshift", prefix="r")
+
+        self._std_dev(redshifts, sigmas, title, save_dir,
+                      plot_name, xlabel="z", ylabel="$\sigma$")
