@@ -1,12 +1,17 @@
 import logging
 import os
+from typing import Tuple
 
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
+import scipy.stats
 import unyt
 import yt
 from src import data, enum
+from src.const.constants import (BIN_CENTRE_KEY, FITS_KEY, HIST_FIT_KEY,
+                                 POPT_KEY, R2_KEY)
 from src.plot import funcs, plotting
 
 
@@ -63,8 +68,8 @@ class Fits(plotting.Plotter):
                  deltas: unyt.unyt_array,
                  sim_name: str,
                  num_bins: int,
-                 fig: plt.Figure = None):
-        logger = logging.getLogger(__name__ + "." + self.gaussian_fit.__name__)
+                 fig: plt.Figure = None) -> Tuple[plt.Figure, np.ndarray]:
+        logger = logging.getLogger(__name__ + "." + self._gen_fit.__name__)
 
         if not yt.is_root():
             return
@@ -81,31 +86,19 @@ class Fits(plotting.Plotter):
             fig: plt.Figure = plt.figure()
         ax: plt.Axes = fig.gca()
 
-        # =============
-        # Fit Gaussian:
-        # =============
-
-        od_bins = np.linspace(start=-1, stop=2, num=num_bins)
-
-        hist, bin_edges = np.histogram(deltas, bins=od_bins)
-        bin_centres = (bin_edges[:-1] + bin_edges[1:])/2
-
-        coeff, var_matrix = scipy.optimize.curve_fit(
-            self._func, bin_centres, hist, p0=self._p0)
-
-        logger.debug(f"Curve fit coefficients are: {coeff}")
-
-        # Get the fitted curve
-        hist_fit = self._func(bin_centres, *coeff)
+        bin_centres, hist_fit, r2, popt = self.calc_fit(
+            z, deltas, num_bins, sim_name)
 
         ax.plot(bin_centres, hist_fit, label='Fitted data')
 
-        # Finally, lets get the fitting parameters, i.e. the mean and standard deviation:
-        logger.info(f"Fitted mean = {coeff[1]}")
-        logger.info(f"Fitted standard deviation = {coeff[2]}")
+        # Show the R^2 in the legend:
+        legend_addendum = f"$R^2 = {r2:.4f}$"
+
+        handles, _ = ax.get_legend_handles_labels()
+        handles.append(mpatches.Patch(color='none', label=legend_addendum))
 
         fig.suptitle(title)
-        ax.legend()
+        ax.legend(handles=handles)
 
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
@@ -115,11 +108,67 @@ class Fits(plotting.Plotter):
 
             logger.debug(f"Saved Gaussian overdensity plot to '{plot_name}'")
 
-        # Add legend to plot
-        # ax.legend([analytic, gaussian], ["Analytic Overdensities",
-        #                                  "Gaussian Fit"])
+        return fig, popt
 
-        return fig
+    def calc_fit(self,
+                 z: float,
+                 deltas: unyt.unyt_array,
+                 num_bins: int,
+                 sim_name: str) -> Tuple[np.ndarray, np.ndarray, float, list]:
+        logger = logging.getLogger(__name__ + "." + self.calc_fit.__name__)
+
+        logger.debug(
+            f"Calculating fitting parameters for function '{self._func.__name__}' at z={z:.2f}...")
+
+        key = (sim_name, self._type.value, FITS_KEY, self._func.__name__, z)
+        cache_vals = self._cache[key].val
+
+        if cache_vals is None or not self._conf.caches.use_fits_cache:
+            logger.debug(f"Recalculating cached fit values...")
+
+            # ================
+            # Fit the Function
+            # ================
+            od_bins = np.linspace(start=-1, stop=2, num=num_bins)
+
+            hist, bin_edges = np.histogram(deltas, bins=od_bins)
+            bin_centres = (bin_edges[:-1] + bin_edges[1:])/2
+
+            popt, pcov = scipy.optimize.curve_fit(
+                self._func, bin_centres, hist, p0=self._p0)
+
+            logger.debug(f"Curve fit coefficients are: {popt}")
+
+            # Get the fitted curve
+            hist_fit = self._func(bin_centres, *popt)
+
+            # =============================================================
+            # R^2 QUALITY OF FIT TEST
+            # =============================================================
+            logger.debug("Calculating R^2 value")
+
+            ss_res = np.sum((hist - hist_fit)**2)
+            ss_tot = np.sum((hist - np.mean(hist))**2)
+
+            r2 = 1 - (ss_res / ss_tot)
+
+            logger.debug(f"R^2 is = {r2}")
+
+            # =============================================================
+            # CACHE RESULTS
+            # =============================================================
+            cache_vals = {
+                BIN_CENTRE_KEY: bin_centres,
+                HIST_FIT_KEY: hist_fit,
+                R2_KEY: r2,
+                POPT_KEY: popt
+            }
+
+            self._cache[key] = cache_vals
+        else:
+            logger.debug("Using cached fits values...")
+
+        return cache_vals[BIN_CENTRE_KEY], cache_vals[HIST_FIT_KEY], cache_vals[R2_KEY], cache_vals[POPT_KEY]
 
     def gaussian_fit(self,
                      z: float,
@@ -127,7 +176,7 @@ class Fits(plotting.Plotter):
                      deltas: unyt.unyt_array,
                      sim_name: str,
                      num_bins: int,
-                     fig: plt.Figure = None):
+                     fig: plt.Figure = None) -> Tuple[plt.Figure, np.ndarray]:
         # p0 is the initial guess for the fitting coefficients (A, mu and sigma for Gaussian...)
         self._p0 = [1., 0., 1.]
         self._title = self.gaussian_title
@@ -142,7 +191,7 @@ class Fits(plotting.Plotter):
                             deltas: unyt.unyt_array,
                             sim_name: str,
                             num_bins: int,
-                            fig: plt.Figure = None):
+                            fig: plt.Figure = None) -> Tuple[plt.Figure, np.ndarray]:
         # p0 is the initial guess for the fitting coefficients (A, mu and sigma for Gaussian...)
         self._p0 = [1., 0., 1., 0., 0.]
         self._title = self.skewed_gaussian_title
@@ -158,7 +207,7 @@ class Fits(plotting.Plotter):
                        sim_name: str,
                        num_bins: int,
                        fig: plt.Figure = None,
-                       num_fits: int = 12):
+                       num_fits: int = 10) -> Tuple[plt.Figure, np.ndarray]:
         # p0 is the initial guess for the fitting coefficients (A, mu and sigma for Gaussian...)
         self._p0 = []
         for i in range(num_fits):

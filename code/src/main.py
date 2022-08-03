@@ -11,13 +11,13 @@ if os.getcwd() not in sys.path:
 
 import yt
 
-from src import runner
+from src import action
 from src import units as u
 from src.calc import mass_function, overdensity, rho_bar, standard_deviation
 from src.plot import fits
 
 
-class MainRunner(runner.Runner):
+class MainRunner(action.Orchestrator):
 
     def tasks(self, hf: str):
         logger = logging.getLogger(self.tasks.__name__)
@@ -105,17 +105,35 @@ class MainRunner(runner.Runner):
                     # if there are too many
                     deltas = deltas[:num_sphere_samples]
 
-                    logger.debug("Generating plots for this data...")
+                except Exception as e:
+                    logger.error(e)
+            else:
+                logger.info("Skipping calculating overdensities...")
 
-                    logger.debug("Plotting overdensity...")
+            # =========================================================
+            # STANDALONE OVERDENSITY PLOT:
+            # =========================================================
+            if self._conf.tasks.overdensity:
+                try:
+                    logger.debug("Plotting standalone overdensity...")
                     # Standalone overdensity plot
                     plotter.overdensities(
                         z,
                         radius,
                         deltas,
                         self._data.sim_name,
-                        self._conf.sampling.num_od_hist_bins)
+                        self._conf.sampling.num_hist_bins)
 
+                except Exception as e:
+                    logger.error(e)
+            else:
+                logger.info("Skipping plotting overdensities...")
+
+            # =========================================================
+            # FITTED GAUSSIAN OVERDENSITY PLOT:
+            # =========================================================
+            if self._conf.tasks.overdensity:
+                try:
                     logger.debug("Plotting fitted Gaussian to overdensity...")
                     # Fitted with Gaussian:
                     fig = plotter.new_figure()
@@ -124,20 +142,30 @@ class MainRunner(runner.Runner):
                         radius,
                         deltas,
                         self._data.sim_name,
-                        self._conf.sampling.num_od_hist_bins,
+                        self._conf.sampling.num_hist_bins,
                         fig=fig)
-                    fig = plotter.gaussian_fit(
+                    fig, gauss_popt = plotter.gaussian_fit(
                         z,
                         radius,
                         deltas,
                         self._data.sim_name,
-                        self._conf.sampling.num_od_hist_bins,
+                        self._conf.sampling.num_hist_bins,
                         fig=fig)
 
                     gaussian_fit_fname = plotter.gaussian_fit_fname(
                         self._data.sim_name, radius, z)
                     fig.savefig(gaussian_fit_fname)
 
+                except Exception as e:
+                    logger.error(e)
+            else:
+                logger.info("Skipping plotting fitted gaussian to overdensities...")
+
+            # =========================================================
+            # SKEWED GAUSSIAN OVERDENSITY PLOT:
+            # =========================================================
+            if self._conf.tasks.overdensity:
+                try:
                     logger.debug("Plotting skewed Gaussian to overdensity...")
                     # Fitted with Skewed Gaussian:
                     fig = plotter.new_figure()
@@ -146,20 +174,30 @@ class MainRunner(runner.Runner):
                         radius,
                         deltas,
                         self._data.sim_name,
-                        self._conf.sampling.num_od_hist_bins,
+                        self._conf.sampling.num_hist_bins,
                         fig=fig)
-                    fig = plotter.skewed_gaussian_fit(
+                    fig, sk_gauss_popt = plotter.skewed_gaussian_fit(
                         z,
                         radius,
                         deltas,
                         self._data.sim_name,
-                        self._conf.sampling.num_od_hist_bins,
+                        self._conf.sampling.num_hist_bins,
                         fig=fig)
 
                     skewed_gaussian_fit_fname = plotter.skewed_gaussian_fit_fname(
                         self._data.sim_name, radius, z)
                     fig.savefig(skewed_gaussian_fit_fname)
 
+                except Exception as e:
+                    logger.error(e)
+            else:
+                logger.info("Skipping plotting skewed gaussian to overdensities...")
+
+            # =========================================================
+            # N GAUSSIAN OVERDENSITY PLOT:
+            # =========================================================
+            if self._conf.tasks.overdensity:
+                try:
                     logger.debug("Plotting N-Gaussian to overdensity...")
                     # Fitted with N Gaussian:
                     fig = plotter.new_figure()
@@ -168,14 +206,14 @@ class MainRunner(runner.Runner):
                         radius,
                         deltas,
                         self._data.sim_name,
-                        self._conf.sampling.num_od_hist_bins,
+                        self._conf.sampling.num_hist_bins,
                         fig=fig)
-                    fig = plotter.n_gaussian_fit(
+                    fig, n_popt = plotter.n_gaussian_fit(
                         z,
                         radius,
                         deltas,
                         self._data.sim_name,
-                        self._conf.sampling.num_od_hist_bins,
+                        self._conf.sampling.num_hist_bins,
                         fig=fig,
                         num_fits=self._conf.plotting.fitting.num_n_gaussian_fits)
 
@@ -183,10 +221,11 @@ class MainRunner(runner.Runner):
                         self._data.sim_name, radius, z)
                     fig.savefig(n_gaussian_fit_fname)
 
+
                 except Exception as e:
                     logger.error(e)
             else:
-                logger.info("Skipping calculating overdensities...")
+                logger.info("Skipping plotting n gaussian to overdensities...")
 
             # =================================================================
             # STANDARD DEVIATION
@@ -219,8 +258,8 @@ class MainRunner(runner.Runner):
 
 
 def main(args):
-    runner = MainRunner(args)
-    runner.run()
+    action = MainRunner(args)
+    action.run()
 
 
 if __name__ == "__main__":

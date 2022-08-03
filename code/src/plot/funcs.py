@@ -5,19 +5,15 @@ import scipy.special as sp
 # Define model function to be used to fit to the data above:
 def gauss(x, *p):
     A, mu, sigma = p
-    return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+    return A * np.exp(-(x - mu)**2 / (2 * sigma**2))
 
 
 # From: https://stackoverflow.com/a/48052931
-def _skew(x, sigmag, mu, alpha, c, a):
+def skew(x, sigmag, mu, alpha, c, a):
     normpdf = (1 / (sigmag * np.sqrt(2 * np.pi))) * \
         np.exp(-(np.power((x - mu), 2) / (2 * np.power(sigmag, 2))))
     normcdf = (0.5 * (1 + sp.erf((alpha * ((x - mu) / sigmag)) / (np.sqrt(2)))))
-    return 2 * a * normpdf * normcdf + c, max(normpdf)
-
-
-def skew(x, sigmag, mu, alpha, c, a):
-    return _skew(x, sigmag, mu, alpha, c, a)[0]
+    return 2 * a * normpdf * normcdf + c
 
 # From: https://stackoverflow.com/a/26954881
 
@@ -29,6 +25,6 @@ def n_gaussian(x, *params):
         ctr = params[i]
         amp = params[i+1]
         wid = params[i+2]
-        y = y + amp * np.exp(-((x - ctr)/wid)**2)
+        y = y + amp * np.exp(-((x - ctr) / wid)**2)
 
     return y

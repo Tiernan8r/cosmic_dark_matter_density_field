@@ -1,8 +1,7 @@
 num_hist_bins: 100
-num_od_hist_bins: 100
 num_sp_samples: 1000
 sample_iteration: 50
 overdensity_std_dev_tol: !!float 1e-2
 converge_std_dev: false
 sphere_sample_iteration: 1000
-sphere_sample_hotsave: true
+sphere_sample_hotsave: false

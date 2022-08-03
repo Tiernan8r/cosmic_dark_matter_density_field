@@ -20,4 +20,4 @@ pattern:
   skewed_gaussian_fit: overdensity_skewed_gaussian_fit_r{:.2f}_z{:.2f}.png
   n_gaussian_fit: overdensity_n_gaussian_fit_r{:.2f}_z{:.2f}.png
 fitting:
-  num_n_gaussian_fits: 5
+  num_n_gaussian_fits: 10

@@ -8,11 +8,11 @@ if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
 import yt
-from src import runner
+from src import action
 from src.calc.sample import Sampler
 
 
-class SampleRunner(runner.Runner):
+class SampleRunner(action.Orchestrator):
 
     def tasks(self, hf: str):
         logger = logging.getLogger(

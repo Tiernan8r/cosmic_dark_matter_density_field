@@ -9,83 +9,14 @@ if os.getcwd() not in sys.path:
 
 import numpy as np
 import yt
-from src import data, enum, runner
+from src import enum, action
 from src.calc.standard_deviation import StandardDeviation
 from src.plot import plotting
 from src.util import halo_finder
+from src.calc import rho_bar
+import src.units as u
 
-
-class StdDevRunner(runner.Runner):
-
-    def run(self):
-        yt.enable_parallelism()
-        if not yt.is_root():
-            return
-
-        logger = logging.getLogger(self.run.__name__)
-
-        # Iterate over the simulations
-        for sim_name in yt.parallel_objects(self._conf.sim_data.simulation_names):
-
-            # Save the current sim name into the data object
-            self._data.sim_name = sim_name
-
-            logger.info(f"Working on simulation: {self._data.sim_name}")
-
-            # Find halos for data set
-            zs = self._conf.redshifts
-            logger.debug(
-                f"Filtering halo files to look for redshifts: {zs}")
-
-            for tp in yt.parallel_objects(enum.DataType):
-                self._type = tp
-
-                logger.info(f"Working on {tp} datasets:")
-
-                # Skip dataset type calculation if not set to run in the config
-                type_name = tp.value
-                if not self._conf.datatypes.__getattribute__(type_name):
-                    logger.info("Skipping...")
-                    continue
-
-                halos_finder = halo_finder.HalosFinder(
-                    halo_type=tp, root=self._conf.sim_data.root, sim_name=sim_name)
-                halo_files = halos_finder.filter_data_files(zs)
-
-                n_hfs = len(halo_files)
-                logger.debug(
-                    f"Found {n_hfs} halo files that match these redshifts")
-
-                for r in self._conf.radii:
-                    logger.debug(
-                        f"Calculating standard deviation across redshift for radius = {r}")
-                    self.std_dev_work(r, zs, halo_files)
-
-        super().run()
-
-    def std_dev_work(self, radius: float, redshifts, hfs):
-        logger = logging.getLogger(
-            __name__ + "." + StdDevRunner.__name__ + "." + self.tasks.__name__)
-
-        std_devs = []
-        std_dev = StandardDeviation(self._data, type=self._type)
-
-        for hf in hfs:
-            ds = self._ds_cache.load(hf)
-            z = ds.current_redshift
-
-            logger.debug(f"Calculating std dev at redshift '{z}'")
-
-            sdev = std_dev.std_dev(hf, radius)
-
-            std_devs.append(sdev)
-
-        logger.debug(f"Plotting std devs...")
-
-        plotter = plotting.Plotter(self._data, self._type)
-
-        plotter.std_dev_func_z(
-            radius, redshifts, std_devs, self._data.sim_name)
+class StdDevRunner(action.Orchestrator):
 
     def tasks(self, hf: str):
         logger = logging.getLogger(
@@ -111,6 +42,18 @@ class StdDevRunner(runner.Runner):
 
         radii = self._conf.radii
 
+        rb = rho_bar.RhoBar(self._data, self._type)
+        av_den = rb.rho_bar(hf)
+
+        masses = []
+        for r in radii:
+            R = ds.quan(r, u.length_cm(ds))
+
+            V = 4 /3 * np.pi * R**3
+            m = av_den * V
+
+            masses.append(m)
+
         x = []
         y = []
         for i in range(len(radii)):
@@ -119,10 +62,10 @@ class StdDevRunner(runner.Runner):
             if s is None:
                 continue
 
-            x.append(radii[i])
+            x.append(masses[i])
             y.append(s*s)
 
-        plotter.std_dev_func_R(z, x, y, self._data.sim_name, logscale=True)
+        plotter.std_dev_func_M(z, x, y, self._data.sim_name, logscale=True)
 
 
 def main(args):

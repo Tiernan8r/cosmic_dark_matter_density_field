@@ -11,7 +11,7 @@ if os.getcwd() not in sys.path:
 
 import numpy as np
 import yt
-from src import runner
+from src import action
 from src import units as u
 from src.calc import (mass_function, press_schechter, rho_bar,
                       standard_deviation)
@@ -20,7 +20,7 @@ from src.plot import plotting
 DELTA_CRIT = 1.686
 
 
-class PressSchechterRunner(runner.Runner):
+class PressSchechterRunner(action.Orchestrator):
 
     def tasks(self, hf: str):
         logger = logging.getLogger(
@@ -31,6 +31,10 @@ class PressSchechterRunner(runner.Runner):
         ds = self._ds_cache.load(hf)
         z = ds.current_redshift
         logger.info(f"Redshift is: {z}")
+
+        radii = self._conf.radii
+        self._conf.min_radius = min(radii)
+        self._conf.max_radius = max(radii)
 
         rb = rho_bar.RhoBar(self._data, type=self._type)
         std_dev = standard_deviation.StandardDeviation(

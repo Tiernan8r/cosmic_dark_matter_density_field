@@ -46,3 +46,10 @@ UNITS_PS_MASS = "ps_mass"
 UNITS_PS_STD_DEV = "ps_std_dev"
 SPHERES_KEY = "spheres"
 SAMPLES_KEY = "num_samples"
+FITS_KEY = "fits"
+
+# Keys used in the fits cache:
+BIN_CENTRE_KEY = "bin_centres"
+HIST_FIT_KEY = "hist_fit"
+R2_KEY = "r2"
+POPT_KEY = "popt"

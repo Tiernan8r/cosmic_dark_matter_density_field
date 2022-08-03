@@ -6,3 +6,4 @@ use_standard_deviation_cache: true
 use_total_cache: true
 use_press_schechter_cache: true
 use_sphere_samples: true
+use_fits_cache: true

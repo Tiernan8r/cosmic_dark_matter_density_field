@@ -7,13 +7,13 @@ import sys
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
-from src import runner
+from src import action
 from src import units as u
 from src.calc.rho_bar import RhoBar
 from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY
 
 
-class RhoBarRunner(runner.Runner):
+class RhoBarRunner(action.Orchestrator):
 
     def tasks(self, hf: str):
         logger = logging.getLogger(

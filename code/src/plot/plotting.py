@@ -15,6 +15,7 @@ class Plotter:
     def __init__(self, d: data.Data, type: enum.DataType):
         self._conf = d.config
         self._type = type.value
+        self._cache = d.cache
 
     def new_figure(self):
         plt.cla()
@@ -262,6 +263,7 @@ class Plotter:
 
         if logscale:
             ax.set_xscale("log")
+            ax.set_yscale("log")
 
         # Ensure the folders exist before attempting to save an image to it...
         if not os.path.isdir(save_dir):
@@ -274,18 +276,18 @@ class Plotter:
 
         logger.debug(f"Saved mass function figure to '{plot_fname}'")
 
-    def std_dev_func_R(self,
+    def std_dev_func_M(self,
                        z: float,
-                       Rs: np.ndarray,
+                       Ms: np.ndarray,
                        sigmas: np.ndarray,
                        sim_name: str,
                        logscale=True):
-        title = f"Standard Deviation as a function of sampling radius for {sim_name}; z={z:.2f}"
+        title = f"Standard Deviation as a function of sphere mass for {sim_name}; z={z:.2f}"
         save_dir = self.std_dev_dir(sim_name)
         plot_name = self.std_dev_fname(sim_name, z)
 
-        self._std_dev(Rs, sigmas, title, save_dir,
-                      plot_name, xlabel="R $(Mpc / h)$", ylabel="$\sigma^2$",logscale=logscale)
+        self._std_dev(Ms, sigmas, title, save_dir,
+                      plot_name, xlabel="M $(M_\odot / h)$", ylabel="$\sigma^2$", logscale=logscale)
 
     def std_dev_func_z(self,
                        R: float,
@@ -294,7 +296,8 @@ class Plotter:
                        sim_name: str):
         title = f"Standard Deviation as a function of redshift for {sim_name}; R={R:.2f} Mpc/h"
         save_dir = self.std_dev_dir(sim_name, as_func="redshift")
-        plot_name = self.std_dev_fname(sim_name, R, as_func="redshift", prefix="r")
+        plot_name = self.std_dev_fname(
+            sim_name, R, as_func="redshift", prefix="r")
 
         self._std_dev(redshifts, sigmas, title, save_dir,
                       plot_name, xlabel="z", ylabel="$\sigma$")
