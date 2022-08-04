@@ -9,6 +9,7 @@ dirs:
   gaussian_fit: "{}/{}/gaussian_fit/"
   skewed_gaussian_fit: "{}/{}/skewed_gaussian_fit/"
   n_gaussian_fit: "{}/{}/n_gaussian_fit/"
+  numerical_mass_function: "{}/{}/numerical_mass_function/{}/"
 pattern:
   mass_function: mass_function_r{:.2f}_z{:.2f}.png
   overdensity: overdensity_r{:.2f}_z{:.2f}.png
@@ -19,5 +20,6 @@ pattern:
   gaussian_fit: overdensity_gaussian_fit_r{:.2f}_z{:.2f}.png
   skewed_gaussian_fit: overdensity_skewed_gaussian_fit_r{:.2f}_z{:.2f}.png
   n_gaussian_fit: overdensity_n_gaussian_fit_r{:.2f}_z{:.2f}.png
+  numerical_mass_function: "numerical_mass_function_z{:.2f}.png"
 fitting:
   num_n_gaussian_fits: 10

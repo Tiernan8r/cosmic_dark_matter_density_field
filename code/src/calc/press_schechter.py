@@ -1,15 +1,46 @@
 import logging
+from typing import List
 
 import numpy as np
 import src.calc.rho_bar as rb
 import unyt
+from scipy import integrate
 from src import units as u
-from src.const.constants import PRESS_SCHECHTER_KEY
-
-DELTA_CRIT = 1.686
+from src.const.constants import DELTA_CRIT, PRESS_SCHECHTER_KEY
 
 
 class PressSchechter(rb.RhoBar):
+
+    def analytic_press_schechter(self, avg_den: float, masses: List[float], sigmas: List[float]):
+        frac = np.abs(np.log(sigmas) / np.log(masses))
+
+        press_schechter = np.sqrt(2 / np.pi) * (avg_den / masses**2) * DELTA_CRIT / \
+            sigmas * frac * np.exp(-DELTA_CRIT / (2 * sigmas**2))
+
+        return press_schechter
+
+    def numerical_mass_function(self, avg_den: float, radii: List[float], masses: List[List[float]], fitting_func, func_params):
+
+        F = []
+
+        for i in range(len(radii)):
+            popt = func_params[i]
+
+            def f(x):
+                return fitting_func(x, *popt)
+
+            integrand, err = integrate.quad(f, DELTA_CRIT, np.inf)
+            F.append(integrand)
+
+        dF_dR = np.abs(np.gradient(F, radii))
+
+        dR_dM = np.abs(np.gradient(radii, masses))
+
+        dF_dM = dF_dR * dR_dM
+
+        dn_dM = dF_dM * avg_den / masses
+
+        return dn_dM
 
     def mass_function(self, hf, radius):
         logger = logging.getLogger(

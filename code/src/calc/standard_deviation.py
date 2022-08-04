@@ -2,6 +2,7 @@ import logging
 from typing import Dict
 
 import numpy as np
+from src.fitting import fits
 import src.calc.sample as sample
 from src.const.constants import (MASS_FUNCTION_KEY, OVERDENSITIES_KEY,
                                  STD_DEV_KEY, UNITS_KEY, UNITS_PS_MASS,
@@ -21,7 +22,8 @@ class StandardDeviation(sample.Sampler):
 
         for radius in sorted(self.config.radii):
 
-            masses = self.cache[hf, self.type.value, MASS_FUNCTION_KEY, z, float(radius)].val
+            masses = self.cache[hf, self.type.value,
+                                MASS_FUNCTION_KEY, z, float(radius)].val
             if masses is None:
                 logger.warning(
                     f"No masses calculated for dataset '{hf}' at a radius of '{radius}'")  # noqa: E501
@@ -92,14 +94,21 @@ class StandardDeviation(sample.Sampler):
                 f"No standard deviation found in cache for '{STD_DEV_KEY}', calculating...")  # noqa: E501
 
             # Get the overdensities calculated for this radius
+            logger.debug(f"Reading cached overdensities at r={radius}; z={z}")
             od_key = (hf, self.type.value, OVERDENSITIES_KEY, z, float(radius))
             overdensities = self.cache[od_key].val
 
             if overdensities is None:
-                logger.warning(f"No overdensity values found for radius = {radius}!!")
+                logger.warning(
+                    f"No overdensity values found for radius = {radius}!!")
                 return std_dev
 
-            std_dev = np.std(overdensities)
+            # Reads gaussian fits by default
+            fitter = fits.Fits(self, self.type)
+            _, _, _, popt = fitter.calc_fit(
+                z, radius, overdensities, self.config.sampling.num_hist_bins)
+
+            _, _, std_dev = popt
             self.cache[key] = std_dev
 
         else:

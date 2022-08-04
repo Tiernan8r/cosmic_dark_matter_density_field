@@ -5,21 +5,13 @@ import time
 import numpy as np
 import unyt
 import yt
-from src import data, enum
+from src import interface, enum, data
 from src import units as u
 from src.const.constants import SAMPLES_KEY, SPHERES_KEY
 from src.util import coordinates
 
 
-class Sampler(data.Data):
-
-    def __init__(self, d: data.Data, type=enum.DataType.ROCKSTAR):
-        super().__init__(*d.compile())
-        self._type = type
-
-    @property
-    def type(self) -> enum.DataType:
-        return self._type
+class Sampler(interface.Interface):
 
     def sample(self, hf, radius, z) -> list:
 
@@ -59,7 +51,8 @@ class Sampler(data.Data):
                 num_samples = len(samples)
 
                 if self.config.sampling.sphere_sample_hotsave:
-                    logger.info(f"Hotsaving sphere samples at {num_samples} samples")
+                    logger.info(
+                        f"Hotsaving sphere samples at {num_samples} samples")
                     self.cache[key] = samples
 
             self.cache[key] = samples
@@ -111,8 +104,12 @@ class Sampler(data.Data):
         if existing is not None:
             coords = coords[len(existing):]
             sphere_samples = existing
+
+            num_sp_samples = self.config.sampling.num_sp_samples
+            num_samples_needed = min(
+                num_sp_samples - len(existing), num_sp_samples)
             logger.debug(
-                f"Have {len(existing)} existing samples, need {self.config.sampling.num_sp_samples - len(existing)} more...")  # noqa: E501
+                f"Have {len(existing)} existing samples, need {num_samples_needed} more...")  # noqa: E501
 
         num_coords = len(coords)
         indexed_coords = [(i, coords[i]) for i in range(num_coords)]
@@ -140,7 +137,7 @@ class Sampler(data.Data):
 
             # Try to read the masses of halos in this sphere
             try:
-                masses = sp[self._type.index]
+                masses = sp[self.type.index]
             except TypeError as te:
                 logger.error("error reading sphere halo masses")
                 logger.error(te)

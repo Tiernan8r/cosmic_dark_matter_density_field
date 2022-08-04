@@ -1,5 +1,7 @@
 import re
 
+DEFAULT_SIMNAME = "GVD_C700_l1600n2048_SLEGAC"
+
 # Log file parameters
 LOG_FILENAME = "logging.yml"
 
@@ -53,3 +55,5 @@ BIN_CENTRE_KEY = "bin_centres"
 HIST_FIT_KEY = "hist_fit"
 R2_KEY = "r2"
 POPT_KEY = "popt"
+
+DELTA_CRIT = 1.686

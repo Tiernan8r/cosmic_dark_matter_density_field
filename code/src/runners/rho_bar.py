@@ -19,20 +19,20 @@ class RhoBarRunner(action.Orchestrator):
         logger = logging.getLogger(
             __name__ + "." + RhoBarRunner.__name__ + "." + self.tasks.__name__)
 
-        rb = RhoBar(self._data, type=self._type)
+        rb = RhoBar(self, type=self.type)
 
-        if not self._conf.caches.use_rho_bar_cache:
+        if not self.config.caches.use_rho_bar_cache:
             try:
                 rb.rho_bar_0(hf)
                 rb.rho_bar(hf)
             except TypeError as te:
                 logger.warning(te)
 
-            ds = self._ds_cache.load(hf)
+            ds = self.dataset_cache.load(hf)
             z = ds.current_redshift
 
             key_0 = (hf, RHO_BAR_0_KEY)
-            key = (hf, self._type.value, RHO_BAR_KEY, z)
+            key = (hf, self.type.value, RHO_BAR_KEY, z)
 
             rho_bar_0 = self._cache[key_0].val
             if rho_bar_0 is None:

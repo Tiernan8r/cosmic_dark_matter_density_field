@@ -12,9 +12,9 @@ if os.getcwd() not in sys.path:
 import yt
 
 from src import action
-from src import units as u
 from src.calc import mass_function, overdensity, rho_bar, standard_deviation
-from src.plot import fits
+from src.fitting import fits
+from src.plotting import Plotter
 
 
 class MainRunner(action.Orchestrator):
@@ -26,28 +26,26 @@ class MainRunner(action.Orchestrator):
 
         logger.debug("Calculating total halo mass function")
 
-        mf = mass_function.MassFunction(self._data, type=self._type)
-        rb = rho_bar.RhoBar(self._data, type=self._type)
-        od = overdensity.Overdensity(self._data, type=self._type)
-        sd = standard_deviation.StandardDeviation(self._data, type=self._type)
-        plotter = fits.Fits(self._data, self._type)
+        mf = mass_function.MassFunction(self, type=self.type)
+        rb = rho_bar.RhoBar(self, type=self.type)
+        od = overdensity.Overdensity(self, type=self.type)
+        sd = standard_deviation.StandardDeviation(self, type=self.type)
+        plotter = Plotter(self, self.type, self.sim_name)
+        fitter = fits.Fits(self, self.type)
 
-        ds = self._ds_cache.load(hf)
+        ds = self.dataset_cache.load(hf)
         z = ds.current_redshift
         # =================================================================
         # TOTAL MASS FUNCTION
         # =================================================================
-        if self._conf.tasks.total_mass_function:
+        if self.config.tasks.total_mass_function:
             logger.info("Calculating total mass function...")
-
-            min_particle_mass = self._ds_cache.min_mass(
-                hf, mass_units=u.mass(ds))
 
             try:
                 total_hist, total_bins = mf.total_mass_function(hf)
                 if total_hist is not None and total_bins is not None:
-                    plotter.total_mass_function(
-                        z, total_hist, total_bins, self._data.sim_name, min_particle_mass)
+                    fitter.total_mass_function(
+                        z, total_hist, total_bins, self.sim_name)
             except Exception as e:
                 logger.error(e)
         else:
@@ -56,7 +54,7 @@ class MainRunner(action.Orchestrator):
         # =================================================================
         # RHO BAR
         # =================================================================
-        if self._conf.tasks.rho_bar:
+        if self.config.tasks.rho_bar:
             logger.info("Calculating rho bar...")
             try:
                 rb.rho_bar(hf)
@@ -66,12 +64,12 @@ class MainRunner(action.Orchestrator):
             logger.info("Skipping calculating rho bar...")
 
         # Get the number of samples needed
-        num_sphere_samples = self._conf.sampling.num_sp_samples
+        num_sphere_samples = self.config.sampling.num_sp_samples
 
-        radii = self._conf.radii
-        self._conf.min_radius = min(radii)
-        self._conf.max_radius = max(radii)
-        logger.debug(f"Maximum radius is: {self._conf.max_radius}")
+        radii = self.config.radii
+        self.config.min_radius = min(radii)
+        self.config.max_radius = max(radii)
+        logger.debug(f"Maximum radius is: {self.config.max_radius}")
 
         # Iterate over the radii to sample for
         for radius in yt.parallel_objects(radii):
@@ -80,11 +78,11 @@ class MainRunner(action.Orchestrator):
             # if we don't want to override the old values
             num = mf.get_num_samples(hf, radius, z)
             logger.debug(
-                f"Overdensity calculation scheduled? {self._conf.tasks.overdensity}")
-            if num is not None and not self._conf.tasks.overdensity:
+                f"Overdensity calculation scheduled? {self.config.tasks.overdensity}")
+            if num is not None and not self.config.tasks.overdensity:
                 logger.debug(
                     f"Setting sample size from convergence cache to {num} instead of {num_sphere_samples}")
-                self._conf.sampling.num_sp_samples = num
+                self.config.sampling.num_sp_samples = num
                 num_sphere_samples = num
 
             logger.debug(
@@ -95,7 +93,7 @@ class MainRunner(action.Orchestrator):
             # =================================================================
             # OVERDENSITIES:
             # =================================================================
-            if self._conf.tasks.overdensity:
+            if self.config.tasks.overdensity:
                 logger.info("Working on overdensities:")
 
                 try:
@@ -113,7 +111,7 @@ class MainRunner(action.Orchestrator):
             # =========================================================
             # STANDALONE OVERDENSITY PLOT:
             # =========================================================
-            if self._conf.tasks.overdensity:
+            if self.config.tasks.overdensity:
                 try:
                     logger.debug("Plotting standalone overdensity...")
                     # Standalone overdensity plot
@@ -121,8 +119,8 @@ class MainRunner(action.Orchestrator):
                         z,
                         radius,
                         deltas,
-                        self._data.sim_name,
-                        self._conf.sampling.num_hist_bins)
+                        self.sim_name,
+                        self.config.sampling.num_hist_bins)
 
                 except Exception as e:
                     logger.error(e)
@@ -132,7 +130,7 @@ class MainRunner(action.Orchestrator):
             # =========================================================
             # FITTED GAUSSIAN OVERDENSITY PLOT:
             # =========================================================
-            if self._conf.tasks.overdensity:
+            if self.config.tasks.overdensity:
                 try:
                     logger.debug("Plotting fitted Gaussian to overdensity...")
                     # Fitted with Gaussian:
@@ -141,30 +139,31 @@ class MainRunner(action.Orchestrator):
                         z,
                         radius,
                         deltas,
-                        self._data.sim_name,
-                        self._conf.sampling.num_hist_bins,
+                        self.sim_name,
+                        self.config.sampling.num_hist_bins,
                         fig=fig)
                     fig, gauss_popt = plotter.gaussian_fit(
                         z,
                         radius,
                         deltas,
-                        self._data.sim_name,
-                        self._conf.sampling.num_hist_bins,
+                        self.sim_name,
+                        self.config.sampling.num_hist_bins,
                         fig=fig)
 
-                    gaussian_fit_fname = plotter.gaussian_fit_fname(
-                        self._data.sim_name, radius, z)
+                    gaussian_fit_fname = fitter.gaussian_fit_fname(
+                        self.sim_name, radius, z)
                     fig.savefig(gaussian_fit_fname)
 
                 except Exception as e:
                     logger.error(e)
             else:
-                logger.info("Skipping plotting fitted gaussian to overdensities...")
+                logger.info(
+                    "Skipping plotting fitted gaussian to overdensities...")
 
             # =========================================================
             # SKEWED GAUSSIAN OVERDENSITY PLOT:
             # =========================================================
-            if self._conf.tasks.overdensity:
+            if self.config.tasks.overdensity:
                 try:
                     logger.debug("Plotting skewed Gaussian to overdensity...")
                     # Fitted with Skewed Gaussian:
@@ -173,30 +172,31 @@ class MainRunner(action.Orchestrator):
                         z,
                         radius,
                         deltas,
-                        self._data.sim_name,
-                        self._conf.sampling.num_hist_bins,
+                        self.sim_name,
+                        self.config.sampling.num_hist_bins,
                         fig=fig)
                     fig, sk_gauss_popt = plotter.skewed_gaussian_fit(
                         z,
                         radius,
                         deltas,
-                        self._data.sim_name,
-                        self._conf.sampling.num_hist_bins,
+                        self.sim_name,
+                        self.config.sampling.num_hist_bins,
                         fig=fig)
 
-                    skewed_gaussian_fit_fname = plotter.skewed_gaussian_fit_fname(
-                        self._data.sim_name, radius, z)
+                    skewed_gaussian_fit_fname = fitter.skewed_gaussian_fit_fname(
+                        self.sim_name, radius, z)
                     fig.savefig(skewed_gaussian_fit_fname)
 
                 except Exception as e:
                     logger.error(e)
             else:
-                logger.info("Skipping plotting skewed gaussian to overdensities...")
+                logger.info(
+                    "Skipping plotting skewed gaussian to overdensities...")
 
             # =========================================================
             # N GAUSSIAN OVERDENSITY PLOT:
             # =========================================================
-            if self._conf.tasks.overdensity:
+            if self.config.tasks.overdensity:
                 try:
                     logger.debug("Plotting N-Gaussian to overdensity...")
                     # Fitted with N Gaussian:
@@ -205,32 +205,35 @@ class MainRunner(action.Orchestrator):
                         z,
                         radius,
                         deltas,
-                        self._data.sim_name,
-                        self._conf.sampling.num_hist_bins,
+                        self.sim_name,
+                        self.config.sampling.num_hist_bins,
                         fig=fig)
                     fig, n_popt = plotter.n_gaussian_fit(
                         z,
                         radius,
                         deltas,
-                        self._data.sim_name,
-                        self._conf.sampling.num_hist_bins,
+                        self.sim_name,
+                        self.config.sampling.num_hist_bins,
                         fig=fig,
-                        num_fits=self._conf.plotting.fitting.num_n_gaussian_fits)
+                        num_fits=self.config.plotting.fitting.num_n_gaussian_fits)
 
-                    n_gaussian_fit_fname = plotter.n_gaussian_fit_fname(
-                        self._data.sim_name, radius, z)
+                    n_gaussian_fit_fname = fitter.n_gaussian_fit_fname(
+                        self.sim_name, radius, z)
                     fig.savefig(n_gaussian_fit_fname)
-
 
                 except Exception as e:
                     logger.error(e)
             else:
                 logger.info("Skipping plotting n gaussian to overdensities...")
 
+            # =================================================
+            # PRESS SCHECHTER FITS
+            # =================================================
+
             # =================================================================
             # STANDARD DEVIATION
             # =================================================================
-            if self._conf.tasks.std_dev:
+            if self.config.tasks.std_dev:
                 logger.info("Working on standard deviation")
                 try:
                     sd.std_dev(hf, radius)
@@ -242,15 +245,13 @@ class MainRunner(action.Orchestrator):
             # =================================================================
             # MASS FUNCTION:
             # =================================================================
-            if self._conf.tasks.mass_function:
+            if self.config.tasks.mass_function:
                 logger.info("Working on mass function:")
                 try:
                     mass_hist, bin_edges = mf.mass_function(hf, radius)
-                    min_particle_mass = self._ds_cache.min_mass(
-                        hf, mass_units=u.mass(ds))
 
                     plotter.mass_function(
-                        z, radius, mass_hist, bin_edges, self._data.sim_name, min_particle_mass)
+                        z, radius, mass_hist, bin_edges, self.sim_name)
                 except Exception as e:
                     logger.error(e)
             else:

@@ -8,13 +8,13 @@ if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
 import numpy as np
-import yt
-from src import enum, action
-from src.calc.standard_deviation import StandardDeviation
-from src.plot import plotting
-from src.util import halo_finder
-from src.calc import rho_bar
 import src.units as u
+import yt
+from src import action
+from src.calc import rho_bar
+from src.calc.standard_deviation import StandardDeviation
+from src.plotting import master
+
 
 class StdDevRunner(action.Orchestrator):
 
@@ -22,42 +22,15 @@ class StdDevRunner(action.Orchestrator):
         logger = logging.getLogger(
             __name__ + "." + StdDevRunner.__name__ + "." + self.tasks.__name__)
 
-        ds = self._ds_cache.load(hf)
+        ds = self.dataset_cache.load(hf)
         z = ds.current_redshift
 
-        std_dev = StandardDeviation(self._data, type=self._type)
-
-        std_devs = []
-
-        logger.debug(f"Creating std devs for radii '{self._conf.radii}'")
-
-        for radius in yt.parallel_objects(self._conf.radii):
-            sdev = std_dev.std_dev(hf, radius)
-
-            std_devs.append(sdev)
-
-        logger.debug(f"Plotting std devs...")
-
-        plotter = plotting.Plotter(self._data, self._type)
-
-        radii = self._conf.radii
-
-        rb = rho_bar.RhoBar(self._data, self._type)
-        av_den = rb.rho_bar(hf)
-
-        masses = []
-        for r in radii:
-            R = ds.quan(r, u.length_cm(ds))
-
-            V = 4 /3 * np.pi * R**3
-            m = av_den * V
-
-            masses.append(m)
+        masses, sigmas = self.masses_sigmas(hf)
 
         x = []
         y = []
-        for i in range(len(radii)):
-            s = std_devs[i]
+        for i in range(len(masses)):
+            s = sigmas[i]
 
             if s is None:
                 continue
@@ -65,7 +38,43 @@ class StdDevRunner(action.Orchestrator):
             x.append(masses[i])
             y.append(s*s)
 
-        plotter.std_dev_func_M(z, x, y, self._data.sim_name, logscale=True)
+        logger.debug(f"Plotting std devs...")
+
+        plotter = master.Plotter(self, self.type)
+
+        plotter.std_dev_func_M(z, x, y, self.sim_name, logscale=True)
+
+    def masses_sigmas(self, hf):
+        logger = logging.getLogger(
+            __name__ + "." + StdDevRunner.__name__ + "." + self.masses_sigmas.__name__)
+
+        ds = self.dataset_cache.load(hf)
+
+        std_dev = StandardDeviation(self, type=self.type)
+
+        sigmas = []
+
+        radii = self.config.radii
+        logger.debug(f"Creating std devs for radii '{radii}'")
+
+        for radius in yt.parallel_objects(radii):
+            sdev = std_dev.std_dev(hf, radius)
+
+            sigmas.append(sdev)
+
+        rb = rho_bar.RhoBar(self, self.type)
+        av_den = rb.rho_bar(hf)
+
+        masses = []
+        for r in radii:
+            R = ds.quan(r, u.length_cm(ds))
+
+            V = 4 / 3 * np.pi * R**3
+            m = av_den * V
+
+            masses.append(m)
+
+        return ds.arr(masses, u.mass(ds)), np.abs(sigmas)
 
 
 def main(args):

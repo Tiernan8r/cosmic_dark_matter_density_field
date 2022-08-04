@@ -10,17 +10,13 @@ if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
 import numpy as np
-import yt
-from src import action
-from src import units as u
-from src.calc import (mass_function, press_schechter, rho_bar,
-                      standard_deviation)
-from src.plot import plotting
-
-DELTA_CRIT = 1.686
+from src.calc import overdensity, press_schechter, rho_bar
+from src.plotting import Plotter
+from src.runners.std_dev import StdDevRunner
+from src.fitting import fits
 
 
-class PressSchechterRunner(action.Orchestrator):
+class PressSchechterRunner(StdDevRunner):
 
     def tasks(self, hf: str):
         logger = logging.getLogger(
@@ -28,68 +24,71 @@ class PressSchechterRunner(action.Orchestrator):
             PressSchechterRunner.__name__ + "." +
             self.tasks.__name__)
 
-        ds = self._ds_cache.load(hf)
+        ds = self.dataset_cache.load(hf)
         z = ds.current_redshift
         logger.info(f"Redshift is: {z}")
 
-        radii = self._conf.radii
-        self._conf.min_radius = min(radii)
-        self._conf.max_radius = max(radii)
+        radii = self.config.radii
+        self.config.min_radius = min(radii)
+        self.config.max_radius = max(radii)
 
-        rb = rho_bar.RhoBar(self._data, type=self._type)
-        std_dev = standard_deviation.StandardDeviation(
-            self._data, type=self._type)
-        mf = mass_function.MassFunction(self._data, type=self._type)
-        ps = press_schechter.PressSchechter(self._data, type=self._type)
+        rb = rho_bar.RhoBar(self, self.type)
+        ps = press_schechter.PressSchechter(self, self.type)
+        ods = overdensity.Overdensity(self, self.type)
+        fitter = fits.Fits(self, self.type)
+        plotter = Plotter(self, self.type)
 
-        # =============================================================
-        # RHO BAR 0
-        # =============================================================
+        masses, sigmas = self.masses_sigmas(hf)
+        num_bins = self.config.sampling.num_hist_bins
 
-        rho_0 = rb.rho_bar_0(hf)
-        if rho_0 is None:
-            logger.warning("Could not calculate rho bar 0!")
-            return
+        z = ds.current_redshift
+        avg_den = rb.rho_bar(hf)
 
-        rho_0 = rho_0.to(u.density(ds))
+        ps_mass_function = ps.analytic_press_schechter(avg_den, masses, sigmas)
+        plotter.press_schechter(z, ps_mass_function,
+                                masses, self.sim_name)
 
-        logger.info(f"Simulation average density is: {rho_0}")
+        for func_name, fitting_func in fitter.fit_functions().items():
+            # Track all the fitted functions over radii
+            all_fits = []
+            # Track the histogram bins used over radii (may be the same??)
+            all_bins = []
+            # Track the overdensities histograms across radii
+            all_deltas = []
 
-        for radius in yt.parallel_objects(self._conf.radii):
-            # =================================================================
-            # PRESS SCHECHTER MASS FUNCTION
-            # =================================================================
+            # Set the fitting function to use
+            plotter.func = fitting_func
+            # Track the fitting parameters across radii
+            func_params = []
 
-            masses, press = ps.mass_function(hf, radius)
+            # Iterate over the radii
+            for radius in radii:
 
-            # =================================================================
-            # PLOTTING
-            # =================================================================
-            sim_name = self._data.sim_name
-            min_mass = self._ds_cache.min_mass(hf, mass_units=u.mass(ds))
+                # Calculate the overdensities at this sampling radius
+                od = ods.calc_overdensities(hf, radius)
 
-            # ps_hist, ps_bins = mf.create_histogram(press_schechter)
+                # Get the fitting parameters to this overdensity
+                fitter.setup_parameters(func_name)
+                bin_centres, f, r2, popt = fitter.calc_fit(
+                    z, radius, od, num_bins)
 
-            plotter = plotting.Plotter(self._data, self._type)
-            plotter.press_schechter(z, masses, press, sim_name, min_mass)
+                # Track the values
+                all_fits.append(f)
+                all_bins.append(bin_centres)
+                # Track the fitting parameters
+                func_params.append(popt)
 
-            # =============================================================
-            # COMPARISON OF PS MASS FUNCTION WITH SIMULATION
-            # =============================================================
+                # Convert the overdensities to a histogram
+                hist, bin_edges = np.histogram(od, bins=num_bins)
+                # Track the hist
+                all_deltas.append(hist)
 
-            # Get the mass samples
-            ms = mf.sample_masses(hf, radius)
-
-            # Get the histogram and scale it
-            hist, bins = mf.create_histogram(ms)
-            a = 1 / (1+z)
-            V = 4/3 * np.pi * (a*radius)**3
-
-            hist = hist / V
-
-            # Plot
-            plotter.press_schechter_comparison(z, radius, hist, bins,
-                                               masses, press, sim_name)
+            # Calculate the numerical mass function for this fit model
+            numerical_mass_function = ps.numerical_mass_function(
+                avg_den, radii, masses, fitting_func, func_params)
+            # Plot the mass function
+            plotter.numerical_mass_function(
+                z, numerical_mass_function, masses, self.sim_name, func_name)
 
 
 def main(args):
