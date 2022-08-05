@@ -5,8 +5,8 @@ import numpy as np
 import src.calc.rho_bar as rb
 import unyt
 from scipy import integrate
-from src import units as u
-from src.const.constants import DELTA_CRIT, PRESS_SCHECHTER_KEY
+from src.util.constants import DELTA_CRIT, PRESS_SCHECHTER_KEY
+from src.util import units as u
 
 
 class PressSchechter(rb.RhoBar):
@@ -102,16 +102,6 @@ class PressSchechter(rb.RhoBar):
         press_schechter = [sz[1] for sz in sorted_zip]
 
         return masses, press_schechter
-
-        # mass_hist, mass_bin_edges = self.create_histogram(masses)
-
-        # # Scale the histogram bins by the total volume sampled.
-        # a = 1 / (1+z)
-        # V = 4/3 * np.pi * (a*radius)**3 * num_sphere_samples
-
-        # mass_hist = mass_hist / V
-
-        # return mass_hist, mass_bin_edges
 
     def sample_masses(self, hf, radius) -> unyt.unyt_array:
         """

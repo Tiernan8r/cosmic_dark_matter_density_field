@@ -1,5 +1,7 @@
 import os
-from src import interface
+
+from src.util import interface
+
 
 class IPaths(interface.Interface):
 

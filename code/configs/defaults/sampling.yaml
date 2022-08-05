@@ -5,3 +5,4 @@ overdensity_std_dev_tol: !!float 1e-2
 converge_std_dev: false
 sphere_sample_iteration: 1000
 sphere_sample_hotsave: false
+std_dev_from_fit: false

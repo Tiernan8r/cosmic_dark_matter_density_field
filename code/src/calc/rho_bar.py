@@ -1,28 +1,25 @@
 #!/usr/bin/env python3
 import functools
 import logging
+from src.util.halos import halo_finder
 
-import numpy as np
-import unyt
-from src import units as u
 from src.calc import sample
-from src.const.constants import RHO_BAR_0_KEY, RHO_BAR_KEY, sim_regex
-from src.util import halo_finder, snapshot_matcher
+from src.util.constants import RHO_BAR_0_KEY, RHO_BAR_KEY, sim_regex
+from src.util.halos import snapshot_matcher
+from src.util import units as u
 
 
 class RhoBar(sample.Sampler):
 
     @functools.lru_cache(maxsize=1)
-    def rho_bar_0(self, hf):
+    def rho_bar_0(self):
 
         logger = logging.getLogger(__name__ + "." + self.rho_bar_0.__name__)
 
-        sim_name = sim_regex.match(hf).group(1)
-
         logger.debug(
-            f"Finding {self.type.value} file for a redshift of 0 on simulation '{sim_name}'")  # noqa: E501
+            f"Finding {self.type.value} file for a redshift of 0 on simulation '{self.sim_name}'")  # noqa: E501
         halos_finder = halo_finder.HalosFinder(
-            halo_type=self.type, root=self.config.sim_data.root, sim_name=sim_name)
+            halo_type=self.type, root=self.config.sim_data.root, sim_name=self.sim_name)
         halo_files = halos_finder.filter_data_files(desired=[0])
         hf0 = halo_files[0]
 

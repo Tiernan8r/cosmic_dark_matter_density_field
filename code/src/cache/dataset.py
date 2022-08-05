@@ -4,9 +4,8 @@ import threading
 
 import yt
 import yt.extensions.legacy
-from astropy.io import ascii
-from src import units as u
 from src.cache.faux_rockstar import FauxRockstar
+from src.util import units as u
 
 _existing_instance = None
 

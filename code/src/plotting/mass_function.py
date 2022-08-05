@@ -1,11 +1,43 @@
-import src.plotting.interface as I
-import numpy as np
-import yt
 import logging
 import os
 
+import matplotlib.pyplot as plt
+import numpy as np
+import src.plotting.interface as I
+import yt
+
 
 class MassFunction(I.IPlot):
+
+    def _mass_function(self, x, y, title, save_dir, plot_name, fig=None):
+        if len(x) == 0 or len(y) == 0:
+            logger = logging.getLogger(
+                __name__ + "." + self._mass_function.__name__)
+            logger.warning("Attempting to plot empty data!")
+            return
+
+        autosave = fig is None
+        if autosave:
+            fig = self.new_figure()
+        ax = fig.gca()
+
+        ax.plot(x, y)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+
+        fig.suptitle(title)
+        ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605
+        ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")  # noqa: W605, E501
+
+        # Ensure the folders exist before attempting to save an image to it...
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
+
+        if autosave:
+            fig.savefig(plot_name)
+            plt.close(fig)
+
+        return fig
 
     def mass_function(self,
                       z: float,
@@ -66,35 +98,6 @@ class MassFunction(I.IPlot):
 
         self._mass_function(masses, vals, title,
                             save_dir, plot_name)
-
-    def _mass_function(self, x, y, title, save_dir, plot_name, fig=None):
-        if len(x) == 0 or len(y) == 0:
-            logger = logging.getLogger(
-                __name__ + "." + self._mass_function.__name__)
-            logger.warning("Attempting to plot empty data!")
-            return
-
-        autosave = fig is None
-        if autosave:
-            fig = self.new_figure()
-        ax = fig.gca()
-
-        ax.plot(x, y)
-        ax.set_xscale("log")
-        ax.set_yscale("log")
-
-        fig.suptitle(title)
-        ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605
-        ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")  # noqa: W605, E501
-
-        # Ensure the folders exist before attempting to save an image to it...
-        if not os.path.isdir(save_dir):
-            os.makedirs(save_dir)
-
-        if autosave:
-            fig.savefig(plot_name)
-
-        return fig
 
     def press_schechter_comparison(self,
                                    z: float,

@@ -9,11 +9,11 @@ import sys
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
-import numpy as np
-from src.calc import overdensity, press_schechter, rho_bar
+from src.calc import (mass_function, overdensity, press_schechter, rho_bar,
+                      std_dev)
+from src.fitting import fits
 from src.plotting import Plotter
 from src.runners.std_dev import StdDevRunner
-from src.fitting import fits
 
 
 class PressSchechterRunner(StdDevRunner):
@@ -29,16 +29,15 @@ class PressSchechterRunner(StdDevRunner):
         logger.info(f"Redshift is: {z}")
 
         radii = self.config.radii
-        self.config.min_radius = min(radii)
-        self.config.max_radius = max(radii)
 
-        rb = rho_bar.RhoBar(self, self.type)
-        ps = press_schechter.PressSchechter(self, self.type)
-        ods = overdensity.Overdensity(self, self.type)
-        fitter = fits.Fits(self, self.type)
-        plotter = Plotter(self, self.type)
+        rb = rho_bar.RhoBar(self, self.type, self.sim_name)
+        ps = press_schechter.PressSchechter(self, self.type, self.sim_name)
+        ods = overdensity.Overdensity(self, self.type, self.sim_name)
+        sd = std_dev.StandardDeviation(self, self.type, self.sim_name)
+        fitter = fits.Fits(self, self.type, self.sim_name)
+        plotter = Plotter(self, self.type, self.sim_name)
 
-        masses, sigmas = self.masses_sigmas(hf)
+        masses, sigmas = sd.masses_sigmas(hf)
         num_bins = self.config.sampling.num_hist_bins
 
         z = ds.current_redshift
@@ -79,7 +78,7 @@ class PressSchechterRunner(StdDevRunner):
                 func_params.append(popt)
 
                 # Convert the overdensities to a histogram
-                hist, bin_edges = np.histogram(od, bins=num_bins)
+                hist, bin_edges = mass_function.create_histogram(od, bins=num_bins)
                 # Track the hist
                 all_deltas.append(hist)
 

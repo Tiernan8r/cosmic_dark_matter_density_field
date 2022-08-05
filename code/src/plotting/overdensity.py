@@ -47,6 +47,7 @@ class Overdensity(I.IPlot):
 
         if autosave:
             fig.savefig(plot_name)
+            plt.close(fig)
 
             logger.debug(f"Saved overdensity plot to '{plot_name}'")
 

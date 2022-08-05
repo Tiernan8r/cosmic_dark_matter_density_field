@@ -3,9 +3,9 @@ import math
 
 import numpy as np
 import unyt
-from src import units as u
 from src.calc import rho_bar
-from src.const.constants import OVERDENSITIES_KEY
+from src.util.constants import OVERDENSITIES_KEY
+from src.util import units as u
 
 
 class Overdensity(rho_bar.RhoBar):

@@ -5,8 +5,9 @@ import numpy as np
 import src.calc.sample as sample
 import unyt
 import yt
-from src import units as u
-from src.const.constants import MASS_FUNCTION_KEY, TOTAL_MASS_FUNCTION_KEY
+from src.util import enum
+from src.util import units as u
+from src.util.constants import MASS_FUNCTION_KEY, TOTAL_MASS_FUNCTION_KEY
 
 
 class MassFunction(sample.Sampler):
@@ -39,7 +40,7 @@ class MassFunction(sample.Sampler):
         if len(masses) > 0:
             logger.info(f"Mass units are: {masses.units}")
 
-        hist, bins = self.create_histogram(masses)
+        hist, bins = create_histogram(masses, self.config.sampling.num_hist_bins)
 
         # Calculate the scale factor
         a = 1 / (1+z)
@@ -73,7 +74,8 @@ class MassFunction(sample.Sampler):
         z = ds.current_redshift
 
         # If key is in cache, doesn't neet recalculation
-        masses = self.cache[hf, self.type.value, TOTAL_MASS_FUNCTION_KEY, z].val
+        masses = self.cache[hf, self.type.value,
+                            TOTAL_MASS_FUNCTION_KEY, z].val
         logger.debug(
             f"Override total mass cache? {not self.config.caches.use_total_cache}")  # noqa: E501
 
@@ -102,13 +104,15 @@ class MassFunction(sample.Sampler):
                 logger.error(ytfnf)
                 return
 
-            logger.info(
-                f"Filtering {len(masses)} entries for negative masses...")
-            # Filter out negative masses (!!!)
-            masses = masses[np.where(masses > 0)]
+            if self.type is enum.DataType.ROCKSTAR:
+                logger.info(
+                    f"Filtering {len(masses)} entries for negative masses...")
+                # Filter out negative masses (!!!)
+                masses = masses[np.where(masses > 0)]
 
             # Cache the calculated values, and save the cache to disk
-            self.cache[hf, self.type.value, TOTAL_MASS_FUNCTION_KEY, z] = masses
+            self.cache[hf, self.type.value,
+                       TOTAL_MASS_FUNCTION_KEY, z] = masses
 
         else:
             logger.debug("Using cached masses in plots...")
@@ -149,7 +153,7 @@ class MassFunction(sample.Sampler):
 
         logger.info(f"Mass units are: {masses.units}")
 
-        mass_hist, mass_bin_edges = self.create_histogram(masses)
+        mass_hist, mass_bin_edges = create_histogram(masses, self.config.sampling.num_hist_bins)
 
         # Scale the histogram bins by the total volume sampled.
         a = 1 / (1+z)
@@ -190,21 +194,20 @@ class MassFunction(sample.Sampler):
 
         return masses
 
-    def create_histogram(self, masses: unyt.unyt_array) -> Tuple[
-            np.ndarray,
-            np.ndarray]:
-        logger = logging.getLogger(__name__ + "."
-                                   + MassFunction.__name__ + "."
-                                   + self.create_histogram.__name__)
 
-        logger.debug("Creating histogram")
+def create_histogram(masses: unyt.unyt_array, bins) -> Tuple[
+        np.ndarray,
+        np.ndarray]:
+    logger = logging.getLogger(__name__ + "." + create_histogram.__name__)
 
-        hist, bins = np.histogram(masses,
-                                  bins=self.config.sampling.num_hist_bins)
+    logger.debug("Creating histogram")
 
-        # Filter hist/bins for non-zero masses
-        valid_idxs = np.where(hist > 0)
-        hist = hist[valid_idxs]
-        bins = bins[valid_idxs]
+    hist, bins = np.histogram(masses,
+                              bins=bins)
 
-        return hist, bins
+    # Filter hist/bins for non-zero masses
+    valid_idxs = np.where(hist > 0)
+    hist = hist[valid_idxs]
+    bins = bins[valid_idxs]
+
+    return hist, bins

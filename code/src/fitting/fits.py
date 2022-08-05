@@ -1,20 +1,17 @@
 import logging
 import os
-from typing import Tuple
+from typing import Callable, Dict, Tuple
 
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
 import scipy.stats
 import unyt
-import yt
-from src.fitting import funcs
-from src import data, enum
-from src.const.constants import (BIN_CENTRE_KEY, FITS_KEY, HIST_FIT_KEY,
+from src.util.constants import (BIN_CENTRE_KEY, FITS_KEY, HIST_FIT_KEY,
                                  POPT_KEY, R2_KEY)
-from typing import Dict, Callable
+from src.fitting import funcs
 from src.fitting.params import FittingParameters
+from src.util import data, enum
+from src.calc import mass_function
 
 
 class Fits(FittingParameters):
@@ -40,7 +37,7 @@ class Fits(FittingParameters):
         logger.debug(
             f"Calculating fitting parameters for function '{self.func.__name__}' at z={z:.2f}; r={radius:.2f}...")
 
-        key = (self._sim_name, self.type, FITS_KEY,
+        key = (self.sim_name, self.type.value, FITS_KEY,
                self.func.__name__, z, float(radius))
         cache_vals = self._cache[key].val
 
@@ -52,7 +49,7 @@ class Fits(FittingParameters):
             # ================
             od_bins = np.linspace(start=-1, stop=2, num=num_bins)
 
-            hist, bin_edges = np.histogram(deltas, bins=od_bins)
+            hist, bin_edges = mass_function.create_histogram(deltas, od_bins)
             bin_centres = (bin_edges[:-1] + bin_edges[1:])/2
 
             try:

@@ -3,7 +3,7 @@ import os
 import pickle
 from typing import Dict, Sequence
 
-from src.const.constants import sim_regex
+from src.util.constants import sim_regex
 
 
 class Cache:

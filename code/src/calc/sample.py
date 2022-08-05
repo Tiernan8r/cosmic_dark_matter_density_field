@@ -3,12 +3,11 @@ import logging
 import time
 
 import numpy as np
-import unyt
 import yt
-from src import interface, enum, data
-from src import units as u
-from src.const.constants import SAMPLES_KEY, SPHERES_KEY
-from src.util import coordinates
+from src.util import enum, interface
+from src.util import units as u
+from src.util.constants import SAMPLES_KEY, SPHERES_KEY
+from src.util.halos import coordinates
 
 
 class Sampler(interface.Interface):

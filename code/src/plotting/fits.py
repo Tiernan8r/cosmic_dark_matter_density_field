@@ -8,14 +8,15 @@ import numpy as np
 import src.plotting.interface as I
 import unyt
 import yt
-from src import data, enum
 from src.fitting import fits
+from src.util import data, enum
+
 
 class Fits(I.IPlot):
 
     def __init__(self, d: data.Data, type: enum.DataType = ..., sim_name: str = ...):
         super().__init__(d, type, sim_name)
-        self.fitter = fits.Fits(d, type)
+        self.fitter = fits.Fits(d, type, sim_name)
 
     def _gen_fit(self,
                  z: float,
@@ -60,6 +61,7 @@ class Fits(I.IPlot):
 
         if autosave:
             fig.savefig(plot_name)
+            plt.close(fig)
 
             logger.debug(f"Saved Gaussian overdensity plot to '{plot_name}'")
 
