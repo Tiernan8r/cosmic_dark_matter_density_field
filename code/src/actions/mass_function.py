@@ -23,21 +23,6 @@ class MassFunctionActions(BaseAction):
         ds = self.dataset_cache.load(hf)
         z = ds.current_redshift
 
-        logger.debug("Calculating total halo mass function")
-        # =================================================================
-        # TOTAL MASS FUNCTION
-        # =================================================================
-        if self.config.tasks.total_mass_function:
-            logger.info("Calculating total mass function...")
-
-            total_hist, total_bins = mf.total_mass_function(hf)
-            if total_hist is not None and total_bins is not None:
-                plotter.total_mass_function(
-                    z, total_hist, total_bins, self.sim_name)
-
-        else:
-            logger.info("Skipping calculating total mass function...")
-
         # Iterate over the radii to sample for
         for radius in yt.parallel_objects(self.config.radii):
 

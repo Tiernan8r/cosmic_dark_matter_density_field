@@ -13,28 +13,22 @@ radii:
 - 100
 redshifts:
 - 0.0
-- 0.1
-- 0.2
-- 0.3
-- 0.4
+- 0.25
 - 0.5
-- 0.6
-- 0.7
-- 0.8
-- 0.9
 - 1
 - 2
 - 4
 - 6
 - 8
 - 10
+- 15
 - 20
 - 99
 datatypes:
-  groups: true
-  halos_h5: true
-  rockstar: true
-  snapshots: false
+  groups: false
+  halos_h5: false
+  rockstar: false
+  snapshots: true
 tasks:
   mass_function: false
   overdensity: true

@@ -49,7 +49,8 @@ class Fits(FittingParameters):
             # ================
             od_bins = np.linspace(start=-1, stop=2, num=num_bins)
 
-            hist, bin_edges = mass_function.create_histogram(deltas, od_bins)
+            hist, bin_edges = np.histogram(deltas,
+                              bins=od_bins)
             bin_centres = (bin_edges[:-1] + bin_edges[1:])/2
 
             try:

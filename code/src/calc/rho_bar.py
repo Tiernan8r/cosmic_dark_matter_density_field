@@ -18,8 +18,7 @@ class RhoBar(sample.Sampler):
 
         logger.debug(
             f"Finding {self.type.value} file for a redshift of 0 on simulation '{self.sim_name}'")  # noqa: E501
-        halos_finder = halo_finder.HalosFinder(
-            halo_type=self.type, root=self.config.sim_data.root, sim_name=self.sim_name)
+        halos_finder = halo_finder.HalosFinder(self.type, self.config.sim_data.root, self.sim_name)
         halo_files = halos_finder.filter_data_files(desired=[0])
         hf0 = halo_files[0]
 

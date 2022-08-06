@@ -3,13 +3,14 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+from src.calc.mass_function import create_histogram
 import src.plotting.interface as I
 import yt
 
 
 class MassFunction(I.IPlot):
 
-    def _mass_function(self, x, y, title, save_dir, plot_name, fig=None):
+    def _mass_function(self, x, y, title, save_dir, plot_name, label: str = None, fig=None):
         if len(x) == 0 or len(y) == 0:
             logger = logging.getLogger(
                 __name__ + "." + self._mass_function.__name__)
@@ -21,9 +22,12 @@ class MassFunction(I.IPlot):
             fig = self.new_figure()
         ax = fig.gca()
 
-        ax.plot(x, y)
+        ax.plot(x, y, label=label)
         ax.set_xscale("log")
         ax.set_yscale("log")
+
+        if label is not None:
+            ax.legend()
 
         fig.suptitle(title)
         ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605
@@ -101,21 +105,32 @@ class MassFunction(I.IPlot):
 
     def press_schechter_comparison(self,
                                    z: float,
-                                   radius: float,
-                                   hist: np.ndarray,
-                                   bins: np.ndarray,
-                                   ps_hist: np.ndarray,
-                                   ps_bins: np.ndarray,
+                                   Ms: np.ndarray,
+                                   all_mass: np.ndarray,
+                                   ps_fit: np.ndarray,
                                    sim_name: str):
         fig = self.new_figure()
 
-        title = f"Compared Press Schecter Mass Function at z={z:.2f}; r={radius:.0f}"  # noqa: E501
+        title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
         save_dir = self.compared_dir(sim_name)
-        plot_name = self.compared_fname(sim_name, radius, z)
+        plot_name = self.compared_fname(sim_name, z)
 
-        self._mass_function(bins, hist, title, save_dir, plot_name, fig=fig)
-        self._mass_function(ps_bins, ps_hist, title,
-                            save_dir, plot_name, fig=fig)
+        total_hist, total_bins = create_histogram(all_mass, bins=len(Ms))
+
+        # Rescale:
+        initial_val = total_hist[0]
+        initial_ps_val = ps_fit[0]
+
+        ps_fit = ps_fit / initial_ps_val * initial_val
+
+        final_val = total_hist[-1]
+        final_ps_val = ps_fit[-1]
+        ps_fit = ps_fit / final_ps_val * final_val
+
+        self._mass_function(total_bins, total_hist, title,
+                            save_dir, plot_name, label="analytic mass function", fig=fig)
+        self._mass_function(Ms, ps_fit, title,
+                            save_dir, plot_name, label="press schechter mass function", fig=fig)
 
         fig.savefig(plot_name)
 

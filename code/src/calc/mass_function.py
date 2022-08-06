@@ -53,7 +53,7 @@ class MassFunction(sample.Sampler):
 
         # Divide the number of halos per bin by the
         # volume to get the number density
-        hist = hist / V
+        hist = (hist / V).to(1 / u.volume(ds))
 
         return hist, bins
 

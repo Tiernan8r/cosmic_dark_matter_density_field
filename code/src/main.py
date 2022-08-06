@@ -22,14 +22,14 @@ class MainRunner(orchestrator.Orchestrator):
         logger = logging.getLogger(self.tasks.__name__)
         logger.info("Running tasks...")
 
+        rb_actions = rho_bar.RhoBarActions(self, self.type, self.sim_name)
+        std_dev_actions = std_dev.StdDevActions(
+            self, self.type, self.sim_name)
         od_actions = overdensity.OverdensityActions(
             self, self.type, self.sim_name)
         mass_fn_actions = mass_function.MassFunctionActions(
             self, self.type, self.sim_name)
-        rb_actions = rho_bar.RhoBarActions(self, self.type, self.sim_name)
         ps_actions = press_schechter.PressSchechterActions(
-            self, self.type, self.sim_name)
-        std_dev_actions = std_dev.StdDevActions(
             self, self.type, self.sim_name)
 
         rb_actions.actions(hf)

@@ -8,7 +8,7 @@ import numpy as np
 import src.plotting.interface as I
 import unyt
 import yt
-from src.fitting import fits
+from src.fitting import fits, funcs
 from src.util import data, enum
 
 
@@ -45,7 +45,12 @@ class Fits(I.IPlot):
         bin_centres, hist_fit, r2, popt = self.fitter.calc_fit(
             z, radius, deltas, num_bins)
 
-        ax.plot(bin_centres, hist_fit, label='Fitted data')
+        label = "Fitted data"
+        if self.fitter.func.__name__ is funcs.gaussian.__name__:
+            _, _, sigma = popt
+            label += f" ($\sigma = {abs(sigma):.2f}$)"
+
+        ax.plot(bin_centres, hist_fit, label=label)
 
         # Show the R^2 in the legend:
         legend_addendum = f"$R^2 = {r2:.4f}$"

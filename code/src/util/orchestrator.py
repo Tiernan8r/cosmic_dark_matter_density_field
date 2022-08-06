@@ -49,8 +49,7 @@ class Orchestrator(interface.Interface):
                     logger.info("Skipping...")
                     continue
 
-                halos_finder = halo_finder.HalosFinder(
-                    halo_type=tp, root=self.config.sim_data.root, sim_name=sim_name)
+                halos_finder = halo_finder.HalosFinder(tp, self.config.sim_data.root, sim_name)
                 halo_files = halos_finder.filter_data_files(zs)
 
                 n_hfs = len(halo_files)

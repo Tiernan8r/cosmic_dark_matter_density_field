@@ -7,7 +7,7 @@ import src.calc.rho_bar as rho_bar
 import src.util.units as u
 import unyt
 from src.fitting import fits
-from src.util.constants import OVERDENSITIES_KEY, STD_DEV_KEY
+from src.util.constants import DELTA_CRIT, OVERDENSITIES_KEY, STD_DEV_KEY
 from src.util.halos import halo_finder
 
 
@@ -29,14 +29,14 @@ class StandardDeviation(rho_bar.RhoBar):
 
             sigmas.append(sdev)
 
-        av_den = self.rho_bar(hf)
+        av_den = self.rho_bar_0() * DELTA_CRIT
 
         masses = []
         for r in radii:
             R = ds.quan(r, u.length_cm(ds))
 
             V = 4 / 3 * np.pi * R**3
-            m = av_den * V
+            m = (av_den * V).to(u.mass(ds))
 
             masses.append(m)
 
@@ -95,7 +95,7 @@ class StandardDeviation(rho_bar.RhoBar):
         logger.debug(
             f"Finding {self.type.value} file for a redshift of {from_z:.2f} on simulation '{self.sim_name}'")  # noqa: E501
         halos_finder = halo_finder.HalosFinder(
-            halo_type=self.type, root=self.config.sim_data.root, sim_name=self.sim_name)
+            self.type, self.config.sim_data.root, self.sim_name)
 
         halo_files = halos_finder.filter_data_files(desired=[from_z])
 
