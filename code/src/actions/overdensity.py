@@ -93,6 +93,7 @@ class OverdensityActions(BaseAction):
                     self.sim_name,
                     self.config.sampling.num_hist_bins,
                     fig=fig)
+                # Gaussian fit
                 fig, gauss_popt = plotter.gaussian_fit(
                     z,
                     radius,
@@ -101,10 +102,46 @@ class OverdensityActions(BaseAction):
                     self.config.sampling.num_hist_bins,
                     fig=fig)
 
+                gaussian_fit_fname = fitter.gaussian_fit_fname(
+                    self.sim_name, radius, z)
+                fig.savefig(gaussian_fit_fname)
+
+            else:
+                logger.info(
+                    "Skipping plotting fitted gaussian to overdensities...")
+
+            # =========================================================
+            # FITTED GAUSSIAN + EXTRAPOLATED OVERDENSITY PLOT:
+            # =========================================================
+            if self.config.tasks.overdensity:
+                logger.debug(
+                    "Plotting extrapolated Gaussian to overdensity...")
+
+                # Fitted with Gaussian:
+                fig = plotter.new_figure()
+                fig = plotter.overdensities(
+                    z,
+                    radius,
+                    deltas,
+                    self.sim_name,
+                    self.config.sampling.num_hist_bins,
+                    fig=fig)
+
+                # Extrapolated
                 A, mu, sigma = gauss_popt
                 extrapolated_sigma = sd.extrapolate(10, z, radius)
 
-                fig = plotter.gaussian(A, mu, extrapolated_sigma, self.config.sampling.num_hist_bins, fig=fig)
+                fig = plotter.gaussian(
+                    A, mu, extrapolated_sigma, self.config.sampling.num_hist_bins, fig=fig)
+
+                # Gaussian fit
+                fig, gauss_popt = plotter.gaussian_fit(
+                    z,
+                    radius,
+                    deltas,
+                    self.sim_name,
+                    self.config.sampling.num_hist_bins,
+                    fig=fig)
 
                 gaussian_fit_fname = fitter.gaussian_fit_fname(
                     self.sim_name, radius, z)

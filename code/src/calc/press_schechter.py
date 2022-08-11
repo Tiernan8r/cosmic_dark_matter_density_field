@@ -8,6 +8,7 @@ from src.calc import rho_bar, sample, std_dev
 from src.util import enum
 from src.util.constants import DELTA_CRIT, PRESS_SCHECHTER_KEY
 from src.util.halos import halo_finder
+from typing import Callable
 
 
 class PressSchechter(sample.Sampler):
@@ -20,7 +21,7 @@ class PressSchechter(sample.Sampler):
 
         return press_schechter
 
-    def numerical_mass_function(self, avg_den: float, radii: List[float], masses: List[List[float]], fitting_func, func_params):
+    def numerical_mass_function(self, avg_den: float, radii: List[float], masses: List[List[float]], fitting_func: Callable, func_params):
 
         F = []
 

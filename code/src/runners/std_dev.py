@@ -31,6 +31,7 @@ class StdDevRunner(orchestrator.Orchestrator):
             self, self.type, self.sim_name)
         masses, sigmas = sd.masses_sigmas(
             hf, from_fit=self.config.sampling.std_dev_from_fit)
+        radii = self.config.radii
 
         x = []
         y = []
@@ -40,14 +41,16 @@ class StdDevRunner(orchestrator.Orchestrator):
             if s is None:
                 continue
 
-            x.append(masses[i])
+            # x.append(masses[i])
+            x.append(radii[i])
             y.append(s*s)
 
         logger.debug(f"Plotting std devs...")
 
         plotter = Plotter(self, self.type, self.sim_name)
 
-        plotter.std_dev_func_M(z, x, y, self.sim_name, logscale=True)
+        # plotter.std_dev_func_M(z, x, y, self.sim_name, logscale=True)
+        plotter.std_dev_func_R(z, x, y, self.sim_name, logscale=True)
 
         self.fig = plotter.std_dev_func_M(
             z, x, y, self.sim_name, logscale=True, fig=self.fig)

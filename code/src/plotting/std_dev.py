@@ -34,7 +34,7 @@ class StandardDeviation(I.IPlot):
 
         ax.plot(x, y, label=legend)
 
-        fig.suptitle(title)
+        # fig.suptitle(title)
         ax.set_xlabel(xlabel)  # noqa: W605
         ax.set_ylabel(ylabel)  # noqa: W605, E501
 
@@ -68,3 +68,18 @@ class StandardDeviation(I.IPlot):
 
         return self._std_dev(Ms, sigmas, title, save_dir,
                              plot_name, xlabel="M $(M_\odot / h)$", ylabel="$\sigma^2$", legend=legend, logscale=logscale, fig=fig)
+
+    def std_dev_func_R(self,
+                       z: float,
+                       Rs: np.ndarray,
+                       sigmas: np.ndarray,
+                       sim_name: str,
+                       logscale=True,
+                       fig=None):
+        title = f"Standard Deviation as a function of sampling radius for {sim_name}; z={z:.2f}"
+        save_dir = self.std_dev_dir(sim_name)
+        plot_name = self.std_dev_fname(sim_name, z)
+        legend = f"z = {z:.2f}"
+
+        return self._std_dev(Rs, sigmas, title, save_dir,
+                             plot_name, xlabel="R $(Mpc / h)$", ylabel="$\sigma^2$", legend=legend, logscale=logscale, fig=fig)

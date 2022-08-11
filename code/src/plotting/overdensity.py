@@ -38,7 +38,7 @@ class Overdensity(I.IPlot):
                                  label="Analytic Overdensities")
         ax.set_xlim(left=-1, right=2)
 
-        fig.suptitle(title)
+        # fig.suptitle(title)
         ax.set_xlabel("Overdensity $\delta$")
         ax.set_ylabel("Frequency")  # noqa: W605
 

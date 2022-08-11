@@ -58,7 +58,7 @@ class Fits(I.IPlot):
         handles, _ = ax.get_legend_handles_labels()
         handles.append(mpatches.Patch(color='none', label=legend_addendum))
 
-        fig.suptitle(title)
+        # fig.suptitle(title)
         ax.legend(handles=handles)
 
         if not os.path.isdir(save_dir):

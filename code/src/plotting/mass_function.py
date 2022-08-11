@@ -29,7 +29,7 @@ class MassFunction(I.IPlot):
         if label is not None:
             ax.legend()
 
-        fig.suptitle(title)
+        # fig.suptitle(title)
         ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605
         ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")  # noqa: W605, E501
 

@@ -1,16 +1,28 @@
 %YAML 1.2
 ---
 radii:
+- 1
+- 5
 - 10
+- 15
 - 20
+- 25
 - 30
+- 35
 - 40
+- 45
 - 50
+- 55
 - 60
+- 65
 - 70
+- 75
 - 80
+- 85
 - 90
+- 95
 - 100
+
 redshifts:
 - 0.0
 - 0.25
@@ -26,7 +38,7 @@ redshifts:
 - 99
 datatypes:
   groups: false
-  halos_h5: false
+  halos_h5: true
   rockstar: false
   snapshots: true
 tasks:
@@ -35,3 +47,6 @@ tasks:
   rho_bar: false
   std_dev: false
   total_mass_function: false
+caches:
+  use_fits_cache: false
+  use_standard_deviation_cache: false

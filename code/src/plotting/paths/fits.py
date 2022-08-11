@@ -1,5 +1,6 @@
 from src.plotting.paths.interface import IPaths
 
+
 class Fits(IPaths):
 
     def gaussian_fit_dir(self, sim_name):
@@ -37,3 +38,15 @@ class Fits(IPaths):
 
     def n_gaussian_title(self, sim_name, z):
         return f"N Gaussian fit to overdensity for {sim_name} @ z={z:.2f}"
+
+    def extrapolated_gaussian_fit_dir(self, sim_name):
+        return self._compile_plot_dir(self.config.plotting.dirs.extrapolated_gaussian_fit,
+                                      sim_name, self.type.value)
+
+    def extrapolated_gaussian_fit_fname(self, sim_name, radius, z):
+        return self._compile_plot_fname(self.config.plotting.dirs.extrapolated_gaussian_fit,
+                                        self.config.plotting.pattern.extrapolated_gaussian_fit,  # noqa: E501
+                                        sim_name, self.type.value, radius, z)
+
+    def extrapolated_gaussian_title(self, sim_name, z):
+        return f"Extrapolated Gaussian fit to overdensity for {sim_name} @ z={z:.2f}"

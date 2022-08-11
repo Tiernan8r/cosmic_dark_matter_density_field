@@ -7,6 +7,7 @@ dirs:
   compared: "{}/{}/compared/"
   std_dev: "{}/{}/std_dev/"
   gaussian_fit: "{}/{}/gaussian_fit/"
+  extrapolated_gaussian_fit: "{}/{}/extrapolated_gaussian_fit/"
   skewed_gaussian_fit: "{}/{}/skewed_gaussian_fit/"
   n_gaussian_fit: "{}/{}/n_gaussian_fit/"
   numerical_mass_function: "{}/{}/numerical_mass_function/{}/"
@@ -19,6 +20,7 @@ pattern:
   std_dev: standard_deviations_z{:.2f}.png
   std_dev_compared: standard_deviations_compared.png
   gaussian_fit: overdensity_gaussian_fit_r{:.2f}_z{:.2f}.png
+  extrapolated_gaussian_fit: overdensity_extrapolated_gaussian_fit_r{:.2f}_z{:.2f}.png
   skewed_gaussian_fit: overdensity_skewed_gaussian_fit_r{:.2f}_z{:.2f}.png
   n_gaussian_fit: overdensity_n_gaussian_fit_r{:.2f}_z{:.2f}.png
   numerical_mass_function: "numerical_mass_function_z{:.2f}.png"
