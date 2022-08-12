@@ -9,7 +9,7 @@
 #SBATCH --time=72:00:00
 #SBATCH --mem=512G
 # email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)
-#SBATCH --mail-type=ALL
+#SBATCH --mail-type=FAIL
 #SBATCH --mail-user=s2222340@ed.ac.uk
 
 #################

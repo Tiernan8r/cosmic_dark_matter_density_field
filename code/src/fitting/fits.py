@@ -7,7 +7,7 @@ import scipy.optimize
 import scipy.stats
 import unyt
 from src.util.constants import (BIN_CENTRE_KEY, FITS_KEY, HIST_FIT_KEY,
-                                 POPT_KEY, R2_KEY)
+                                POPT_KEY, R2_KEY)
 from src.fitting import funcs
 from src.fitting.params import FittingParameters
 from src.util import data, enum
@@ -26,6 +26,25 @@ class Fits(FittingParameters):
             funcs.skew_gaussian.__name__: funcs.skew_gaussian,
             funcs.n_gaussian.__name__: funcs.n_gaussian,
         }
+
+    def filter_fit(self, y: np.ndarray) -> np.ndarray:
+        # # offset final values to get close to 0
+        # final_val: float = y[-1]
+
+        # y = y - final_val
+        # print("OFFSET Y NOW=", y)
+
+        # filter for close to 0, and set equal to 0
+        zeros = np.zeros(y.shape)
+        zero_idxs = np.where(np.isclose(y, zeros))
+
+        y[zero_idxs] = 0
+
+        # Filter for neg values
+        neg_idxs = np.where(y < 0)
+        y[neg_idxs] = 0
+
+        return y
 
     def calc_fit(self,
                  z: float,
@@ -50,7 +69,7 @@ class Fits(FittingParameters):
             od_bins = np.linspace(start=-1, stop=2, num=num_bins)
 
             hist, bin_edges = np.histogram(deltas,
-                              bins=od_bins)
+                                           bins=od_bins)
             bin_centres = (bin_edges[:-1] + bin_edges[1:])/2
 
             try:
@@ -67,6 +86,9 @@ class Fits(FittingParameters):
 
             # Get the fitted curve
             hist_fit = self.func(bin_centres, *popt)
+
+            # Filter the result:
+            hist_fit = self.filter_fit(hist_fit)
 
             # =============================================================
             # R^2 QUALITY OF FIT TEST

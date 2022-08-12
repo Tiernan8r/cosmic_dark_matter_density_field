@@ -143,9 +143,9 @@ class OverdensityActions(BaseAction):
                     self.config.sampling.num_hist_bins,
                     fig=fig)
 
-                gaussian_fit_fname = fitter.gaussian_fit_fname(
+                extrapolated_fit_fname = fitter.extrapolated_gaussian_fit_fname(
                     self.sim_name, radius, z)
-                fig.savefig(gaussian_fit_fname)
+                fig.savefig(extrapolated_fit_fname)
 
             else:
                 logger.info(

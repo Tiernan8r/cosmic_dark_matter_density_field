@@ -6,11 +6,30 @@ from src.util import interface
 class IPaths(interface.Interface):
 
     def _compile_plot_dir(self, subdir, *args):
-        dirname = os.path.join(self.config.plotting.dirs.root, subdir)
+        dir_ptrn = os.path.join(self.config.plotting.dirs.root, subdir)
 
-        return dirname.format(*args)
+        # ensure the paths exist
+        dname = dir_ptrn.format(*args)
+        if not os.path.exists(dname):
+            try:
+                os.makedirs(dname)
+            except FileExistsError as fee:
+                pass
+
+        return dname
 
     def _compile_plot_fname(self, subdir, fname, *args):
-        plot_fname = os.path.join(self.config.plotting.dirs.root, subdir, fname)
+        fname_ptrn = os.path.join(
+            self.config.plotting.dirs.root, subdir, fname)
 
-        return plot_fname.format(*args)
+        fname = fname_ptrn.format(*args)
+
+        # Ensure the paths exist
+        pth = os.path.dirname(fname)
+        if not os.path.exists(pth):
+            try:
+                os.makedirs(pth)
+            except FileExistsError as fee:
+                pass
+
+        return fname
