@@ -89,7 +89,7 @@ class RhoBar(sample.Sampler):
             logger.debug(
                 f"No entries found in cache for '{RHO_BAR_KEY}', calculating...")  # noqa: E501
 
-            rb0 = self.rho_bar_0(hf)
+            rb0 = self.rho_bar_0()
             rho_bar = rb0 * (1 + z)**3
             rho_bar = rho_bar.to(u.density(ds))
             logger.debug(

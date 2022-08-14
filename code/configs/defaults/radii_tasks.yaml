@@ -3,3 +3,5 @@ overdensity: true
 rho_bar: false
 std_dev: false
 total_mass_function: false
+press_schechter_mass_function: true
+numerical_mass_function: true

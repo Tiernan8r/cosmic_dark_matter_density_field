@@ -1,5 +1,0 @@
-caches:
-  use_rho_bar_cache: false
-  use_rho_bar_0_cache: true
-redshifts:
-- 0

@@ -2,11 +2,21 @@
 ---
 datatypes: !include defaults/radii_datatypes.yaml
 radii: 
+- 1
+- 2
+- 3
+- 4
+- 5
 - 10
+- 15
 - 20
+- 25
 - 30
+- 35
 - 40
+- 45
 - 50
+- 55
 - 60
 - 70
 - 80
@@ -27,3 +37,8 @@ redshifts:
 - 99
 caches:
   use_standard_deviation_cache: false
+datatypes:
+  groups: false
+  halos_h5: false
+  rockstar: false
+  snapshots: true

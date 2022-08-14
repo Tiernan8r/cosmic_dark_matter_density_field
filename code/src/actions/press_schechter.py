@@ -4,7 +4,8 @@ import logging.config
 
 import src.util.units as u
 from src.actions.base import BaseAction
-from src.calc import mass_function, press_schechter
+from src.calc import mass_function, overdensity, press_schechter, rho_bar
+from src.fitting import fits
 from src.plotting import Plotter
 
 
@@ -15,7 +16,10 @@ class PressSchechterActions(BaseAction):
         logger = logging.getLogger(__name__ + "." + self.actions.__name__)
 
         mf = mass_function.MassFunction(self, self.type, self.sim_name)
+        ods = overdensity.Overdensity(self, self.type, self.sim_name)
         ps = press_schechter.PressSchechter(self, self.type, self.sim_name)
+        rb = rho_bar.RhoBar(self, self.type, self.sim_name)
+        fitter = fits.Fits(self, self.type, self.sim_name)
         plotter = Plotter(self, self.type, self.sim_name)
 
         ds = self.dataset_cache.load(hf)
@@ -66,3 +70,60 @@ class PressSchechterActions(BaseAction):
 
         else:
             logger.info("Skipping comparing mass function plots...")
+
+        # =============================================================
+        # NUMERICAL MASS FUNCTIONS
+        # =============================================================
+        if self.config.tasks.numerical_mass_function:
+            logger.info("Plotting numerical mass function...")
+
+            avg_den = rb.rho_bar(hf)
+            num_bins = self.config.sampling.num_hist_bins
+
+            for func_name, fitting_func in fitter.fit_functions().items():
+                logger.info(f"Plotting '{func_name}'")
+
+                # Track all the fitted functions over radii
+                all_fits = []
+                # Track the histogram bins used over radii (may be the same??)
+                all_bins = []
+                # Track the overdensities histograms across radii
+                all_deltas = []
+
+                # Set the fitting function to use
+                plotter.func = fitting_func
+                # Track the fitting parameters across radii
+                func_params = []
+
+                # Iterate over the radii
+                radii = self.config.radii
+                for radius in radii:
+
+                    # Calculate the overdensities at this sampling radius
+                    od = ods.calc_overdensities(hf, radius)
+
+                    # Get the fitting parameters to this overdensity
+                    fitter.setup_parameters(func_name)
+                    bin_centres, f, r2, popt = fitter.calc_fit(
+                        z, radius, od, num_bins)
+
+                    # Track the values
+                    all_fits.append(f)
+                    all_bins.append(bin_centres)
+                    # Track the fitting parameters
+                    func_params.append(popt)
+
+                    # Convert the overdensities to a histogram
+                    hist, bin_edges = mass_function.create_histogram(
+                        od, bins=num_bins)
+                    # Track the hist
+                    all_deltas.append(hist)
+
+                # Calculate the numerical mass function for this fit model
+                numerical_mass_function = ps.numerical_mass_function(
+                    avg_den, radii, masses, fitting_func, func_params)
+                # Plot the mass function
+                plotter.numerical_mass_function(
+                    z, numerical_mass_function, masses, self.sim_name, func_name)
+        else:
+            logger.info("Skipping calculating numerical mass functions...")

@@ -30,8 +30,10 @@ class MassFunction(I.IPlot):
             ax.legend()
 
         # fig.suptitle(title)
-        ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605
-        ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")  # noqa: W605, E501
+        # ax.set_xlabel("$\log{M_{vir}}$")  # noqa: W605
+        # ax.set_ylabel("$\phi=\\frac{d \log{n}}{d \log{M_{vir}}}$")  # noqa: W605, E501
+        ax.set_xlabel("M $(M_\odot / h)$")  # noqa: W605
+        ax.set_ylabel("$\phi=\\frac{d n}{d M}$")  # noqa: W605, E501
 
         # Ensure the folders exist before attempting to save an image to it...
         if not os.path.isdir(save_dir):

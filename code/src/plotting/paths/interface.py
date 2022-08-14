@@ -10,7 +10,7 @@ class IPaths(interface.Interface):
 
         # ensure the paths exist
         dname = dir_ptrn.format(*args)
-        if not os.path.exists(dname):
+        if not os.path.isdir(dname):
             try:
                 os.makedirs(dname)
             except FileExistsError as fee:
@@ -26,7 +26,7 @@ class IPaths(interface.Interface):
 
         # Ensure the paths exist
         pth = os.path.dirname(fname)
-        if not os.path.exists(pth):
+        if not os.path.isdir(pth):
             try:
                 os.makedirs(pth)
             except FileExistsError as fee:

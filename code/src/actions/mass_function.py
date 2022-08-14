@@ -18,7 +18,6 @@ class MassFunctionActions(BaseAction):
 
         mf = mass_function.MassFunction(self, self.type, self.sim_name)
         plotter = Plotter(self, self.type, self.sim_name)
-        fitter = fits.Fits(self, self.type, self.sim_name)
 
         ds = self.dataset_cache.load(hf)
         z = ds.current_redshift

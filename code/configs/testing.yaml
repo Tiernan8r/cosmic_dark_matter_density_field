@@ -3,12 +3,22 @@
 sampling:
   overdensity_std_dev_tol: !!float 1e-2
   converge_std_dev: false
-  sphere_sample_iteration: 500
-  sphere_sample_hotsave: true
-  num_sp_samples: 1000
+  sphere_sample_iteration: 10
+  sphere_sample_hotsave: false
+  num_sp_samples: 20
 radii:
-- 123
-- 12
+- 10
+# - 12
+- 20
+- 30
+- 40
+- 50
+- 60
+- 70
+- 80
+- 90
+- 100
+# - 123
 redshifts:
 - 0
 caches:
@@ -17,19 +27,21 @@ caches:
   use_rho_bar_cache: true
   use_standard_deviation_cache: true
   use_total_cache: true
-  use_press_schechter_cache: true
+  use_press_schechter_cache: false
   use_sphere_samples: true
+  use_fits_cache: false
 datatypes:
   groups: false
-  halos_h5: true
+  halos_h5: false
   rockstar: false
-  snapshots: false
+  snapshots: true
 tasks:
   mass_function: false
   overdensity: true
   rho_bar: false
   std_dev: false
   total_mass_function: false
+  numerical_mass_function: true
 plotting:
     dirs:
       root: ../plots/testing/

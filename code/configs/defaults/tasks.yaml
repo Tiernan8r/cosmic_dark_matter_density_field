@@ -4,3 +4,4 @@ rho_bar: true
 std_dev: true
 total_mass_function: true
 press_schechter_mass_function: true
+numerical_mass_function: true
