@@ -67,7 +67,7 @@ class StandardDeviation(I.IPlot):
         legend = f"z = {z:.2f}"
 
         return self._std_dev(Ms, sigmas, title, save_dir,
-                             plot_name, xlabel="M $(M_\odot / h)$", ylabel="$\sigma^2$", legend=legend, logscale=logscale, fig=fig)
+                             plot_name, xlabel="M ($M_\odot$/h)", ylabel="$\sigma^2$", legend=legend, logscale=logscale, fig=fig)
 
     def std_dev_func_R(self,
                        z: float,
@@ -82,4 +82,4 @@ class StandardDeviation(I.IPlot):
         legend = f"z = {z:.2f}"
 
         return self._std_dev(Rs, sigmas, title, save_dir,
-                             plot_name, xlabel="R $(Mpc / h)$", ylabel="$\sigma^2$", legend=legend, logscale=logscale, fig=fig)
+                             plot_name, xlabel="R (Mpc/h)", ylabel="$\sigma^2$", legend=legend, logscale=logscale, fig=fig)

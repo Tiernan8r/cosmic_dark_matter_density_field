@@ -1,0 +1,56 @@
+%YAML 1.2
+---
+radii:
+- 1
+- 5
+- 10
+- 15
+- 20
+- 25
+- 30
+- 35
+- 40
+- 45
+- 50
+- 55
+- 60
+- 65
+- 70
+# - 75
+- 80
+# - 85
+- 90
+# - 95
+- 100
+
+redshifts:
+- 0.0
+- 0.25
+- 0.5
+- 1
+- 2
+- 4
+- 6
+- 8
+- 10
+- 15
+- 20
+- 99
+datatypes:
+  groups: false
+  halos_h5: false
+  rockstar: false
+  snapshots: true
+tasks:
+  mass_function: false
+  overdensity: false
+  rho_bar: false
+  std_dev: false
+  total_mass_function: false
+  press_schechter_mass_function: true
+  numerical_mass_function: true
+caches:
+  use_standard_deviation_cache: false
+  use_total_cache: true
+  use_press_schechter_cache: false
+  use_fits_cache: false
