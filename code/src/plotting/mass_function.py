@@ -112,6 +112,20 @@ class MassFunction(I.IPlot):
         self._mass_function(masses, vals, title,
                             save_dir, plot_name)
 
+    def _scale_axes(self, x, y, ref):
+        # Filter the PS mass function to be in x-axis range of total
+        min_x_total = min(ref)
+        max_x_total = max(ref)
+
+        max_idxs = np.where(x < max_x_total)
+        x = x[max_idxs]
+        y = y[max_idxs]
+        min_idxs = np.where(x > min_x_total)
+        x = x[min_idxs]
+        y = y[min_idxs]
+
+        return x, y
+
     def press_schechter_total_comparison(self,
                                          z: float,
                                          total_bins: np.ndarray,
@@ -126,15 +140,7 @@ class MassFunction(I.IPlot):
         plot_name = self.compared_total_fname(sim_name, z)
 
         # Filter the PS mass function to be in x-axis range of total
-        min_x_total = min(total_bins)
-        max_x_total = max(total_bins)
-
-        max_idxs = np.where(Ms < max_x_total)
-        Ms = Ms[max_idxs]
-        ps_fit = ps_fit[max_idxs]
-        min_idxs = np.where(Ms > min_x_total)
-        Ms = Ms[min_idxs]
-        ps_fit = ps_fit[min_idxs]
+        Ms, ps_fit = self._scale_axes(Ms, ps_fit, total_bins)
 
         # Rescale:
         initial_val = total_hist[0]
@@ -174,6 +180,10 @@ class MassFunction(I.IPlot):
         title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
         save_dir = self.compared_dir(sim_name)
         plot_name = self.compared_analytic_fname(sim_name, z, radius)
+
+        # Filter the PS mass function to be in x-axis range of the analytic
+        ps_masses, ps_fit = self._scale_axes(
+            ps_masses, ps_fit, analytic_masses)
 
         # Rescale:
         if len(analytic) == 0:
@@ -252,6 +262,8 @@ class MassFunction(I.IPlot):
         plot_name = self.compared_total_to_numerical_fname(
             sim_name, fit_name, z)
 
+        # Filter the numeric mass function to be in x-axis range of total
+        Ms, numeric = self._scale_axes(Ms, numeric, total_bins)
 
         # Rescale:
         initial_val = numeric[0]
