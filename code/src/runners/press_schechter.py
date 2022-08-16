@@ -125,59 +125,43 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 self.sim_name = sim_name
 
                 logger.info(f"Working on simulation: {self.sim_name}")
-                for tp in yt.parallel_objects(enum.DataType):
-                    self.type = tp
+                # =============================================================
+                # COMPARE PS MASS FN TO TOTAL MASS FN
+                # =============================================================
 
-                    logger.info(f"Working on {tp.value} datasets:")
+                mf = mass_function.MassFunction(
+                    self, enum.DataType.H5, self.sim_name)
+                sd = std_dev.StandardDeviation(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                ps = press_schechter.PressSchechter(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                rb = rho_bar.RhoBar(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                plotter = Plotter(self, enum.DataType.H5, self.sim_name)
 
-                    # Skip dataset type calculation if not set to run in the config
-                    type_name = tp.value
-                    if not self.config.datatypes.__getattribute__(type_name):
-                        logger.info("Skipping...")
-                        continue
+                zs = self.config.redshifts
 
-                    if type_name == enum.DataType.SNAPSHOT.value:
-                        logger.info("Skipping running on SNAPSHOTS...")
-                        continue
-                    self.type = tp
+                halos_finder = halo_finder.HalosFinder(
+                    tp, self.config.sim_data.root, self.sim_name)
+                halo_files = halos_finder.filter_data_files(zs)
+                snapshots_finder = halo_finder.HalosFinder(
+                    enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
+                snapshot_files = snapshots_finder.filter_data_files(zs)
 
-                    # =============================================================
-                    # COMPARE PS MASS FN TO TOTAL MASS FN
-                    # =============================================================
+                for hf, sf in zip(halo_files, snapshot_files):
+                    ds = self.dataset_cache.load(hf)
 
-                    mf = mass_function.MassFunction(
-                        self, enum.DataType.H5, self.sim_name)
-                    sd = std_dev.StandardDeviation(
-                        self, enum.DataType.SNAPSHOT, self.sim_name)
-                    ps = press_schechter.PressSchechter(
-                        self, self.type, self.sim_name)
-                    rb = rho_bar.RhoBar(
-                        self, enum.DataType.SNAPSHOT, self.sim_name)
-                    plotter = Plotter(self, self.type, self.sim_name)
+                    z = ds.current_redshift
+                    avg_den = rb.rho_bar(hf)
 
-                    zs = self.config.redshifts
+                    total_mass_hist, total_mass_bins = mf.total_mass_function(hf)
+                    masses, sigmas = sd.masses_sigmas(sf)
 
-                    halos_finder = halo_finder.HalosFinder(
-                        tp, self.config.sim_data.root, self.sim_name)
-                    halo_files = halos_finder.filter_data_files(zs)
-                    snapshots_finder = halo_finder.HalosFinder(
-                        enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
-                    snapshot_files = snapshots_finder.filter_data_files(zs)
+                    ps_mass_function = ps.analytic_press_schechter(
+                        avg_den, masses, sigmas)
 
-                    for hf, sf in zip(halo_files, snapshot_files):
-                        ds = self.dataset_cache.load(hf)
-
-                        z = ds.current_redshift
-                        avg_den = rb.rho_bar(hf)
-
-                        total_mass_hist, total_mass_bins = mf.total_mass_function(hf)
-                        masses, sigmas = sd.masses_sigmas(sf)
-
-                        ps_mass_function = ps.analytic_press_schechter(
-                            avg_den, masses, sigmas)
-
-                        plotter.press_schechter_total_comparison(
-                            z, total_mass_bins, total_mass_hist, masses, ps_mass_function, self.sim_name)
+                    plotter.press_schechter_total_comparison(
+                        z, total_mass_bins, total_mass_hist, masses, ps_mass_function, self.sim_name)
 
         else:
             logger.info(
@@ -195,59 +179,43 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 self.sim_name = sim_name
 
                 logger.info(f"Working on simulation: {self.sim_name}")
-                for tp in yt.parallel_objects(enum.DataType):
-                    self.type = tp
+                # =============================================================
+                # COMPARE PS MASS FN TO ANALYTIC MASS FN
+                # =============================================================
+                mf = mass_function.MassFunction(
+                    self, enum.DataType.H5, self.sim_name)
+                sd = std_dev.StandardDeviation(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                ps = press_schechter.PressSchechter(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                plotter = Plotter(self, enum.DataType.H5, self.sim_name)
 
-                    logger.info(f"Working on {tp.value} datasets:")
+                zs = self.config.redshifts
 
-                    # Skip dataset type calculation if not set to run in the config
-                    type_name = tp.value
-                    if not self.config.datatypes.__getattribute__(type_name):
-                        logger.info("Skipping...")
-                        continue
+                halos_finder = halo_finder.HalosFinder(
+                    tp, self.config.sim_data.root, self.sim_name)
+                halo_files = halos_finder.filter_data_files(zs)
+                snapshots_finder = halo_finder.HalosFinder(
+                    enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
+                snapshot_files = snapshots_finder.filter_data_files(zs)
 
-                    if type_name == enum.DataType.SNAPSHOT.value:
-                        logger.info("Skipping running on SNAPSHOTS...")
-                        continue
-                    self.type = tp
+                for hf, sf in zip(halo_files, snapshot_files):
+                    ds = self.dataset_cache.load(hf)
+                    z = ds.current_redshift
 
-                    # =============================================================
-                    # COMPARE PS MASS FN TO ANALYTIC MASS FN
-                    # =============================================================
-                    mf = mass_function.MassFunction(
-                        self, enum.DataType.H5, self.sim_name)
-                    sd = std_dev.StandardDeviation(
-                        self, enum.DataType.SNAPSHOT, self.sim_name)
-                    ps = press_schechter.PressSchechter(
-                        self, self.type, self.sim_name)
-                    plotter = Plotter(self, self.type, self.sim_name)
+                    masses, sigmas = sd.masses_sigmas(sf)
 
-                    zs = self.config.redshifts
+                    ps_mass_function = ps.analytic_press_schechter(
+                        avg_den, masses, sigmas)
 
-                    halos_finder = halo_finder.HalosFinder(
-                        tp, self.config.sim_data.root, self.sim_name)
-                    halo_files = halos_finder.filter_data_files(zs)
-                    snapshots_finder = halo_finder.HalosFinder(
-                        enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
-                    snapshot_files = snapshots_finder.filter_data_files(zs)
+                    for radius in self.config.radii:
+                        logger.info(
+                            f"Working on mass function: r={radius}")
 
-                    for hf, sf in zip(halo_files, snapshot_files):
-                        ds = self.dataset_cache.load(hf)
-                        z = ds.current_redshift
+                        mass_hist, bin_edges = mf.mass_function(hf, radius)
 
-                        masses, sigmas = sd.masses_sigmas(sf)
-
-                        ps_mass_function = ps.analytic_press_schechter(
-                            avg_den, masses, sigmas)
-
-                        for radius in self.config.radii:
-                            logger.info(
-                                f"Working on mass function: r={radius}")
-
-                            mass_hist, bin_edges = mf.mass_function(hf, radius)
-
-                            plotter.press_schechter_analytic_comparison(
-                                z, radius, bin_edges, mass_hist, masses, ps_mass_function, self.sim_name)
+                        plotter.press_schechter_analytic_comparison(
+                            z, radius, bin_edges, mass_hist, masses, ps_mass_function, self.sim_name)
 
         else:
             logger.info("Skipping comparing analytic mass function plots...")
@@ -264,94 +232,76 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 # Save the current sim name into the data object
                 self.sim_name = sim_name
 
-                logger.info(f"Working on simulation: {self.sim_name}")
-                for tp in yt.parallel_objects(enum.DataType):
-                    logger.info(f"Working on {tp.value} datasets:")
+                # =============================================================
+                # COMPARE PS MASS FN TO NUMERICAL MASS FN
+                # =============================================================
+                ods = overdensity.Overdensity(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                sd = std_dev.StandardDeviation(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                ps = press_schechter.PressSchechter(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                rb = rho_bar.RhoBar(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                plotter = Plotter(self, enum.DataType.SNAPSHOT, self.sim_name)
+                fitter = fits.Fits(self, enum.DataType.SNAPSHOT, self.sim_name)
 
-                    # Skip dataset type calculation if not set to run in the config
-                    type_name = tp.value
-                    if not self.config.datatypes.__getattribute__(type_name):
-                        logger.info("Skipping...")
-                        continue
+                zs = self.config.redshifts
 
-                    if type_name == enum.DataType.H5.value:
-                        logger.info("Skipping running on HALOS_H5...")
-                        continue
+                halos_finder = halo_finder.HalosFinder(
+                    tp, self.config.sim_data.root, self.sim_name)
+                halo_files = halos_finder.filter_data_files(zs)
+                snapshots_finder = halo_finder.HalosFinder(
+                    enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
+                snapshot_files = snapshots_finder.filter_data_files(zs)
 
-                    self.type = tp
+                for hf, sf in zip(halo_files, snapshot_files):
+                    ds = self.dataset_cache.load(hf)
+                    z = ds.current_redshift
 
+                    # ===========================================================
+                    # NUMERICAL MASS FUNCTIONS
                     # =============================================================
-                    # COMPARE PS MASS FN TO NUMERICAL MASS FN
-                    # =============================================================
-                    mf = mass_function.MassFunction(
-                        self, self.type, self.sim_name)
-                    ods = overdensity.Overdensity(
-                        self, self.type, self.sim_name)
-                    sd = std_dev.StandardDeviation(
-                        self, enum.DataType.SNAPSHOT, self.sim_name)
-                    ps = press_schechter.PressSchechter(
-                        self, self.type, self.sim_name)
-                    rb = rho_bar.RhoBar(
-                        self, enum.DataType.SNAPSHOT, self.sim_name)
-                    plotter = Plotter(self, self.type, self.sim_name)
-                    fitter = fits.Fits(self, self.type, self.sim_name)
+                    logger.info("Plotting numerical mass function...")
 
-                    zs = self.config.redshifts
+                    avg_den = rb.rho_bar(hf)
+                    num_bins = self.config.sampling.num_hist_bins
 
-                    halos_finder = halo_finder.HalosFinder(
-                        tp, self.config.sim_data.root, self.sim_name)
-                    halo_files = halos_finder.filter_data_files(zs)
-                    snapshots_finder = halo_finder.HalosFinder(
-                        enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
-                    snapshot_files = snapshots_finder.filter_data_files(zs)
+                    # Get the PS mass function
+                    masses, sigmas = sd.masses_sigmas(sf)
 
-                    for hf, sf in zip(halo_files, snapshot_files):
-                        ds = self.dataset_cache.load(hf)
-                        z = ds.current_redshift
+                    ps_mass_function = ps.analytic_press_schechter(
+                        avg_den, masses, sigmas)
 
-                        # ===========================================================
-                        # NUMERICAL MASS FUNCTIONS
-                        # =============================================================
-                        logger.info("Plotting numerical mass function...")
+                    for func_name, fitting_func in fitter.fit_functions().items():
+                        logger.info(f"Plotting '{func_name}'")
 
-                        avg_den = rb.rho_bar(hf)
-                        num_bins = self.config.sampling.num_hist_bins
+                        # Set the fitting function to use
+                        plotter.func = fitting_func
+                        # Track the fitting parameters across radii
+                        func_params = []
 
-                        # Get the PS mass function
-                        masses, sigmas = sd.masses_sigmas(sf)
+                        # Iterate over the radii
+                        radii = self.config.radii
+                        for radius in radii:
 
-                        ps_mass_function = ps.analytic_press_schechter(
-                            avg_den, masses, sigmas)
+                            # Calculate the overdensities at this sampling radius
+                            od = ods.calc_overdensities(hf, radius)
 
-                        for func_name, fitting_func in fitter.fit_functions().items():
-                            logger.info(f"Plotting '{func_name}'")
+                            # Get the fitting parameters to this overdensity
+                            fitter.setup_parameters(func_name)
+                            _, _, _, popt = fitter.calc_fit(
+                                z, radius, od, num_bins)
 
-                            # Set the fitting function to use
-                            plotter.func = fitting_func
-                            # Track the fitting parameters across radii
-                            func_params = []
+                            # Track the fitting parameters
+                            func_params.append(popt)
 
-                            # Iterate over the radii
-                            radii = self.config.radii
-                            for radius in radii:
-
-                                # Calculate the overdensities at this sampling radius
-                                od = ods.calc_overdensities(hf, radius)
-
-                                # Get the fitting parameters to this overdensity
-                                fitter.setup_parameters(func_name)
-                                _, _, _, popt = fitter.calc_fit(
-                                    z, radius, od, num_bins)
-
-                                # Track the fitting parameters
-                                func_params.append(popt)
-
-                            # Calculate the numerical mass function for this fit model
-                            numerical_mass_function = ps.numerical_mass_function(
-                                avg_den, radii, masses, fitting_func, func_params)
-                            # Plot the mass function
-                            plotter.press_schechter_numerical_comparison(
-                                z, masses, numerical_mass_function, ps_mass_function, self.sim_name, fitting_func.__name__)
+                        # Calculate the numerical mass function for this fit model
+                        numerical_mass_function = ps.numerical_mass_function(
+                            avg_den, radii, masses, fitting_func, func_params)
+                        # Plot the mass function
+                        plotter.press_schechter_numerical_comparison(
+                            z, masses, numerical_mass_function, ps_mass_function, self.sim_name, fitting_func.__name__)
 
         else:
             logger.info("Skipping comparing numerical mass function plots...")
@@ -369,93 +319,78 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 self.sim_name = sim_name
 
                 logger.info(f"Working on simulation: {self.sim_name}")
-                for tp in yt.parallel_objects(enum.DataType):
-                    logger.info(f"Working on {tp.value} datasets:")
+                # =============================================================
+                # COMPARE TOTAL MASS FN TO NUMERICAL MASS FN
+                # =============================================================
+                mf = mass_function.MassFunction(
+                    self, enum.DataType.H5, self.sim_name)
+                ods = overdensity.Overdensity(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                sd = std_dev.StandardDeviation(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                ps = press_schechter.PressSchechter(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                rb = rho_bar.RhoBar(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
+                plotter = Plotter(self, enum.DataType.SNAPSHOT, self.sim_name)
+                fitter = fits.Fits(self, enum.DataType.SNAPSHOT, self.sim_name)
 
-                    # Skip dataset type calculation if not set to run in the config
-                    type_name = tp.value
-                    if not self.config.datatypes.__getattribute__(type_name):
-                        logger.info("Skipping...")
-                        continue
+                zs = self.config.redshifts
 
-                    if type_name == enum.DataType.SNAPSHOT.value:
-                        logger.info("Skipping running on SNAPSHOTS...")
-                        continue
+                halos_finder = halo_finder.HalosFinder(
+                    tp, self.config.sim_data.root, self.sim_name)
+                halo_files = halos_finder.filter_data_files(zs)
+                snapshots_finder = halo_finder.HalosFinder(
+                    enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
+                snapshot_files = snapshots_finder.filter_data_files(zs)
 
-                    self.type = tp
+                for hf, sf in zip(halo_files, snapshot_files):
+                    ds = self.dataset_cache.load(hf)
+                    z = ds.current_redshift
 
+                    # ===========================================================
+                    # NUMERICAL MASS FUNCTIONS
                     # =============================================================
-                    # COMPARE TOTAL MASS FN TO NUMERICAL MASS FN
-                    # =============================================================
-                    mf = mass_function.MassFunction(
-                        self, enum.DataType.H5, self.sim_name)
-                    ods = overdensity.Overdensity(
-                        self, self.type, self.sim_name)
-                    sd = std_dev.StandardDeviation(
-                        self, enum.DataType.SNAPSHOT, self.sim_name)
-                    ps = press_schechter.PressSchechter(
-                        self, self.type, self.sim_name)
-                    rb = rho_bar.RhoBar(
-                        self, enum.DataType.SNAPSHOT, self.sim_name)
-                    plotter = Plotter(self, self.type, self.sim_name)
-                    fitter = fits.Fits(self, self.type, self.sim_name)
+                    logger.info("Plotting numerical mass function...")
 
-                    zs = self.config.redshifts
+                    avg_den = rb.rho_bar(hf)
+                    num_bins = self.config.sampling.num_hist_bins
 
-                    halos_finder = halo_finder.HalosFinder(
-                        tp, self.config.sim_data.root, self.sim_name)
-                    halo_files = halos_finder.filter_data_files(zs)
-                    snapshots_finder = halo_finder.HalosFinder(
-                        enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
-                    snapshot_files = snapshots_finder.filter_data_files(zs)
+                    # Total mass
+                    total_hist, total_bins = mf.total_mass_function(hf)
 
-                    for hf, sf in zip(halo_files, snapshot_files):
-                        ds = self.dataset_cache.load(hf)
-                        z = ds.current_redshift
+                    # Get the PS mass function
+                    masses, _ = sd.masses_sigmas(sf)
 
-                        # ===========================================================
-                        # NUMERICAL MASS FUNCTIONS
-                        # =============================================================
-                        logger.info("Plotting numerical mass function...")
+                    for func_name, fitting_func in fitter.fit_functions().items():
+                        logger.info(f"Plotting '{func_name}'")
 
-                        avg_den = rb.rho_bar(hf)
-                        num_bins = self.config.sampling.num_hist_bins
+                        # Set the fitting function to use
+                        plotter.func = fitting_func
+                        # Track the fitting parameters across radii
+                        func_params = []
 
-                        # Total mass
-                        total_hist, total_bins = mf.total_mass_function(hf)
+                        # Iterate over the radii
+                        radii = self.config.radii
+                        for radius in radii:
 
-                        # Get the PS mass function
-                        masses, _ = sd.masses_sigmas(sf)
+                            # Calculate the overdensities at this sampling radius
+                            od = ods.calc_overdensities(hf, radius)
 
-                        for func_name, fitting_func in fitter.fit_functions().items():
-                            logger.info(f"Plotting '{func_name}'")
+                            # Get the fitting parameters to this overdensity
+                            fitter.setup_parameters(func_name)
+                            _, _, _, popt = fitter.calc_fit(
+                                z, radius, od, num_bins)
 
-                            # Set the fitting function to use
-                            plotter.func = fitting_func
-                            # Track the fitting parameters across radii
-                            func_params = []
+                            # Track the fitting parameters
+                            func_params.append(popt)
 
-                            # Iterate over the radii
-                            radii = self.config.radii
-                            for radius in radii:
-
-                                # Calculate the overdensities at this sampling radius
-                                od = ods.calc_overdensities(hf, radius)
-
-                                # Get the fitting parameters to this overdensity
-                                fitter.setup_parameters(func_name)
-                                _, _, _, popt = fitter.calc_fit(
-                                    z, radius, od, num_bins)
-
-                                # Track the fitting parameters
-                                func_params.append(popt)
-
-                            # Calculate the numerical mass function for this fit model
-                            numerical_mass_function = ps.numerical_mass_function(
-                                avg_den, radii, masses, fitting_func, func_params)
-                            # Compare to total mass function
-                            plotter.total_to_numerical_comparison(
-                                z, total_bins, total_hist, masses, numerical_mass_function, self.sim_name, fitting_func.__name__)
+                        # Calculate the numerical mass function for this fit model
+                        numerical_mass_function = ps.numerical_mass_function(
+                            avg_den, radii, masses, fitting_func, func_params)
+                        # Compare to total mass function
+                        plotter.total_to_numerical_comparison(
+                            z, total_bins, total_hist, masses, numerical_mass_function, self.sim_name, fitting_func.__name__)
 
         else:
             logger.info(
