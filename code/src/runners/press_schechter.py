@@ -174,10 +174,10 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 snapshot_files = snapshots_finder.filter_data_files(zs)
 
                 for hf, sf in zip(halo_files, snapshot_files):
-                    ds = self.dataset_cache.load(hf)
+                    ds = self.dataset_cache.load(sf)
 
                     z = ds.current_redshift
-                    avg_den = rb.rho_bar(hf)
+                    avg_den = rb.rho_bar(sf)
 
                     total_mass_hist, total_mass_bins = mf.total_mass_function(
                         hf)
@@ -231,11 +231,11 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 snapshot_files = snapshots_finder.filter_data_files(zs)
 
                 for hf, sf in zip(halo_files, snapshot_files):
-                    ds = self.dataset_cache.load(hf)
+                    ds = self.dataset_cache.load(sf)
                     z = ds.current_redshift
 
                     masses, sigmas = sd.masses_sigmas(sf)
-                    avg_den = rb.rho_bar(hf)
+                    avg_den = rb.rho_bar(sf)
 
                     ps_mass_function = ps.analytic_press_schechter(
                         avg_den, masses, sigmas)
@@ -380,7 +380,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 snapshot_files = snapshots_finder.filter_data_files(zs)
 
                 for hf, sf in zip(halo_files, snapshot_files):
-                    ds = self.dataset_cache.load(hf)
+                    ds = self.dataset_cache.load(sf)
                     z = ds.current_redshift
 
                     # ===========================================================
@@ -388,7 +388,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     # =============================================================
                     logger.info("Plotting numerical mass function...")
 
-                    avg_den = rb.rho_bar(hf)
+                    avg_den = rb.rho_bar(sf)
                     num_bins = self.config.sampling.num_hist_bins
 
                     # Total mass
@@ -410,7 +410,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                         for radius in radii:
 
                             # Calculate the overdensities at this sampling radius
-                            od = ods.calc_overdensities(hf, radius)
+                            od = ods.calc_overdensities(sf, radius)
 
                             # Get the fitting parameters to this overdensity
                             fitter.setup_parameters(func_name)
