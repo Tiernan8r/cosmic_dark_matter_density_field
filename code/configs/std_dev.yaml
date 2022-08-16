@@ -4,6 +4,8 @@ caches:
   use_standard_deviation_cache: false
 datatypes:
   groups: false
-  halos_h5: true
+  halos_h5: false
   rockstar: false
   snapshots: true
+from_z: 6
+to_z: 0
