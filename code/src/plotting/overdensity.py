@@ -8,6 +8,7 @@ import yt
 import numpy as np
 import src.plotting.interface as I
 
+
 class Overdensity(I.IPlot):
 
     def overdensities(self,
@@ -45,8 +46,9 @@ class Overdensity(I.IPlot):
 
         handles, _ = ax.get_legend_handles_labels()
         handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
-        handles.append(mpatches.Patch(color='none', label=f"R = {radius:.2f} Mpc/h"))
-
+        handles.append(mpatches.Patch(
+            color='none', label=f"R = {radius:.2f} Mpc/h"))
+        ax.legend(handles=handles)
 
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)

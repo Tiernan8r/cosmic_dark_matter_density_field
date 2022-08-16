@@ -144,6 +144,7 @@ class MassFunction(I.IPlot):
         ax = fig.gca()
         handles, _ = ax.get_legend_handles_labels()
         handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+        ax.legend(handles=handles)
 
         fig.savefig(plot_name)
 
@@ -187,6 +188,7 @@ class MassFunction(I.IPlot):
         handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
         handles.append(mpatches.Patch(
             color='none', label=f"R = {radius:.2f} Mpc/h"))
+        ax.legend(handles=handles)
 
         fig.savefig(plot_name)
 
@@ -220,6 +222,7 @@ class MassFunction(I.IPlot):
         ax = fig.gca()
         handles, _ = ax.get_legend_handles_labels()
         handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+        ax.legend(handles=handles)
 
         fig.savefig(plot_name)
 
@@ -258,6 +261,7 @@ class MassFunction(I.IPlot):
         ax = fig.gca()
         handles, _ = ax.get_legend_handles_labels()
         handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+        ax.legend(handles=handles)
 
         fig.savefig(plot_name)
 
