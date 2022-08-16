@@ -28,21 +28,17 @@ class Fits(FittingParameters):
         }
 
     def filter_fit(self, y: np.ndarray) -> np.ndarray:
-        # filter for close to 0, and set equal to 0
-        zeros = np.zeros(y.shape)
-        zero_idxs = np.where(np.isclose(y, zeros))
-
-        y[zero_idxs] = 0
-
-        # Round very small numbers to 0
-        y = np.round(y, decimals=10)
+        # Filter for Nan values
+        y = y[np.logical_not(np.isnan(y))]
 
         # Filter for neg values
         neg_idxs = np.where(y < 0)
         y[neg_idxs] = 0
 
-        # Filter for Nan values
-        y = y[np.logical_not(np.isnan(y))]
+        # filter for close to 0, and set equal to 0
+        y = np.round(y, decimals=100)
+        zero_idxs = (y == 0)
+        y[zero_idxs] = 0
 
         return y
 
