@@ -44,6 +44,10 @@ class PressSchechterRunner(orchestrator.Orchestrator):
         z = ds.current_redshift
         avg_den = rb.rho_bar(hf)
 
+        if self.type.value == enum.DataType.H5.value:
+            logger.info("Skipping running on HALOS_H5...")
+            return
+
         # =================================================================
         # PRESS SCHECHTER MASS FUNCTION
         # =================================================================
@@ -142,7 +146,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     # =============================================================
 
                     mf = mass_function.MassFunction(
-                        self, self.type, self.sim_name)
+                        self, enum.DataType.H5, self.sim_name)
                     sd = std_dev.StandardDeviation(
                         self, enum.DataType.SNAPSHOT, self.sim_name)
                     ps = press_schechter.PressSchechter(
@@ -211,7 +215,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     # COMPARE PS MASS FN TO ANALYTIC MASS FN
                     # =============================================================
                     mf = mass_function.MassFunction(
-                        self, self.type, self.sim_name)
+                        self, enum.DataType.H5, self.sim_name)
                     sd = std_dev.StandardDeviation(
                         self, enum.DataType.SNAPSHOT, self.sim_name)
                     ps = press_schechter.PressSchechter(
@@ -270,6 +274,10 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                         logger.info("Skipping...")
                         continue
 
+                    if type_name == enum.DataType.H5.value:
+                        logger.info("Skipping running on HALOS_H5...")
+                        continue
+
                     self.type = tp
 
                     # =============================================================
@@ -308,9 +316,6 @@ class PressSchechterRunner(orchestrator.Orchestrator):
 
                         avg_den = rb.rho_bar(hf)
                         num_bins = self.config.sampling.num_hist_bins
-
-                        # Total mass
-                        all_mass = mf.cache_total_mass_function(hf)
 
                         # Get the PS mass function
                         masses, sigmas = sd.masses_sigmas(sf)
