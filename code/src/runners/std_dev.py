@@ -91,27 +91,24 @@ class StdDevRunner(orchestrator.Orchestrator):
                 # Extraplote the z=10 to z=0 for all radii
                 sd = std_dev.StandardDeviation(self, self.type, self.sim_name)
 
-                stds = []
+                from_z = self.config.from_z
+                to_z = self.config.to_z
+
+                stds = sd.extrapolated(from_z, to_z)
 
                 R = np.array(self.config.radii)
-                for r in R:
-                    extrap_std = sd.extrapolate(10, 0, r)
-                    stds.append(extrap_std)
 
-                rb0 = sd.rho_bar_0()
-                Vs = 4/3 * np.pi * R**3
-                Ms = Vs * rb0
-
-                extrap_stds = np.array(stds)
-                logger.debug(f"Extrapolated std devs are: {extrap_stds}")
+                # rb0 = sd.rho_bar_0()
+                # Vs = 4/3 * np.pi * R**3
+                # Ms = Vs * rb0
 
                 fig = self.fig.get(tp)
                 ax = fig.gca()
 
                 # ax.plot(Ms, extrap_stds**2, linestyle="dashed",
                 #         label="extrapolated z=10 to z=0")
-                ax.plot(R, extrap_stds**2, linestyle="dashed",
-                        label="extrapolated z=10 to z=0")
+                ax.plot(R, stds**2, linestyle="dashed",
+                        label=f"extrapolated z={from_z} to z={to_z}")
 
                 ax.legend()
 

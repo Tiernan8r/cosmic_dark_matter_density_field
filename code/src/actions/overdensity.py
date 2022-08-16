@@ -129,7 +129,7 @@ class OverdensityActions(BaseAction):
 
                 # Extrapolated
                 A, mu, sigma = gauss_popt
-                extrapolated_sigma = sd.extrapolate(10, z, radius)
+                extrapolated_sigma = sd.extrapolate(self.config.from_z, z, radius)
 
                 fig = plotter.gaussian(
                     A, mu, extrapolated_sigma, self.config.sampling.num_hist_bins, fig=fig)
