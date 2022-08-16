@@ -170,14 +170,14 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                         z = ds.current_redshift
                         avg_den = rb.rho_bar(hf)
 
-                        all_mass = mf.cache_total_mass_function(hf)
+                        total_mass_hist, total_mass_bins = mf.total_mass_function(hf)
                         masses, sigmas = sd.masses_sigmas(sf)
 
                         ps_mass_function = ps.analytic_press_schechter(
                             avg_den, masses, sigmas)
 
                         plotter.press_schechter_total_comparison(
-                            z, masses, all_mass, ps_mass_function, self.sim_name)
+                            z, total_mass_bins, total_mass_hist, masses, ps_mass_function, self.sim_name)
 
         else:
             logger.info(
@@ -422,7 +422,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                         num_bins = self.config.sampling.num_hist_bins
 
                         # Total mass
-                        all_mass = mf.cache_total_mass_function(hf)
+                        total_hist, total_bins = mf.total_mass_function(hf)
 
                         # Get the PS mass function
                         masses, _ = sd.masses_sigmas(sf)
@@ -455,7 +455,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                                 avg_den, radii, masses, fitting_func, func_params)
                             # Compare to total mass function
                             plotter.total_to_numerical_comparison(
-                                z, masses, numerical_mass_function, all_mass, self.sim_name, fitting_func.__name__)
+                                z, total_bins, total_hist, masses, numerical_mass_function, self.sim_name, fitting_func.__name__)
 
         else:
             logger.info(

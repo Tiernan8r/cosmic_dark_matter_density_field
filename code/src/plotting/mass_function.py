@@ -108,8 +108,9 @@ class MassFunction(I.IPlot):
 
     def press_schechter_total_comparison(self,
                                          z: float,
+                                         total_bins: np.ndarray,
+                                         total_hist: np.ndarray,
                                          Ms: np.ndarray,
-                                         total: np.ndarray,
                                          ps_fit: np.ndarray,
                                          sim_name: str):
         fig = self.new_figure()
@@ -117,8 +118,6 @@ class MassFunction(I.IPlot):
         title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
         save_dir = self.compared_dir(sim_name)
         plot_name = self.compared_total_fname(sim_name, z)
-
-        total_hist, total_bins = create_histogram(total, bins=len(Ms))
 
         # Filter the PS mass function to be in x-axis range of total
         min_x_total = min(total_bins)
@@ -231,18 +230,19 @@ class MassFunction(I.IPlot):
 
     def total_to_numerical_comparison(self,
                                       z: float,
+                                      total_bins: np.ndarray,
+                                      total_hist: np.ndarray,
                                       Ms: np.ndarray,
                                       numeric: np.ndarray,
-                                      total: np.ndarray,
                                       sim_name: str,
                                       fit_name: str):
         fig = self.new_figure()
 
         title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
         save_dir = self.compared_dir(sim_name)
-        plot_name = self.compared_total_to_numerical_fname(sim_name, fit_name, z)
+        plot_name = self.compared_total_to_numerical_fname(
+            sim_name, fit_name, z)
 
-        total_hist, total_bins = create_histogram(total, bins=len(Ms))
 
         # Rescale:
         initial_val = numeric[0]
