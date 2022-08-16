@@ -9,6 +9,7 @@ from src.util import enum
 from src.util.constants import DELTA_CRIT, PRESS_SCHECHTER_KEY
 from src.util.halos import halo_finder
 from typing import Callable
+from src.fitting import funcs
 
 
 class PressSchechter(sample.Sampler):
@@ -29,7 +30,8 @@ class PressSchechter(sample.Sampler):
             popt = func_params[i]
 
             def f(x):
-                return fitting_func(x, *popt)
+                y = fitting_func(x, *popt)
+                return funcs.filter_val(y)
 
             integrand, err = integrate.quad(f, DELTA_CRIT, np.inf)
             F.append(integrand)

@@ -27,21 +27,6 @@ class Fits(FittingParameters):
             funcs.n_gaussian.__name__: funcs.n_gaussian,
         }
 
-    def filter_fit(self, y: np.ndarray) -> np.ndarray:
-        # Filter for Nan values
-        y = y[np.logical_not(np.isnan(y))]
-
-        # Filter for neg values
-        neg_idxs = np.where(y < 0)
-        y[neg_idxs] = 0
-
-        # filter for close to 0, and set equal to 0
-        y = np.round(y, decimals=100)
-        zero_idxs = (y == 0)
-        y[zero_idxs] = 0
-
-        return y
-
     def calc_fit(self,
                  z: float,
                  radius: float,
@@ -101,7 +86,7 @@ class Fits(FittingParameters):
             hist_fit = self.func(bin_centres, *popt)
 
             # Filter the result:
-            hist_fit = self.filter_fit(hist_fit)
+            # hist_fit = funcs.filter_fit(hist_fit)
 
             # =============================================================
             # R^2 QUALITY OF FIT TEST
