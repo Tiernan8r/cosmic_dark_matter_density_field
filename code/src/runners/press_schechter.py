@@ -177,17 +177,14 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     ds = self.dataset_cache.load(sf)
 
                     z = ds.current_redshift
-                    avg_den = rb.rho_bar(sf)
 
                     total_mass_hist, total_mass_bins = mf.total_mass_function(
                         hf)
-                    masses, sigmas = sd.masses_sigmas(sf)
-
-                    ps_mass_function = ps.analytic_press_schechter(
-                        avg_den, masses, sigmas)
+                    masses, ps_fit = ps.mass_function(sf)
+                    ps_fit = ps_fit.to(1 / u.volume(ds))
 
                     plotter.press_schechter_total_comparison(
-                        z, total_mass_bins, total_mass_hist, masses, ps_mass_function, self.sim_name)
+                        z, total_mass_bins, total_mass_hist, masses, ps_fit, self.sim_name)
 
         else:
             logger.info(
@@ -234,11 +231,8 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     ds = self.dataset_cache.load(sf)
                     z = ds.current_redshift
 
-                    masses, sigmas = sd.masses_sigmas(sf)
-                    avg_den = rb.rho_bar(sf)
-
-                    ps_mass_function = ps.analytic_press_schechter(
-                        avg_den, masses, sigmas)
+                    masses, ps_fit = ps.mass_function(sf)
+                    ps_fit = ps_fit.to(1 / u.volume(ds))
 
                     for radius in self.config.radii:
                         logger.info(
@@ -247,7 +241,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                         mass_hist, bin_edges = mf.mass_function(hf, radius)
 
                         plotter.press_schechter_analytic_comparison(
-                            z, radius, bin_edges, mass_hist, masses, ps_mass_function, self.sim_name)
+                            z, radius, bin_edges, mass_hist, masses, ps_fit, self.sim_name)
 
         else:
             logger.info("Skipping comparing analytic mass function plots...")
@@ -300,10 +294,8 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     num_bins = self.config.sampling.num_hist_bins
 
                     # Get the PS mass function
-                    masses, sigmas = sd.masses_sigmas(sf)
-
-                    ps_mass_function = ps.analytic_press_schechter(
-                        avg_den, masses, sigmas)
+                    masses, ps_fit = ps.mass_function(sf)
+                    ps_fit = ps_fit.to(1 / u.volume(ds))
 
                     for func_name, fitting_func in fitter.fit_functions().items():
                         logger.info(f"Plotting '{func_name}'")
@@ -333,7 +325,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                             avg_den, radii, masses, fitting_func, func_params)
                         # Plot the mass function
                         plotter.press_schechter_numerical_comparison(
-                            z, masses, numerical_mass_function, ps_mass_function, self.sim_name, fitting_func.__name__)
+                            z, masses, numerical_mass_function, ps_fit, self.sim_name, fitting_func.__name__)
 
         else:
             logger.info("Skipping comparing numerical mass function plots...")
