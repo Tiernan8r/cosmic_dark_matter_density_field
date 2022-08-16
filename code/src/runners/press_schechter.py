@@ -27,32 +27,31 @@ class PressSchechterRunner(orchestrator.Orchestrator):
             PressSchechterRunner.__name__ + "." +
             self.tasks.__name__)
 
-        ds = self.dataset_cache.load(hf)
-        z = ds.current_redshift
-        logger.info(f"Redshift is: {z}")
-
-        radii = self.config.radii
-
-        rb = rho_bar.RhoBar(self, self.type, self.sim_name)
-        ps = press_schechter.PressSchechter(self, self.type, self.sim_name)
-        ods = overdensity.Overdensity(self, self.type, self.sim_name)
-        fitter = fits.Fits(self, self.type, self.sim_name)
-        plotter = Plotter(self, self.type, self.sim_name)
-
-        num_bins = self.config.sampling.num_hist_bins
-
-        z = ds.current_redshift
-        avg_den = rb.rho_bar(hf)
-
         if self.type.value == enum.DataType.H5.value:
             logger.info("Skipping running on HALOS_H5...")
             return
 
+        self.task_press_schechter_mass_function(hf)
+        self.tasks_numerical_mass_function(hf)
+
+        self.dataset_cache.clear()
+        self.cache.reset()
+
+    def task_press_schechter_mass_function(self, hf):
+        logger = logging.getLogger(
+            self.__name__ + "." + self.task_press_schechter_mass_function.__name__)
+
         # =================================================================
         # PRESS SCHECHTER MASS FUNCTION
         # =================================================================
+        ps = press_schechter.PressSchechter(self, self.type, self.sim_name)
+        plotter = Plotter(self, self.type, self.sim_name)
+
         if self.config.tasks.press_schechter_mass_function:
             logger.info("Calculating press schechter mass function...")
+
+            ds = self.dataset_cache.load(hf)
+            z = ds.current_redshift
 
             masses, ps_fit = ps.mass_function(hf)
             ps_fit = ps_fit.to(1 / u.volume(ds))
@@ -64,14 +63,30 @@ class PressSchechterRunner(orchestrator.Orchestrator):
             logger.info(
                 "Skipping calculating press schechter mass function...")
 
+    def tasks_numerical_mass_function(self, hf):
+        logger = logging.getLogger(
+            self.__name__ + "." + self.tasks_numerical_mass_function.__name__)
+
         # ===========================================================
         # NUMERICAL MASS FUNCTIONS
         # =============================================================
+        rb = rho_bar.RhoBar(self, self.type, self.sim_name)
+        sd = std_dev.StandardDeviation(self, self.type, self.sim_name)
+        ps = press_schechter.PressSchechter(self, self.type, self.sim_name)
+        ods = overdensity.Overdensity(self, self.type, self.sim_name)
+        fitter = fits.Fits(self, self.type, self.sim_name)
+        plotter = Plotter(self, self.type, self.sim_name)
+
         if self.config.tasks.numerical_mass_function:
             logger.info("Plotting numerical mass function...")
 
+            ds = self.dataset_cache.load(hf)
+            z = ds.current_redshift
+
             avg_den = rb.rho_bar(hf)
             num_bins = self.config.sampling.num_hist_bins
+
+            masses, _ = sd.masses_sigmas(hf)
 
             for func_name, fitting_func in fitter.fit_functions().items():
                 logger.info(f"Plotting '{func_name}'")
@@ -104,9 +119,6 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     z, numerical_mass_function, masses, self.sim_name, func_name)
         else:
             logger.info("Skipping calculating numerical mass functions...")
-
-        self.dataset_cache.clear()
-        self.cache.reset()
 
     def run(self):
         super().run()
