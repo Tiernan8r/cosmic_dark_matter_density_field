@@ -23,6 +23,12 @@ class MassFunction(I.IPlot):
             fig = self.new_figure()
         ax = fig.gca()
 
+        # Filter values:
+        y = np.round(y, decimals=100)
+        non_zero = (y != 0)
+        y = y[non_zero]
+        x = x[non_zero]
+
         ax.plot(x, y, label=label)
         ax.set_xscale("log")
         ax.set_yscale("log")
