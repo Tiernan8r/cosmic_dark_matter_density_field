@@ -105,6 +105,7 @@ class StandardDeviation(rho_bar.RhoBar):
         from_hf = halo_files[0]
 
         from_std_dev = self.std_dev(from_hf, radius, from_fit=from_fits)
+        logger.debug(f"Std dev for r={radius:.2f} = {from_std_dev}")
 
         extrapolated = from_std_dev * (1 + from_z) / (1 + to_z)
 

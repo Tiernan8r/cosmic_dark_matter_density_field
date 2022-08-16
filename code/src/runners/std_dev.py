@@ -7,11 +7,12 @@ import sys
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
+from typing import List
+
+import numpy as np
 from src.calc import std_dev
 from src.plotting import Plotter
-from src.util import orchestrator
-from typing import List
-import numpy as np
+from src.util import enum, orchestrator
 
 
 class StdDevRunner(orchestrator.Orchestrator):
@@ -33,7 +34,8 @@ class StdDevRunner(orchestrator.Orchestrator):
             hf, from_fit=self.config.sampling.std_dev_from_fit)
         radii = self.config.radii
 
-        x = []
+        r = []
+        m = []
         y = []
         for i in range(len(masses)):
             s = sigmas[i]
@@ -41,54 +43,85 @@ class StdDevRunner(orchestrator.Orchestrator):
             if s is None:
                 continue
 
-            # x.append(masses[i])
-            x.append(radii[i])
+            m.append(masses[i])
+            r.append(radii[i])
             y.append(s*s)
 
         logger.debug(f"Plotting std devs...")
 
         plotter = Plotter(self, self.type, self.sim_name)
 
-        # plotter.std_dev_func_M(z, x, y, self.sim_name, logscale=True)
-        plotter.std_dev_func_R(z, x, y, self.sim_name, logscale=True)
+        # Plot the standalone std dev
+        plotter.std_dev_func_R(
+            z, r, y, self.sim_name, logscale=True)
+        # Add it to the composite plot
 
-        self.fig = plotter.std_dev_func_M(
-            z, x, y, self.sim_name, logscale=True, fig=self.fig)
+        if self.fig is None:
+            self.fig = {}
+        if self.type not in self.fig:
+            self.fig[self.type] = None
+
+        self.fig[self.type] = plotter.std_dev_func_R(
+            z, r, y, self.sim_name, logscale=True, fig=self.fig[self.type])
+
+        # self.fig = plotter.std_dev_func_M(
+        #     z, m, y, self.sim_name, logscale=True, fig=self.fig)
 
         self.fig_save_dir = plotter.std_dev_dir(self.sim_name)
 
     def run(self):
         super().run()
+        logger = logging.getLogger(__name__ + "." + self.run.__name__)
 
-        if self.fig is not None:
+        if self.fig is None:
+            logger.info("No figs to extrapolated onto!")
+            return
 
-            # Extraplote the z=10 to z=0 for all radii
-            sd = std_dev.StandardDeviation(self, self.type, self.sim_name)
+        for tp in enum.DataType:
 
-            stds = []
+            if not self.config.datatypes.__getattribute__(tp.value):
+                logger.info(f"Skipping running on {tp.value}...")
+                continue
 
-            R = np.array(self.config.radii)
-            for r in R:
-                extrap_std = sd.extrapolate(10, 0, r)
-                stds.append(extrap_std)
+            self.type = tp
 
-            rb0 = sd.rho_bar_0()
-            Vs = 4/3 * np.pi * R**3
-            Ms = Vs * rb0
+            if self.fig.get(tp) is not None:
+                logger.info("Showing extrapolated std dev on plot...")
 
-            extrap_stds = np.array(stds)
+                # Extraplote the z=10 to z=0 for all radii
+                sd = std_dev.StandardDeviation(self, self.type, self.sim_name)
 
-            ax = self.fig.gca()
+                stds = []
 
-            ax.plot(Ms, extrap_stds**2, linestyle="dashed",
-                    label="extrapolated z=10 to z=0")
+                R = np.array(self.config.radii)
+                for r in R:
+                    extrap_std = sd.extrapolate(10, 0, r)
+                    stds.append(extrap_std)
 
-            ax.legend()
+                rb0 = sd.rho_bar_0()
+                Vs = 4/3 * np.pi * R**3
+                Ms = Vs * rb0
 
-            plot_fname = os.path.join(
-                self.fig_save_dir, self.config.plotting.pattern.std_dev_compared)
+                extrap_stds = np.array(stds)
+                logger.debug(f"Extrapolated std devs are: {extrap_stds}")
 
-            self.fig.savefig(plot_fname)
+                fig = self.fig.get(tp)
+                ax = fig.gca()
+
+                # ax.plot(Ms, extrap_stds**2, linestyle="dashed",
+                #         label="extrapolated z=10 to z=0")
+                ax.plot(R, extrap_stds**2, linestyle="dashed",
+                        label="extrapolated z=10 to z=0")
+
+                ax.legend()
+
+                plot_fname = os.path.join(
+                    self.fig_save_dir, self.config.plotting.pattern.std_dev_compared)
+                logger.debug(f"Saving compared std devs plot to: {plot_fname}")
+
+                fig.savefig(plot_fname)
+
+            logger.info("DONE")
 
 
 def main(args):
