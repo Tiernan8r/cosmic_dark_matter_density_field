@@ -142,6 +142,12 @@ class MassFunction(I.IPlot):
         # Filter the PS mass function to be in x-axis range of total
         Ms, ps_fit = self._scale_axes(Ms, ps_fit, total_bins)
 
+        if len(Ms) == 0 or len(ps_fit) == 0:
+            logger = logging.getLogger(
+                __name__ + "." + self.press_schechter_total_comparison.__name__)
+            logger.warning("Scaled ps fit is empty!")
+            return
+
         # Rescale:
         initial_val = total_hist[0]
         initial_ps_val = ps_fit[0]
@@ -181,14 +187,19 @@ class MassFunction(I.IPlot):
         save_dir = self.compared_dir(sim_name)
         plot_name = self.compared_analytic_fname(sim_name, z, radius)
 
+        if len(analytic) == 0:
+            logger.warning("Analytic mass function is empty, skipping!")
+            return
+
         # Filter the PS mass function to be in x-axis range of the analytic
         ps_masses, ps_fit = self._scale_axes(
             ps_masses, ps_fit, analytic_masses)
 
-        # Rescale:
-        if len(analytic) == 0:
-            logger.warning("Analytic mass function is empty, skipping!")
+        if len(ps_masses) == 0 or len(ps_fit) == 0:
+            logger.warning("Scaled ps fit is empty, skipping!")
             return
+
+        # Rescale:
         initial_val = analytic[0]
         initial_ps_val = ps_fit[0]
 
@@ -256,6 +267,8 @@ class MassFunction(I.IPlot):
                                       sim_name: str,
                                       fit_name: str):
         fig = self.new_figure()
+        logger = logging.getLogger(
+            __name__ + "." + self.total_to_numerical_comparison.__name__)
 
         title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
         save_dir = self.compared_dir(sim_name)
@@ -264,6 +277,10 @@ class MassFunction(I.IPlot):
 
         # Filter the numeric mass function to be in x-axis range of total
         Ms, numeric = self._scale_axes(Ms, numeric, total_bins)
+
+        if len(Ms) == 0 or len(numeric) == 0:
+            logger.debug("Scaled axes are empty, skipping!")
+            return
 
         # Rescale:
         initial_val = numeric[0]
