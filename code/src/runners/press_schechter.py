@@ -39,7 +39,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
 
     def _task_press_schechter_mass_function(self, hf):
         logger = logging.getLogger(
-            self.__name__ + "." + self._task_press_schechter_mass_function.__name__)
+            __name__ + "." + self._task_press_schechter_mass_function.__name__)
 
         # =================================================================
         # PRESS SCHECHTER MASS FUNCTION
@@ -65,7 +65,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
 
     def _task_numerical_mass_function(self, hf):
         logger = logging.getLogger(
-            self.__name__ + "." + self._task_numerical_mass_function.__name__)
+            __name__ + "." + self._task_numerical_mass_function.__name__)
 
         # ===========================================================
         # NUMERICAL MASS FUNCTIONS
@@ -136,7 +136,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
 
     def _run_press_schechter_total_comparison(self):
         logger = logging.getLogger(
-            self.__name__ + "." + self._run_press_schechter_total_comparison.__name__)
+            __name__ + "." + self._run_press_schechter_total_comparison.__name__)
 
         # =============================================================
         # PRESS SCHECHTER - TOTAL COMPARISON
@@ -195,7 +195,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
 
     def _run_press_schechter_analytic(self):
         logger = logging.getLogger(
-            self.__name__ + "." + self._run_press_schechter_analytic.__name__)
+            __name__ + "." + self._run_press_schechter_analytic.__name__)
         # =============================================================
         # PRESS SCHECHTER - ANALYTIC
         # =============================================================
@@ -254,7 +254,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
 
     def _run_press_schechter_numeric(self):
         logger = logging.getLogger(
-            self.__name__ + "." + self._run_press_schechter_numeric.__name__)
+            __name__ + "." + self._run_press_schechter_numeric.__name__)
         # =============================================================
         # PRESS SCHECHTER - NUMERIC
         # =============================================================
@@ -340,7 +340,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
 
     def _run_total_numeric(self):
         logger = logging.getLogger(
-            self.__name__ + "." + self._run_total_numeric.__name__)
+            __name__ + "." + self._run_total_numeric.__name__)
         # =============================================================
         # TOTAL - NUMERIC
         # =============================================================
