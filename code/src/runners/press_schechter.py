@@ -31,15 +31,15 @@ class PressSchechterRunner(orchestrator.Orchestrator):
             logger.info("Skipping running on HALOS_H5...")
             return
 
-        self.task_press_schechter_mass_function(hf)
-        self.tasks_numerical_mass_function(hf)
+        self._task_press_schechter_mass_function(hf)
+        self._task_numerical_mass_function(hf)
 
         self.dataset_cache.clear()
         self.cache.reset()
 
-    def task_press_schechter_mass_function(self, hf):
+    def _task_press_schechter_mass_function(self, hf):
         logger = logging.getLogger(
-            self.__name__ + "." + self.task_press_schechter_mass_function.__name__)
+            self.__name__ + "." + self._task_press_schechter_mass_function.__name__)
 
         # =================================================================
         # PRESS SCHECHTER MASS FUNCTION
@@ -63,9 +63,9 @@ class PressSchechterRunner(orchestrator.Orchestrator):
             logger.info(
                 "Skipping calculating press schechter mass function...")
 
-    def tasks_numerical_mass_function(self, hf):
+    def _task_numerical_mass_function(self, hf):
         logger = logging.getLogger(
-            self.__name__ + "." + self.tasks_numerical_mass_function.__name__)
+            self.__name__ + "." + self._task_numerical_mass_function.__name__)
 
         # ===========================================================
         # NUMERICAL MASS FUNCTIONS
@@ -125,6 +125,19 @@ class PressSchechterRunner(orchestrator.Orchestrator):
 
         logger = logging.getLogger(__name__ + "." + self.run.__name__)
 
+        self._run_press_schechter_total_comparison()
+        self._run_press_schechter_analytic()
+        self._run_press_schechter_numeric()
+        self._run_total_numeric()
+
+        self.dataset_cache.clear()
+
+        logger.info("DONE")
+
+    def _run_press_schechter_total_comparison(self):
+        logger = logging.getLogger(
+            self.__name__ + "." + self._run_press_schechter_total_comparison.__name__)
+
         # =============================================================
         # PRESS SCHECHTER - TOTAL COMPARISON
         # =============================================================
@@ -154,7 +167,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 zs = self.config.redshifts
 
                 halos_finder = halo_finder.HalosFinder(
-                    tp, self.config.sim_data.root, self.sim_name)
+                    enum.DataType.H5, self.config.sim_data.root, self.sim_name)
                 halo_files = halos_finder.filter_data_files(zs)
                 snapshots_finder = halo_finder.HalosFinder(
                     enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
@@ -166,7 +179,8 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     z = ds.current_redshift
                     avg_den = rb.rho_bar(hf)
 
-                    total_mass_hist, total_mass_bins = mf.total_mass_function(hf)
+                    total_mass_hist, total_mass_bins = mf.total_mass_function(
+                        hf)
                     masses, sigmas = sd.masses_sigmas(sf)
 
                     ps_mass_function = ps.analytic_press_schechter(
@@ -179,6 +193,9 @@ class PressSchechterRunner(orchestrator.Orchestrator):
             logger.info(
                 "Skipping comparing total mass function plots...")
 
+    def _run_press_schechter_analytic(self):
+        logger = logging.getLogger(
+            self.__name__ + "." + self._run_press_schechter_analytic.__name__)
         # =============================================================
         # PRESS SCHECHTER - ANALYTIC
         # =============================================================
@@ -196,6 +213,8 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 # =============================================================
                 mf = mass_function.MassFunction(
                     self, enum.DataType.H5, self.sim_name)
+                rb = rho_bar.RhoBar(
+                    self, enum.DataType.SNAPSHOT, self.sim_name)
                 sd = std_dev.StandardDeviation(
                     self, enum.DataType.SNAPSHOT, self.sim_name)
                 ps = press_schechter.PressSchechter(
@@ -205,7 +224,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 zs = self.config.redshifts
 
                 halos_finder = halo_finder.HalosFinder(
-                    tp, self.config.sim_data.root, self.sim_name)
+                    enum.DataType.H5, self.config.sim_data.root, self.sim_name)
                 halo_files = halos_finder.filter_data_files(zs)
                 snapshots_finder = halo_finder.HalosFinder(
                     enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
@@ -216,6 +235,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     z = ds.current_redshift
 
                     masses, sigmas = sd.masses_sigmas(sf)
+                    avg_den = rb.rho_bar(hf)
 
                     ps_mass_function = ps.analytic_press_schechter(
                         avg_den, masses, sigmas)
@@ -232,6 +252,9 @@ class PressSchechterRunner(orchestrator.Orchestrator):
         else:
             logger.info("Skipping comparing analytic mass function plots...")
 
+    def _run_press_schechter_numeric(self):
+        logger = logging.getLogger(
+            self.__name__ + "." + self._run_press_schechter_numeric.__name__)
         # =============================================================
         # PRESS SCHECHTER - NUMERIC
         # =============================================================
@@ -260,15 +283,12 @@ class PressSchechterRunner(orchestrator.Orchestrator):
 
                 zs = self.config.redshifts
 
-                halos_finder = halo_finder.HalosFinder(
-                    tp, self.config.sim_data.root, self.sim_name)
-                halo_files = halos_finder.filter_data_files(zs)
                 snapshots_finder = halo_finder.HalosFinder(
                     enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
                 snapshot_files = snapshots_finder.filter_data_files(zs)
 
-                for hf, sf in zip(halo_files, snapshot_files):
-                    ds = self.dataset_cache.load(hf)
+                for sf in snapshot_files:
+                    ds = self.dataset_cache.load(sf)
                     z = ds.current_redshift
 
                     # ===========================================================
@@ -276,7 +296,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                     # =============================================================
                     logger.info("Plotting numerical mass function...")
 
-                    avg_den = rb.rho_bar(hf)
+                    avg_den = rb.rho_bar(sf)
                     num_bins = self.config.sampling.num_hist_bins
 
                     # Get the PS mass function
@@ -298,7 +318,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                         for radius in radii:
 
                             # Calculate the overdensities at this sampling radius
-                            od = ods.calc_overdensities(hf, radius)
+                            od = ods.calc_overdensities(sf, radius)
 
                             # Get the fitting parameters to this overdensity
                             fitter.setup_parameters(func_name)
@@ -318,6 +338,9 @@ class PressSchechterRunner(orchestrator.Orchestrator):
         else:
             logger.info("Skipping comparing numerical mass function plots...")
 
+    def _run_total_numeric(self):
+        logger = logging.getLogger(
+            self.__name__ + "." + self._run_total_numeric.__name__)
         # =============================================================
         # TOTAL - NUMERIC
         # =============================================================
@@ -350,7 +373,7 @@ class PressSchechterRunner(orchestrator.Orchestrator):
                 zs = self.config.redshifts
 
                 halos_finder = halo_finder.HalosFinder(
-                    tp, self.config.sim_data.root, self.sim_name)
+                    enum.DataType.H5, self.config.sim_data.root, self.sim_name)
                 halo_files = halos_finder.filter_data_files(zs)
                 snapshots_finder = halo_finder.HalosFinder(
                     enum.DataType.SNAPSHOT, self.config.sim_data.root, self.sim_name)
@@ -407,10 +430,6 @@ class PressSchechterRunner(orchestrator.Orchestrator):
         else:
             logger.info(
                 "Skipping comparing numerical mass function to total plots...")
-
-        self.dataset_cache.clear()
-
-        logger.info("DONE")
 
 
 def main(args):
