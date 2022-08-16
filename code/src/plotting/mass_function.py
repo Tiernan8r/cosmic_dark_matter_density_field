@@ -120,6 +120,17 @@ class MassFunction(I.IPlot):
 
         total_hist, total_bins = create_histogram(total, bins=len(Ms))
 
+        # Filter the PS mass function to be in x-axis range of total
+        min_x_total = min(total_bins)
+        max_x_total = max(total_bins)
+
+        max_idxs = np.where(Ms < max_x_total)
+        Ms = Ms[max_idxs]
+        ps_fit = ps_fit[max_idxs]
+        min_idxs = np.where(Ms > min_x_total)
+        Ms = Ms[min_idxs]
+        ps_fit = ps_fit[min_idxs]
+
         # Rescale:
         initial_val = total_hist[0]
         initial_ps_val = ps_fit[0]
