@@ -51,12 +51,22 @@ class PressSchechter(sample.Sampler):
         ds = self.dataset_cache.load(hf)
         z = ds.current_redshift
 
-        logger.debug(f"Workin on redshift: {z}")
+        logger.debug(f"Working on redshift: {z}")
 
         tp = enum.DataType.SNAPSHOT
         snapshots_finder = halo_finder.HalosFinder(
             tp, self.config.sim_data.root, self.sim_name)
-        sf, = snapshots_finder.filter_data_files([z])
+
+        # Translate the halo redshift back to the rounded one from the
+        # config
+        zs = self.config.redshifts
+        nearest_z = min(zs, key=lambda x: abs(x-z))
+
+        logger.info(f"Halo redshift of '{z}' corresponds to '{nearest_z}'")
+
+        sf, = snapshots_finder.filter_data_files([nearest_z])
+        ds_sf = self.dataset_cache.load(sf)
+        z = ds_sf.current_redshift
 
         logger.debug(f"Found snapshot file '{sf}' that matches this redshift")
 

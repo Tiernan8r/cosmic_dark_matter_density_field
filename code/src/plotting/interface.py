@@ -8,4 +8,7 @@ class IPlot(Paths):
         plt.cla()
         plt.clf()
 
-        return plt.figure()
+        fig = plt.figure()
+        fig.tight_layout()
+
+        return fig

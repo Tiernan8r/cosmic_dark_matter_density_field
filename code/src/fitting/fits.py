@@ -28,21 +28,21 @@ class Fits(FittingParameters):
         }
 
     def filter_fit(self, y: np.ndarray) -> np.ndarray:
-        # # offset final values to get close to 0
-        # final_val: float = y[-1]
-
-        # y = y - final_val
-        # print("OFFSET Y NOW=", y)
-
         # filter for close to 0, and set equal to 0
         zeros = np.zeros(y.shape)
         zero_idxs = np.where(np.isclose(y, zeros))
 
         y[zero_idxs] = 0
 
+        # Round very small numbers to 0
+        y = np.round(y, decimals=10)
+
         # Filter for neg values
         neg_idxs = np.where(y < 0)
         y[neg_idxs] = 0
+
+        # Filter for Nan values
+        y = y[np.logical_not(np.isnan(y))]
 
         return y
 
@@ -72,15 +72,32 @@ class Fits(FittingParameters):
                                            bins=od_bins)
             bin_centres = (bin_edges[:-1] + bin_edges[1:])/2
 
-            try:
-                popt, pcov = scipy.optimize.curve_fit(
-                    self.func, bin_centres, hist, p0=self._p0)
-            except RuntimeError as re:
-                logger.error(
-                    "Could not fit curve to data, defaulting to initial guess parameters!")
-                logger.error(re)
-                unpacker = lambda *x: x
-                popt = unpacker(*self._p0)
+            repeat = True
+            while repeat:
+                try:
+                    popt, pcov = scipy.optimize.curve_fit(
+                        self.func, bin_centres, hist, p0=self._p0)
+                    repeat = False
+                except RuntimeError as re:
+                    logger.error(
+                        "Could not fit curve to data, defaulting to initial guess parameters!")
+                    logger.error(re)
+
+                    if self.func is funcs.n_gaussian:
+                        p0s = self._p0
+                        p0s = p0s[:-3]
+                        if len(p0s) > 0:
+                            self._p0 = p0s
+
+                            logger.info(
+                                f"Repeating calculation for N={len(p0s) // 3}")
+                            continue
+
+                    unpacker = lambda *x: x
+                    popt = unpacker(*self._p0)
+
+                    repeat = False
+                    break
 
             logger.debug(f"Curve fit coefficients are: {popt}")
 

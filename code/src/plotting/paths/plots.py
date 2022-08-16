@@ -51,10 +51,25 @@ class Plots(IPaths):
         return self._compile_plot_dir(self.config.plotting.dirs.compared,
                                       sim_name, self.type.value)
 
-    def compared_fname(self, sim_name, z):
+    def compared_total_fname(self, sim_name, z):
         return self._compile_plot_fname(self.config.plotting.dirs.compared,
-                                        self.config.plotting.pattern.compared,
+                                        self.config.plotting.pattern.compared_total,
                                         sim_name, self.type.value, z)
+
+    def compared_analytic_fname(self, sim_name, z, radius):
+        return self._compile_plot_fname(self.config.plotting.dirs.compared,
+                                        self.config.plotting.pattern.compared_analytic,
+                                        sim_name, self.type.value, z, radius)
+
+    def compared_numerical_fname(self, sim_name,  fit_name, z):
+        return self._compile_plot_fname(self.config.plotting.dirs.compared,
+                                        self.config.plotting.pattern.compared_numerical,
+                                        sim_name, self.type.value, fit_name, z)
+
+    def compared_total_to_numerical_fname(self, sim_name,  fit_name, z):
+        return self._compile_plot_fname(self.config.plotting.dirs.compared,
+                                        self.config.plotting.pattern.compared_total_to_numerical,
+                                        sim_name, self.type.value, fit_name, z)
 
     def std_dev_dir(self, sim_name):
         return self._compile_plot_dir(self.config.plotting.dirs.std_dev,

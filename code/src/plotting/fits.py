@@ -57,6 +57,8 @@ class Fits(I.IPlot):
 
         handles, _ = ax.get_legend_handles_labels()
         handles.append(mpatches.Patch(color='none', label=legend_addendum))
+        handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+        handles.append(mpatches.Patch(color='none', label=f"R = {radius:.2f} Mpc/h"))
 
         # fig.suptitle(title)
         ax.legend(handles=handles)
@@ -72,7 +74,6 @@ class Fits(I.IPlot):
 
         return fig, popt
 
-    
     def gaussian_fit(self,
                      z: float,
                      radius: float,

@@ -81,7 +81,7 @@ class HalosFinder(caching.Cache):
         map = self[(REDSHIFTS_KEY,)].val
         # If the map is an empty dictionary
         if map is None:
-            logger.warn(
+            logger.warning(
                 f"'{REDSHIFTS_KEY}' key not found in cache, creating entry...")
 
             halo_files = self._find_data_files()

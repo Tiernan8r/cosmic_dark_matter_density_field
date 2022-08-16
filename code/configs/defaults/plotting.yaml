@@ -4,19 +4,18 @@ dirs:
   overdensity: "{}/{}/deltas/"
   press_schechter: "{}/{}/press_schechter/"
   total: "{}/{}/total_mass_function/"
-  compared: "{}/{}/compared/"
   std_dev: "{}/{}/std_dev/"
   gaussian_fit: "{}/{}/gaussian_fit/"
   extrapolated_gaussian_fit: "{}/{}/extrapolated_gaussian_fit/"
   skewed_gaussian_fit: "{}/{}/skewed_gaussian_fit/"
   n_gaussian_fit: "{}/{}/n_gaussian_fit/"
   numerical_mass_function: "{}/{}/numerical_mass_function/{}/"
+  compared: "{}/{}/compared/"
 pattern:
   mass_function: mass_function_r{:.2f}_z{:.2f}.png
   overdensity: overdensity_r{:.2f}_z{:.2f}.png
   press_schechter: press_schechter_z{:.2f}.png
   total: total_mass_function_z{:.2f}.png
-  compared: comparison_ps_mass_function_z{:.2f}.png
   std_dev: standard_deviations_z{:.2f}.png
   std_dev_compared: standard_deviations_compared.png
   gaussian_fit: overdensity_gaussian_fit_r{:.2f}_z{:.2f}.png
@@ -24,5 +23,9 @@ pattern:
   skewed_gaussian_fit: overdensity_skewed_gaussian_fit_r{:.2f}_z{:.2f}.png
   n_gaussian_fit: overdensity_n_gaussian_fit_r{:.2f}_z{:.2f}.png
   numerical_mass_function: "numerical_mass_function_z{:.2f}.png"
+  compared_total: total_mass_function_comparison_z{:.2f}.png
+  compared_analytic: analytic_mass_function_comparison_z{:.2f}_r{:.2f}.png
+  compared_numerical: "{}_mass_function_comparison_z{:.2f}.png"
+  compared_total_to_numerical: "{}_mass_function_total_comparison_z{:.2f}.png"
 fitting:
   num_n_gaussian_fits: 10

@@ -2,6 +2,7 @@ import logging
 import os
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import unyt
 import yt
 import numpy as np
@@ -41,6 +42,11 @@ class Overdensity(I.IPlot):
         # fig.suptitle(title)
         ax.set_xlabel("Overdensity $\delta$")
         ax.set_ylabel("Frequency")  # noqa: W605
+
+        handles, _ = ax.get_legend_handles_labels()
+        handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+        handles.append(mpatches.Patch(color='none', label=f"R = {radius:.2f} Mpc/h"))
+
 
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)

@@ -38,19 +38,19 @@ redshifts:
 - 99
 datatypes:
   groups: false
-  halos_h5: false
+  halos_h5: true
   rockstar: false
   snapshots: true
 tasks:
-  mass_function: false
+  mass_function: true
   overdensity: false
   rho_bar: false
   std_dev: false
-  total_mass_function: false
+  total_mass_function: true
   press_schechter_mass_function: true
   numerical_mass_function: true
 caches:
   use_standard_deviation_cache: false
   use_total_cache: true
   use_press_schechter_cache: false
-  use_fits_cache: false
+  use_fits_cache: true

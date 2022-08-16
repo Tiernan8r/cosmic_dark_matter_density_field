@@ -2,6 +2,7 @@ import logging
 import os
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import numpy as np
 from src.calc.mass_function import create_histogram
 import src.plotting.interface as I
@@ -105,19 +106,19 @@ class MassFunction(I.IPlot):
         self._mass_function(masses, vals, title,
                             save_dir, plot_name)
 
-    def press_schechter_comparison(self,
-                                   z: float,
-                                   Ms: np.ndarray,
-                                   all_mass: np.ndarray,
-                                   ps_fit: np.ndarray,
-                                   sim_name: str):
+    def press_schechter_total_comparison(self,
+                                         z: float,
+                                         Ms: np.ndarray,
+                                         total: np.ndarray,
+                                         ps_fit: np.ndarray,
+                                         sim_name: str):
         fig = self.new_figure()
 
         title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
         save_dir = self.compared_dir(sim_name)
-        plot_name = self.compared_fname(sim_name, z)
+        plot_name = self.compared_total_fname(sim_name, z)
 
-        total_hist, total_bins = create_histogram(all_mass, bins=len(Ms))
+        total_hist, total_bins = create_histogram(total, bins=len(Ms))
 
         # Rescale:
         initial_val = total_hist[0]
@@ -125,18 +126,131 @@ class MassFunction(I.IPlot):
 
         ps_fit = ps_fit / initial_ps_val * initial_val
 
-        final_val = total_hist[-1]
-        final_ps_val = ps_fit[-1]
-        ps_fit = ps_fit / final_ps_val * final_val
-
         self._mass_function(total_bins, total_hist, title,
-                            save_dir, plot_name, label="analytic mass function", fig=fig)
+                            save_dir, plot_name, label="total mass function", fig=fig)
         self._mass_function(Ms, ps_fit, title,
                             save_dir, plot_name, label="press schechter mass function", fig=fig)
+
+        ax = fig.gca()
+        handles, _ = ax.get_legend_handles_labels()
+        handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
 
         fig.savefig(plot_name)
 
         logger = logging.getLogger(
-            __name__ + "." + self.press_schechter_comparison.__name__)
+            __name__ + "." + self.press_schechter_total_comparison.__name__)
         logger.debug(
             f"Saved press-schechter comparison mass function figure to '{plot_name}'")
+
+    def press_schechter_analytic_comparison(self,
+                                            z: float,
+                                            radius: float,
+                                            analytic_masses: np.ndarray,
+                                            analytic: np.ndarray,
+                                            ps_masses: np.ndarray,
+                                            ps_fit: np.ndarray,
+                                            sim_name: str):
+        fig = self.new_figure()
+        logger = logging.getLogger(
+            __name__ + "." + self.press_schechter_analytic_comparison.__name__)
+
+        title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
+        save_dir = self.compared_dir(sim_name)
+        plot_name = self.compared_analytic_fname(sim_name, z, radius)
+
+        # Rescale:
+        if len(analytic) == 0:
+            logger.warning("Analytic mass function is empty, skipping!")
+            return
+        initial_val = analytic[0]
+        initial_ps_val = ps_fit[0]
+
+        ps_fit = ps_fit / initial_ps_val * initial_val
+
+        self._mass_function(analytic_masses, analytic, title,
+                            save_dir, plot_name, label="analytic mass function", fig=fig)
+        self._mass_function(ps_masses, ps_fit, title,
+                            save_dir, plot_name, label="press schechter mass function", fig=fig)
+
+        ax = fig.gca()
+        handles, _ = ax.get_legend_handles_labels()
+        handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+        handles.append(mpatches.Patch(
+            color='none', label=f"R = {radius:.2f} Mpc/h"))
+
+        fig.savefig(plot_name)
+
+        logger.debug(
+            f"Saved press-schechter comparison analytic mass function figure to '{plot_name}'")
+
+    def press_schechter_numerical_comparison(self,
+                                             z: float,
+                                             Ms: np.ndarray,
+                                             numeric: np.ndarray,
+                                             ps_fit: np.ndarray,
+                                             sim_name: str,
+                                             fit_name: str):
+        fig = self.new_figure()
+
+        title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
+        save_dir = self.compared_dir(sim_name)
+        plot_name = self.compared_numerical_fname(sim_name, fit_name, z)
+
+        # Rescale:
+        initial_val = numeric[0]
+        initial_ps_val = ps_fit[0]
+
+        ps_fit = ps_fit / initial_ps_val * initial_val
+
+        self._mass_function(Ms, numeric, title,
+                            save_dir, plot_name, label=f"numerical ({fit_name}) mass function", fig=fig)
+        self._mass_function(Ms, ps_fit, title,
+                            save_dir, plot_name, label="press schechter mass function", fig=fig)
+
+        ax = fig.gca()
+        handles, _ = ax.get_legend_handles_labels()
+        handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+
+        fig.savefig(plot_name)
+
+        logger = logging.getLogger(
+            __name__ + "." + self.press_schechter_numerical_comparison.__name__)
+        logger.debug(
+            f"Saved press-schechter comparison numerical mass function figure to '{plot_name}'")
+
+    def total_to_numerical_comparison(self,
+                                      z: float,
+                                      Ms: np.ndarray,
+                                      numeric: np.ndarray,
+                                      total: np.ndarray,
+                                      sim_name: str,
+                                      fit_name: str):
+        fig = self.new_figure()
+
+        title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
+        save_dir = self.compared_dir(sim_name)
+        plot_name = self.compared_total_to_numerical_fname(sim_name, fit_name, z)
+
+        total_hist, total_bins = create_histogram(total, bins=len(Ms))
+
+        # Rescale:
+        initial_val = numeric[0]
+        initial_ps_val = total_hist[0]
+
+        total_hist = total_hist / initial_ps_val * initial_val
+
+        self._mass_function(Ms, numeric, title,
+                            save_dir, plot_name, label=f"numerical ({fit_name}) mass function", fig=fig)
+        self._mass_function(total_bins, total_hist, title,
+                            save_dir, plot_name, label="total mass function", fig=fig)
+
+        ax = fig.gca()
+        handles, _ = ax.get_legend_handles_labels()
+        handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+
+        fig.savefig(plot_name)
+
+        logger = logging.getLogger(
+            __name__ + "." + self.press_schechter_numerical_comparison.__name__)
+        logger.debug(
+            f"Saved press-schechter comparison numerical mass function figure to '{plot_name}'")
