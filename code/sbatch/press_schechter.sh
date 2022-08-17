@@ -5,9 +5,9 @@
 #SBATCH -o logs/press_schechter.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=4
 #SBATCH --time=24:00:00
-#SBATCH --mem=100G
+#SBATCH --mem=1G
 # email notifications (NONE, BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=s2222340@ed.ac.uk

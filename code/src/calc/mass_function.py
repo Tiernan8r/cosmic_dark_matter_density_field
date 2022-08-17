@@ -12,7 +12,7 @@ from src.util.constants import MASS_FUNCTION_KEY, TOTAL_MASS_FUNCTION_KEY
 
 class MassFunction(sample.Sampler):
 
-    def total_mass_function(self, hf):
+    def total_mass_function(self, hf) -> Tuple[np.ndarray, np.ndarray]:
         # Only need to run this once per file, so run only on root
         if not yt.is_root():
             return

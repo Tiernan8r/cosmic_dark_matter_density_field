@@ -89,8 +89,8 @@ class StandardDeviation(rho_bar.RhoBar):
 
         return std_dev
 
-    def extrapolate(self, from_z: float, to_z: float, radius: float, from_fits=True):
-        logger = logging.getLogger(__name__ + "." + self.extrapolate.__name__)
+    def extrapolated(self, from_z: float, to_z: float, from_fit=True):
+        logger = logging.getLogger(__name__ + "." + self._extrapolate.__name__)
 
         logger.debug(
             f"Finding {self.type.value} file for a redshift of {from_z:.2f} on simulation '{self.sim_name}'")  # noqa: E501
@@ -104,8 +104,24 @@ class StandardDeviation(rho_bar.RhoBar):
         logger.debug(f"Found halo files = {halo_files}")
         from_hf = halo_files[0]
 
-        from_std_dev = self.std_dev(from_hf, radius, from_fit=from_fits)
+        _, sigmas = self.masses_sigmas(from_hf, from_fit=from_fit)
 
-        extrapolated = from_std_dev * (1 + from_z) / (1 + to_z)
+        extraps = [self._extrapolate(from_z, to_z, s) for s in sigmas]
+
+        logger.debug(f"Input sigmas = {sigmas}")
+        logger.debug(f"Extrapolated sigmas = {extraps}")
+
+        return np.array(extraps)
+
+    def extrapolate(self, from_z: float, to_z: float, radius: float, from_fit=True):
+        radii = self.config.radii
+        r_idx = radii.index(radius)
+
+        sigmas = self.extrapolated(from_z, to_z, from_fit=from_fit)
+
+        return sigmas[r_idx]
+
+    def _extrapolate(self, from_z: float, to_z: float, val: float):
+        extrapolated = val * (1 + from_z) / (1 + to_z)
 
         return extrapolated

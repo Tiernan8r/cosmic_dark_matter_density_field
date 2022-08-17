@@ -23,6 +23,12 @@ class MassFunction(I.IPlot):
             fig = self.new_figure()
         ax = fig.gca()
 
+        # Filter values:
+        y = np.round(y, decimals=100)
+        non_zero = (y != 0)
+        y = y[non_zero]
+        x = x[non_zero]
+
         ax.plot(x, y, label=label)
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -106,10 +112,25 @@ class MassFunction(I.IPlot):
         self._mass_function(masses, vals, title,
                             save_dir, plot_name)
 
+    def _scale_axes(self, x, y, ref):
+        # Filter the PS mass function to be in x-axis range of total
+        min_x_total = min(ref)
+        max_x_total = max(ref)
+
+        max_idxs = np.where(x < max_x_total)
+        x = x[max_idxs]
+        y = y[max_idxs]
+        min_idxs = np.where(x > min_x_total)
+        x = x[min_idxs]
+        y = y[min_idxs]
+
+        return x, y
+
     def press_schechter_total_comparison(self,
                                          z: float,
+                                         total_bins: np.ndarray,
+                                         total_hist: np.ndarray,
                                          Ms: np.ndarray,
-                                         total: np.ndarray,
                                          ps_fit: np.ndarray,
                                          sim_name: str):
         fig = self.new_figure()
@@ -118,7 +139,14 @@ class MassFunction(I.IPlot):
         save_dir = self.compared_dir(sim_name)
         plot_name = self.compared_total_fname(sim_name, z)
 
-        total_hist, total_bins = create_histogram(total, bins=len(Ms))
+        # Filter the PS mass function to be in x-axis range of total
+        Ms, ps_fit = self._scale_axes(Ms, ps_fit, total_bins)
+
+        if len(Ms) == 0 or len(ps_fit) == 0:
+            logger = logging.getLogger(
+                __name__ + "." + self.press_schechter_total_comparison.__name__)
+            logger.warning("Scaled ps fit is empty!")
+            return
 
         # Rescale:
         initial_val = total_hist[0]
@@ -134,6 +162,7 @@ class MassFunction(I.IPlot):
         ax = fig.gca()
         handles, _ = ax.get_legend_handles_labels()
         handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+        ax.legend(handles=handles)
 
         fig.savefig(plot_name)
 
@@ -158,10 +187,19 @@ class MassFunction(I.IPlot):
         save_dir = self.compared_dir(sim_name)
         plot_name = self.compared_analytic_fname(sim_name, z, radius)
 
-        # Rescale:
         if len(analytic) == 0:
             logger.warning("Analytic mass function is empty, skipping!")
             return
+
+        # Filter the PS mass function to be in x-axis range of the analytic
+        ps_masses, ps_fit = self._scale_axes(
+            ps_masses, ps_fit, analytic_masses)
+
+        if len(ps_masses) == 0 or len(ps_fit) == 0:
+            logger.warning("Scaled ps fit is empty, skipping!")
+            return
+
+        # Rescale:
         initial_val = analytic[0]
         initial_ps_val = ps_fit[0]
 
@@ -177,6 +215,7 @@ class MassFunction(I.IPlot):
         handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
         handles.append(mpatches.Patch(
             color='none', label=f"R = {radius:.2f} Mpc/h"))
+        ax.legend(handles=handles)
 
         fig.savefig(plot_name)
 
@@ -210,6 +249,7 @@ class MassFunction(I.IPlot):
         ax = fig.gca()
         handles, _ = ax.get_legend_handles_labels()
         handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+        ax.legend(handles=handles)
 
         fig.savefig(plot_name)
 
@@ -220,18 +260,27 @@ class MassFunction(I.IPlot):
 
     def total_to_numerical_comparison(self,
                                       z: float,
+                                      total_bins: np.ndarray,
+                                      total_hist: np.ndarray,
                                       Ms: np.ndarray,
                                       numeric: np.ndarray,
-                                      total: np.ndarray,
                                       sim_name: str,
                                       fit_name: str):
         fig = self.new_figure()
+        logger = logging.getLogger(
+            __name__ + "." + self.total_to_numerical_comparison.__name__)
 
         title = f"Compared Press Schecter Mass Function at z={z:.2f}"  # noqa: E501
         save_dir = self.compared_dir(sim_name)
-        plot_name = self.compared_total_to_numerical_fname(sim_name, fit_name, z)
+        plot_name = self.compared_total_to_numerical_fname(
+            sim_name, fit_name, z)
 
-        total_hist, total_bins = create_histogram(total, bins=len(Ms))
+        # Filter the numeric mass function to be in x-axis range of total
+        Ms, numeric = self._scale_axes(Ms, numeric, total_bins)
+
+        if len(Ms) == 0 or len(numeric) == 0:
+            logger.debug("Scaled axes are empty, skipping!")
+            return
 
         # Rescale:
         initial_val = numeric[0]
@@ -247,6 +296,7 @@ class MassFunction(I.IPlot):
         ax = fig.gca()
         handles, _ = ax.get_legend_handles_labels()
         handles.append(mpatches.Patch(color='none', label=f"z = {z:.2f}"))
+        ax.legend(handles=handles)
 
         fig.savefig(plot_name)
 

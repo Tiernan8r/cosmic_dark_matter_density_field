@@ -1,8 +1,28 @@
+from typing import Any, Callable
+
 import numpy as np
 import scipy.special as sp
 
+FuncType = Callable[[np.ndarray, Any], np.ndarray]
+
+
+def filter_val(v: float) -> float:
+    if v < 0:
+        return 0
+
+    v = round(v, ndigits=100)
+
+    return v
+
+
+def filter_fit(y: np.ndarray) -> np.ndarray:
+    y = [filter_val(v) for v in y]
+
+    return np.array(y)
 
 # Define model function to be used to fit to the data above:
+
+
 def gaussian(x, *p):
     A, mu, sigma = p
     return A * np.exp(-(x - mu)**2 / (2 * sigma**2))
