@@ -15,7 +15,7 @@ class FittingParameters(Fits):
 
     def setup_gaussian(self):
         # p0 is the initial guess for the fitting coefficients (A, mu and sigma for Gaussian...)
-        self._p0 = [1, 0, 1]
+        self._p0 = [1, 0, 0.01]
         self.title = self.gaussian_title
         self.func = funcs.gaussian
         self.fit_dir = self.gaussian_fit_dir

@@ -5,9 +5,9 @@
 
 nodes=1
 ntasks_per_node=1
-cpus_per_task=16
+cpus_per_task=1
 timeout="72:00:00"
-mem="512G"
+mem="1G"
 
 task() {
     R="${1}"
