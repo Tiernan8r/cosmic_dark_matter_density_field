@@ -8,7 +8,7 @@ from src.util.constants import sim_regex
 
 class Cache:
 
-    def __init__(self, caches_dir: str = "../data/"):
+    def __init__(self, caches_dir: str = "./data/"):
         self._dir = caches_dir
         self._cache: Dict[tuple, CacheEntry] = {}
 

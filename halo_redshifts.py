@@ -17,13 +17,13 @@ assert ht in halo_types, f"{ht} is not a valid halo type: Options are {halo_type
 
 print(f"Working from {os.getcwd()}")
 print("Reading redshifts cache...")
-with open(f"../data/{ds_name}/{ht}/redshifts.pickle","rb") as f:
+with open(f".data/{ds_name}/{ht}/redshifts.pickle","rb") as f:
     d=pickle.load(f)
 
 zs = d.keys()
 
 print("Writing redshifts to txt file...")
-with open(f"../data/{ds_name}/{ht}/redshifts.txt","w") as f:
+with open(f".data/{ds_name}/{ht}/redshifts.txt","w") as f:
     for z in zs:
         f.write(f"{z} ")
 

@@ -44,6 +44,6 @@ tasks:
   numerical_mass_function: true
 plotting:
     dirs:
-      root: ../plots/testing/
+      root: ./plots/testing/
     fitting:
       num_n_gaussian_fits: 3

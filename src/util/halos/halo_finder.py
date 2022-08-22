@@ -17,7 +17,7 @@ class HalosFinder(caching.Cache):
         self._root = root
         self._sim_name = sim_name
 
-        cache_dir = f"../data/{sim_name}/{halo_type.value}/"
+        cache_dir = f"./data/{sim_name}/{halo_type.value}/"
         super().__init__(caches_dir=cache_dir)
 
     def _find_directory(self) -> str:

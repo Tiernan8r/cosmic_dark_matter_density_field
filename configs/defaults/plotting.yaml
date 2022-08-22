@@ -1,5 +1,5 @@
 dirs:
-  root: ../plots/
+  root: ./plots/
   mass_function: "{}/{}/mass_function/"
   overdensity: "{}/{}/deltas/"
   press_schechter: "{}/{}/press_schechter/"
